@@ -1,0 +1,39 @@
+Package: annotatr
+Title: Annotation of Genomic Regions to Genomic Annotations
+Version: 0.99.19
+Date: 2016-10-11
+Authors@R: c( person("Raymond G.", "Cavalcante", email =
+        "rcavalca@umich.edu", role = c("aut", "cre")),
+        person(c("Maureen A."), "Sartor", email =
+        "sartorma@med.umich.edu", role = c("ths")))
+Description: Given a set of genomic sites/regions (e.g. ChIP-seq peaks,
+        CpGs, differentially methylated CpGs or regions, SNPs, etc.) it
+        is often of interest to investigate the intersecting genomic
+        annotations. Such annotations include those relating to gene
+        models (promoters, 5'UTRs, exons, introns, and 3'UTRs), CpGs
+        (CpG islands, CpG shores, CpG shelves), or regulatory sequences
+        such as enhancers. The annotatr package provides an easy way to
+        summarize and visualize the intersection of genomic
+        sites/regions with genomic annotations.
+Depends: R (>= 3.3.0)
+Imports: AnnotationDbi, AnnotationHub, dplyr, GenomicFeatures,
+        GenomicRanges, GenomeInfoDb, ggplot2, IRanges, methods,
+        org.Dm.eg.db, org.Hs.eg.db, org.Mm.eg.db, org.Rn.eg.db,
+        regioneR, reshape2, rtracklayer, S4Vectors, stats,
+        TxDb.Dmelanogaster.UCSC.dm3.ensGene,
+        TxDb.Dmelanogaster.UCSC.dm6.ensGene,
+        TxDb.Hsapiens.UCSC.hg19.knownGene,
+        TxDb.Hsapiens.UCSC.hg38.knownGene,
+        TxDb.Mmusculus.UCSC.mm9.knownGene,
+        TxDb.Mmusculus.UCSC.mm10.knownGene,
+        TxDb.Rnorvegicus.UCSC.rn4.ensGene,
+        TxDb.Rnorvegicus.UCSC.rn5.refGene,
+        TxDb.Rnorvegicus.UCSC.rn6.refGene, utils
+Suggests: BiocStyle, devtools, knitr, rmarkdown, roxygen2, testthat
+VignetteBuilder: knitr
+BugReports: https://www.github.com/rcavalcante/annotatr/issues
+License: GPL-3
+LazyData: true
+RoxygenNote: 5.0.1
+biocViews: Software, Annotation, GenomeAnnotation, FunctionalGenomics,
+        Visualization

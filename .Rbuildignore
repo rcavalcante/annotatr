@@ -1,0 +1,6 @@
+^.*\.git$
+^data-raw$
+^meta$
+^\.travis\.yml$
+README\.md
+^\.Rprofile$

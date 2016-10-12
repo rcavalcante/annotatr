@@ -1,0 +1,31 @@
+CHANGES IN VERSION 0.99.13
+-------------------------
+
+PKG FEATURES
+
+  o annotatr is a package to quickly and flexibly annotate genomic regions to
+    genomic annotations.
+
+    o Genomic annotations include CpG features (island, shore, shelves, and
+	  open sea), genic features (1-5kb upstream of TSS, promoters,
+	  5'UTRs, exons, introns, CDS, 3'UTRs, intron/exon boundaries, and exon/
+	  intron boundaries), as well as enhancers from the FANTOM5 consortium for
+	  hg19 and mm9.
+
+	  o Annotations are built at runtime using the TxDb.*, AnnotationHub, and
+	    rtracklayer packages. Users can select annotations a la carte, or via
+		shortcuts, such as hg19_basicgenes.
+
+	  o Annotations are currently available for hg19, mm9, mm10, dm3, dm6, rn4,
+	    rn5, and rn6. Any species is supported through custom annotations.
+
+  o Genomic regions are read in using the rtracklayer::import() function, and
+    the extraCols argument enables users to include an arbitrary number of
+	categorical or numerical data with the genomic regions.
+
+  o Annotations are determined via GenomicRanges::findOverlaps(), and all
+    annotations are returned, rather than imposing a prioritization.
+
+  o annotatr provides several helpful summarization (using dplyr) and plot
+    functions (using ggplot2) to investigate trends in data associated with the
+	genomic regions over annotations.

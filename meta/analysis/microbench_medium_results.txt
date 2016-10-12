@@ -1,0 +1,21 @@
+"expr"	"time"
+"1"	"cpa_medium()"	434891991733
+"2"	"dplyr_medium()"	64622397530
+"3"	"cpa_medium()"	419996810596
+"4"	"cpa_medium()"	428533028983
+"5"	"dplyr_medium()"	64435896723
+"6"	"cpa_medium()"	432293339112
+"7"	"cpa_medium()"	420742838425
+"8"	"dplyr_medium()"	67558593252
+"9"	"cpa_medium()"	407943526452
+"10"	"dplyr_medium()"	64269383784
+"11"	"dplyr_medium()"	50869504178
+"12"	"dplyr_medium()"	55542324432
+"13"	"dplyr_medium()"	51906029788
+"14"	"cpa_medium()"	403909667846
+"15"	"cpa_medium()"	422266264230
+"16"	"dplyr_medium()"	66418926080
+"17"	"dplyr_medium()"	53461214042
+"18"	"cpa_medium()"	431394872579
+"19"	"dplyr_medium()"	66696895707
+"20"	"cpa_medium()"	384333216752
