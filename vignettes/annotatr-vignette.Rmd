@@ -47,17 +47,23 @@ The genic annotations are determined by functions from `GenomicFeatures` and dat
 
 ![Schematic of knownGene annotations.](annotatr_genes.jpeg)
 
-Also included in genic annotations are intronexon and exonintron boundaries. These annotations are 200bp up/down stream of any boundary between an exon and intron. Expanded regions are then merged as necessary.
+Also included in genic annotations are intronexon and exonintron boundaries. These annotations are 200bp up/down stream of any boundary between an exon and intron. Important to note, is that the boundaries are with respect to the strand of the gene.
 
 Non-intergenic gene annotations include Entrez ID and gene symbol information where it exists. The `org.*.eg.db` packages for the appropriate organisms are used to provide gene IDs and gene symbols.
 
+The genic annotations have populated `tx_id`, `gene_id`, and `symbol` columns. Respectively they are, the knownGene transcript name, Entrez Gene ID, and gene symbol.
+
 ## FANTOM5 Permissive Enhancers
 
-FANTOM5 permissive enhancers were determined from bi-directional CAGE transcription as in [Andersson et al. (2014)](http://www.nature.com/nature/journal/v507/n7493/full/nature12787.html), and are downloaded and processed for **hg19** and **mm10** from the [FANTOM5](http://fantom.gsc.riken.jp/5/datafiles/phase2.0/extra/Enhancers/) resource.
+FANTOM5 permissive enhancers were determined from bi-directional CAGE transcription as in [Andersson et al. (2014)](http://www.nature.com/nature/journal/v507/n7493/full/nature12787.html), and are downloaded and processed for **hg19** and **mm9** from the [FANTOM5](http://fantom.gsc.riken.jp/5/datafiles/phase2.0/extra/Enhancers/) resource.
+
+## GENCODE lncRNA transcripts
+
+The long non-coding RNA (lncRNA) annotations are from [GENCODE](https://www.gencodegenes.org) for hg19, hg38, and mm10. The lncRNA transcripts are used, and we eventually plan to include the lncRNA introns/exons at a later date. The lncRNA annotations have populated `tx_id`, `gene_id`, and `symbol` columns. Respectively they are, the Ensembl transcript name, Entrez Gene ID, and gene symbol. As per the `transcript_type` field in the GENCODE anntotations, the [biotypes](https://www.gencodegenes.org/gencode_biotypes.html) are given in the `id` column.
 
 ## Custom Annotations
 
-Users may load their own annotations from BED files using the `read_annotations()` function, which uses the `rtracklayer::import()` function. The output is a `GRanges` with `mcols()` for `id`, `gene_id`, `symbol`, and `type`. If a user wants to include `gene_id` and `symbol` in their custom annotations they can be included as extra columns on a BED6 input file.
+Users may load their own annotations from BED files using the `read_annotations()` function, which uses the `rtracklayer::import()` function. The output is a `GRanges` with `mcols()` for `id`, `tx_id`, `gene_id`, `symbol`, and `type`. If a user wants to include `tx_id`, `gene_id`, and/or `symbol` in their custom annotations they can be included as extra columns on a BED6 input file.
 
 ```{r, echo=FALSE}
 suppressWarnings(suppressMessages(suppressPackageStartupMessages(library(annotatr))))
@@ -110,7 +116,7 @@ Before annotating regions, they must be built with `build_annotations()` which r
 # Note inclusion of custom annotation, and use of shortcuts
 annots = c('hg19_cpgs', 'hg19_basicgenes', 'hg19_genes_intergenic',
     'hg19_enhancers_fantom', 'hg19_genes_firstexons', 'hg19_genes_intronexonboundaries',
-    'hg19_custom_ezh2', 'hg19_custom_cjun')
+    'hg19_lncrna_gencode', 'hg19_custom_ezh2', 'hg19_custom_cjun')
 
 # Build the annotations (a single GRanges object)
 annotations = build_annotations(genome = 'hg19', annotations = annots)
@@ -272,7 +278,8 @@ annots_order = c(
     'hg19_genes_intronexonboundaries',
     'hg19_genes_introns',
     'hg19_genes_3UTRs',
-    'hg19_genes_intergenic')
+    'hg19_genes_intergenic',
+    'hg19_lncrna_gencode')
 dm_vs_kg_annotations_wrandom = plot_annotation(
     annotated_regions = dm_annotated,
     annotated_random = dm_random_annotated,
@@ -285,7 +292,7 @@ print(dm_vs_kg_annotations_wrandom)
 
 ### Plotting Regions Occurring in Pairs of Annotations
 
-```{r, fig.align='center', fig.cap='Number of DM regions per pair of annotations.', fig.height=7, fig.width=7, fig.show = 'hold', warning = FALSE, message = FALSE}
+```{r, fig.align='center', fig.cap='Number of DM regions per pair of annotations.', fig.height=8, fig.width=8, fig.show = 'hold', warning = FALSE, message = FALSE}
 # View a heatmap of regions occurring in pairs of annotations
 annots_order = c(
     'hg19_custom_ezh2',
@@ -299,7 +306,8 @@ annots_order = c(
     'hg19_genes_intronexonboundaries',
     'hg19_genes_introns',
     'hg19_genes_3UTRs',
-    'hg19_genes_intergenic')
+    'hg19_genes_intergenic',
+    'hg19_lncrna_gencode')
 dm_vs_coannotations = plot_coannotations(
     annotated_regions = dm_annotated,
     annotation_order = annots_order,
@@ -320,7 +328,7 @@ dm_vs_regions_annot = plot_numerical(
     facet_order = c('hg19_genes_1to5kb','hg19_genes_promoters',
         'hg19_genes_5UTRs','hg19_genes_3UTRs', 'hg19_custom_ezh2',
         'hg19_custom_cjun', 'hg19_genes_intergenic', 'hg19_cpg_islands',
-    'hg19_cpg_shores'),
+        'hg19_lncrna_gencode'),
     bin_width = 5,
     plot_title = 'Group 0 Region Methylation In Genes',
     x_label = 'Group 0')
@@ -336,7 +344,7 @@ dm_vs_regions_name = plot_numerical(
     facet_order = c('hg19_genes_1to5kb','hg19_genes_promoters',
         'hg19_genes_5UTRs','hg19_genes_3UTRs', 'hg19_custom_ezh2',
         'hg19_custom_cjun', 'hg19_genes_intergenic', 'hg19_cpg_islands',
-    'hg19_cpg_shores'),
+        'hg19_cpg_shores'),
     plot_title = 'Region Methylation: Group 0 vs Group 1',
     x_label = 'Group 0',
     y_label = 'Group 1')
@@ -436,7 +444,8 @@ x_order = c(
     'hg19_genes_exons',
     'hg19_genes_introns',
     'hg19_genes_3UTRs',
-    'hg19_genes_intergenic')
+    'hg19_genes_intergenic',
+    'hg19_lncrna_gencode')
 # The orders for the fill labels.
 fill_order = c(
     'hyper',

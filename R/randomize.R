@@ -27,11 +27,15 @@ randomize_regions = function(regions, allow.overlaps = TRUE, per.chromosome = TR
         stop('Error: regions must have class GRanges. The best way to ensure this is to pass the result of read_regions() into this function.')
     }
 
-    chr_lengths = GenomeInfoDb::seqlengths(regions)
+    # Get the genome from the regions
+    genome = unique(GenomeInfoDb::genome(regions))
 
-    if(any(is.na(chr_lengths))) {
-        stop('Error: regions GRanges object must have valid seqlengths to randomize its regions.')
+    if(is.na(genome)) {
+        stop('Error: regions GRanges object must have a valid genome to randomize its regions.')
     } else {
+        chr_lengths = GenomeInfoDb::Seqinfo(genome = genome)
+        chr_lengths = GenomeInfoDb::seqlengths(chr_lengths)
+
         df_genome = data.frame(
             'chr' = names(chr_lengths),
             'start' = rep.int(1, length(chr_lengths)),

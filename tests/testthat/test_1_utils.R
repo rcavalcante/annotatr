@@ -11,7 +11,7 @@ test_that('Test get_*_name() functions', {
 })
 
 test_that('Test tidy_annotations()', {
-    hg19_annots = c('hg19_cpg_islands', 'hg19_cpg_inter', 'hg19_genes_firstexons', 'hg19_genes_intronexonboundaries', 'hg19_genes_exonintronboundaries')
+    hg19_annots = c('hg19_cpg_islands', 'hg19_cpg_inter', 'hg19_genes_firstexons', 'hg19_genes_intronexonboundaries', 'hg19_genes_exonintronboundaries', 'hg19_lncrna_gencode')
     mm9_annots = c('mm9_cpg_islands','mm9_genes_exonsCDSs','mm9_cpg_inter')
     rn4_custom_annots = c('rn4_custom_cpgislands','rn4_custom_TFBS')
 
@@ -19,9 +19,10 @@ test_that('Test tidy_annotations()', {
     mm9_tidy_annots = tidy_annotations(mm9_annots)
     rn4_tidy_annots = tidy_annotations(rn4_custom_annots)
 
-    expect_equal( all(names(hg19_tidy_annots) == c('CpG islands', 'interCGI', 'first exons', 'intron/exon boundaries', 'exon/intron boundaries')), expected = TRUE)
+    expect_equal( all(names(hg19_tidy_annots) == c('CpG islands', 'interCGI', 'first exons', 'intron/exon boundaries', 'exon/intron boundaries', 'GENCODE lncRNA')), expected = TRUE)
     expect_equal( all(names(mm9_tidy_annots) == c('CpG islands', 'exonsCDSs', 'interCGI')), expected = TRUE)
     expect_equal( all(names(rn4_tidy_annots) == c('cpgislands', 'TFBS')), expected = TRUE)
+    expect_equal
 })
 
 test_that('Test check_annotations()', {

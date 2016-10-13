@@ -4,7 +4,7 @@
 \alias{build_enhancer_annots}
 \title{A helper function to build enhancer annotations for hg19 and mm10 from FANTOM5.}
 \usage{
-build_enhancer_annots(genome = supported_genomes())
+build_enhancer_annots(genome = c("hg19", "mm9"))
 }
 \arguments{
 \item{genome}{The genome assembly.}

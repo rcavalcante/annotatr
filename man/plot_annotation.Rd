@@ -55,10 +55,10 @@ Given a \code{GRanges} of annotated regions, plot the number of regions with the
        'hg19_cpg_islands',
        'hg19_cpg_shores')
 
-   p_annots = plot_annotation(annotated_regions = chip_annots, annotation_order = annots_order)
-
-   p_annots_rnd = plot_annotation(annotated_regions = chip_annots, annotated_random = chip_rnd_annots,
+   p_annots = plot_annotation(annotated_regions = chip_annots,
        annotation_order = annots_order)
+   p_annots_rnd = plot_annotation(annotated_regions = chip_annots,
+       annotated_random = chip_rnd_annots, annotation_order = annots_order)
 
 }
 

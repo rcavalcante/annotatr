@@ -68,41 +68,41 @@ test_that('Test custom BED3 with no genome and a name', {
     file = system.file('extdata', 'test_annotations_3.bed', package = 'annotatr')
     read_annotations(con = file, name = 'test', format = 'bed')
 
-    expect_true( all(colnames(mcols(annotatr_cache$get('genome_custom_test'))) == c('id','gene_id','symbol','type')) )
+    expect_true( all(colnames(mcols(annotatr_cache$get('genome_custom_test'))) == c('id','tx_id','gene_id','symbol','type')) )
 })
 
 test_that('Test custom BED3 with no name and a genome', {
     file = system.file('extdata', 'test_annotations_3.bed', package = 'annotatr')
     read_annotations(con = file, genome = 'hg19', format = 'bed')
 
-    expect_true( all(colnames(mcols(annotatr_cache$get('hg19_custom_annotations'))) == c('id','gene_id','symbol','type')) )
+    expect_true( all(colnames(mcols(annotatr_cache$get('hg19_custom_annotations'))) == c('id','tx_id','gene_id','symbol','type')) )
 })
 
 test_that('Test custom BED3 with no name or genome', {
     file = system.file('extdata', 'test_annotations_3.bed', package = 'annotatr')
     read_annotations(con = file, format = 'bed')
-    expect_true( all(colnames(mcols(annotatr_cache$get('genome_custom_annotations'))) == c('id','gene_id','symbol','type')) )
+    expect_true( all(colnames(mcols(annotatr_cache$get('genome_custom_annotations'))) == c('id','tx_id','gene_id','symbol','type')) )
 })
 
 test_that('Test custom BED4', {
     file = system.file('extdata', 'test_annotations_4.bed', package = 'annotatr')
     read_annotations(con = file, format = 'bed')
 
-    expect_true( all(colnames(mcols(annotatr_cache$get('genome_custom_test'))) == c('id','gene_id','symbol','type')) )
+    expect_true( all(colnames(mcols(annotatr_cache$get('genome_custom_test'))) == c('id','tx_id','gene_id','symbol','type')) )
 })
 
 test_that('Test custom BED5', {
     file = system.file('extdata', 'test_annotations_5.bed', package = 'annotatr')
     read_annotations(con = file, format = 'bed')
 
-    expect_true( all(colnames(mcols(annotatr_cache$get('genome_custom_test'))) == c('id','gene_id','symbol','type')) )
+    expect_true( all(colnames(mcols(annotatr_cache$get('genome_custom_test'))) == c('id','tx_id','gene_id','symbol','type')) )
 })
 
 test_that('Test custom BED6', {
     file = system.file('extdata', 'test_annotations_6.bed', package = 'annotatr')
     read_annotations(con = file, name = 'six', format = 'bed')
 
-    expect_true( all(colnames(mcols(annotatr_cache$get('genome_custom_test'))) == c('id','gene_id','symbol','type')) )
+    expect_true( all(colnames(mcols(annotatr_cache$get('genome_custom_six'))) == c('id','tx_id','gene_id','symbol','type')) )
 })
 
 test_that('Test custom BED6 with gene_id', {
@@ -110,7 +110,7 @@ test_that('Test custom BED6 with gene_id', {
     extraCols = c(gene_id = 'character')
     read_annotations(con = file, name = 'geneid', format = 'bed', extraCols = extraCols)
 
-    expect_true( all(colnames(mcols(annotatr_cache$get('genome_custom_test'))) == c('id','gene_id','symbol','type')) )
+    expect_true( all(colnames(mcols(annotatr_cache$get('genome_custom_geneid'))) == c('id','tx_id','gene_id','symbol','type')) )
 })
 
 test_that('Test custom BED6 with symbol', {
@@ -118,13 +118,13 @@ test_that('Test custom BED6 with symbol', {
     extraCols = c(symbol = 'character')
     read_annotations(con = file, name = 'symbol', format = 'bed', extraCols = extraCols)
 
-    expect_true( all(colnames(mcols(annotatr_cache$get('genome_custom_test'))) == c('id','gene_id','symbol','type')) )
+    expect_true( all(colnames(mcols(annotatr_cache$get('genome_custom_symbol'))) == c('id','tx_id','gene_id','symbol','type')) )
 })
 
 test_that('Test custom BED6 with symbol nad gene_id', {
-    file = system.file('extdata', 'test_annotations_6_gene_symbol.bed', package = 'annotatr')
-    extraCols = c(gene_id = 'character', symbol = 'character')
-    read_annotations(con = file, name = 'genesymbol', format = 'bed', extraCols = extraCols)
+    file = system.file('extdata', 'test_annotations_6_tx_gene_symbol.bed', package = 'annotatr')
+    extraCols = c(gene_id = 'character', symbol = 'character', tx_id = 'character')
+    read_annotations(con = file, name = 'txgenesymbol', format = 'bed', extraCols = extraCols)
 
-    expect_true( all(colnames(mcols(annotatr_cache$get('genome_custom_test'))) == c('id','gene_id','symbol','type')) )
+    expect_true( all(colnames(mcols(annotatr_cache$get('genome_custom_txgenesymbol'))) == c('id','tx_id','gene_id','symbol','type')) )
 })

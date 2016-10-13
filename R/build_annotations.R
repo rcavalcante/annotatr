@@ -39,7 +39,7 @@ annotatr_cache <- local({
 #' @param annotations A character vector of annotations to build. Valid annotation codes are listed with \code{supported_annotations()}. The "basicgenes" shortcut builds the following regions: 1-5Kb upstream of TSSs, promoters, 5UTRs, exons, introns, and 3UTRs. The "cpgs" shortcut builds the following regions: CpG islands, shores, shelves, and interCGI regions. NOTE: Shortcuts need to be appended by the genome, e.g. \code{hg19_basicgenes}.
 #' Custom annotations whose names are of the form \code{[genome]_custom_[name]} should also be included. Custom annotations should be read in and converted to \code{GRanges} with \code{read_annotations()}. They can be for a \code{supported_genome()}, or for an unsupported genome.
 #'
-#' @return A \code{GRanges} object of all the \code{annotations} combined. The \code{mcols} are \code{id, gene_id, symbol, type}.
+#' @return A \code{GRanges} object of all the \code{annotations} combined. The \code{mcols} are \code{id, tx_id, gene_id, symbol, type}. The \code{id} column is a unique name, the \code{tx_id} column is either a UCSC knownGene transcript ID (genic annotations) or a Ensembl transcript ID (lncRNA annotations), the \code{gene_id} is the Entrez ID, the \code{symbol} is the gene symbol from the \code{org.*.eg.db} mapping from the Entrez ID, and the \code{type} is of the form \code{[genome]_[type]_[name]}.
 #'
 #' @examples
 #' # Example with hg19
@@ -61,6 +61,7 @@ build_annotations = function(genome, annotations) {
     enh_annotations = grep('_enhancers_', annotations, value=TRUE)
     gene_annotations = grep('_genes_', annotations, value=TRUE)
     cpg_annotations = grep('_cpg_', annotations, value=TRUE)
+    lncrna_annotations = grep('_lncrna_', annotations, value=TRUE)
     custom_annotations = grep('_custom_', annotations, value=TRUE)
 
     annots_grl = GenomicRanges::GRangesList()
@@ -74,6 +75,9 @@ build_annotations = function(genome, annotations) {
     if(length(cpg_annotations) != 0) {
         annots_grl = c(annots_grl, suppressWarnings(build_cpg_annots(genome = genome, annotations = cpg_annotations)))
     }
+    if(length(lncrna_annotations) != 0) {
+        annots_grl = c(annots_grl, GenomicRanges::GRangesList(lncrna_gencode = suppressWarnings(build_lncrna_annots(genome = genome))))
+    }
     if(length(custom_annotations) > 0) {
         annots_grl = c(annots_grl, GenomicRanges::GRangesList(sapply(custom_annotations, function(ca){annotatr_cache$get(ca)})))
     }
@@ -86,7 +90,7 @@ build_annotations = function(genome, annotations) {
 #' @param genome The genome assembly.
 #'
 #' @return A \code{GRanges} object.
-build_enhancer_annots = function(genome = supported_genomes()) {
+build_enhancer_annots = function(genome = c('hg19','mm9')) {
     # Ensure valid arguments
     genome = match.arg(genome)
 
@@ -103,6 +107,7 @@ build_enhancer_annots = function(genome = supported_genomes()) {
 
     enhancers = GenomicRanges::granges(enhancers)
     GenomicRanges::mcols(enhancers)$id = paste0('enhancer:', seq_along(enhancers))
+    GenomicRanges::mcols(enhancers)$tx_id = NA
     GenomicRanges::mcols(enhancers)$gene_id = NA
     GenomicRanges::mcols(enhancers)$symbol = NA
     GenomicRanges::mcols(enhancers)$type = sprintf('%s_enhancers_fantom', genome)
@@ -156,13 +161,14 @@ build_cpg_annots = function(genome = supported_genomes(), annotations = supporte
             GenomicRanges::mcols(islands)$id = paste0('island:', seq_along(islands))
 
             # Add tx_name, gene_id, and symbol columns
+            GenomicRanges::mcols(islands)$tx_id = NA
             GenomicRanges::mcols(islands)$gene_id = NA
             GenomicRanges::mcols(islands)$symbol = NA
 
             # Give it the correct type
             GenomicRanges::mcols(islands)$type = sprintf('%s_cpg_islands', genome)
 
-            GenomicRanges::mcols(islands) = GenomicRanges::mcols(islands)[, c('id','gene_id','symbol','type')]
+            GenomicRanges::mcols(islands) = GenomicRanges::mcols(islands)[, c('id','tx_id','gene_id','symbol','type')]
 
         if(any(grepl('shores', annotations)) || any(grepl('shelves', annotations)) || any(grepl('inter', annotations))) {
             message('Building CpG shores...')
@@ -185,13 +191,14 @@ build_cpg_annots = function(genome = supported_genomes(), annotations = supporte
                 GenomicRanges::mcols(shores)$id = paste0('shore:', seq_along(shores))
 
                 # Add tx_name, gene_id, and symbol columns
+                GenomicRanges::mcols(shores)$tx_id = NA
                 GenomicRanges::mcols(shores)$gene_id = NA
                 GenomicRanges::mcols(shores)$symbol = NA
 
                 # Give it the correct type
                 GenomicRanges::mcols(shores)$type = sprintf('%s_cpg_shores', genome)
 
-                GenomicRanges::mcols(shores) = GenomicRanges::mcols(shores)[, c('id','gene_id','symbol','type')]
+                GenomicRanges::mcols(shores) = GenomicRanges::mcols(shores)[, c('id','tx_id','gene_id','symbol','type')]
 
             if(any(grepl('shelves', annotations)) || any(grepl('inter', annotations))) {
                 message('Building CpG shelves...')
@@ -215,13 +222,14 @@ build_cpg_annots = function(genome = supported_genomes(), annotations = supporte
                     GenomicRanges::mcols(shelves)$id = paste0('shelf:', seq_along(shelves))
 
                     # Add gene_id, and symbol columns
+                    GenomicRanges::mcols(shelves)$tx_id = NA
                     GenomicRanges::mcols(shelves)$gene_id = NA
                     GenomicRanges::mcols(shelves)$symbol = NA
 
                     # Give it the correct type
                     GenomicRanges::mcols(shelves)$type = sprintf('%s_cpg_shelves', genome)
 
-                    GenomicRanges::mcols(shelves) = GenomicRanges::mcols(shelves)[, c('id','gene_id','symbol','type')]
+                    GenomicRanges::mcols(shelves) = GenomicRanges::mcols(shelves)[, c('id','tx_id','gene_id','symbol','type')]
 
                 if(any(grepl('inter', annotations))) {
                     message('Building inter-CpG-islands...')
@@ -243,13 +251,14 @@ build_cpg_annots = function(genome = supported_genomes(), annotations = supporte
                         GenomicRanges::mcols(inter_cgi)$id = paste0('inter:', seq_along(inter_cgi))
 
                         # Add gene_id, and symbol columns
+                        GenomicRanges::mcols(inter_cgi)$tx_id = NA
                         GenomicRanges::mcols(inter_cgi)$gene_id = NA
                         GenomicRanges::mcols(inter_cgi)$symbol = NA
 
                         # Give it the correct type
                         GenomicRanges::mcols(inter_cgi)$type = sprintf('%s_cpg_inter', genome)
 
-                        GenomicRanges::mcols(inter_cgi) = GenomicRanges::mcols(inter_cgi)[, c('id','gene_id','symbol','type')]
+                        GenomicRanges::mcols(inter_cgi) = GenomicRanges::mcols(inter_cgi)[, c('id','tx_id','gene_id','symbol','type')]
                 }
             }
         }
@@ -270,7 +279,7 @@ build_cpg_annots = function(genome = supported_genomes(), annotations = supporte
 #' @param genome The genome assembly.
 #' @param annotations A character vector with entries of the form \code{[genome]_genes_{1to5kb,promoters,5UTRs,cds,exons,firstexons,introns,intronexonboundaries,exonintronboundaries,3UTRs,intergenic}}.
 #'
-#' @return A list of \code{GRanges} objects.
+#' @return A list of \code{GRanges} objects with unique \code{id} of the form \code{[type]:i}, \code{tx_id} being the UCSC knownGene transcript name, \code{gene_id} being the Entrez Gene ID, \code{symbol} being the gene symbol from the Entrez ID to symbol mapping in \code{org.db} for that species, and \code{type} being the annotation type.
 build_gene_annots = function(genome = supported_genomes(), annotations = supported_annotations()) {
     # Ensure valid arguments
     genome = match.arg(genome)
@@ -301,8 +310,8 @@ build_gene_annots = function(genome = supported_genomes(), annotations = support
     # Get the org.XX.eg.db mapping from Entrez ID to gene symbol
     # First element returned is package name, second is eg2SYMBOL name
     orgdb_name = get_orgdb_name(genome)
-    library(orgdb_name[1], character.only = TRUE)
-    x = get(orgdb_name[2])
+    library(sprintf('org.%s.eg.db', orgdb_name), character.only = TRUE)
+    x = get(sprintf('org.%s.egSYMBOL', orgdb_name))
     mapped_genes = mappedkeys(x)
     eg2symbol = as.data.frame(x[mapped_genes])
 
@@ -330,7 +339,7 @@ build_gene_annots = function(genome = supported_genomes(), annotations = support
     id_maps = AnnotationDbi::select(txdb, keys = as.character(GenomicRanges::mcols(tx_gr)$TXID), columns = c('TXNAME','GENEID'), keytype = 'TXID')
 
     # Each annotation should be a GRanges object with the following mcols:
-    # tx_name, gene_id, symbol, type
+    # id, tx_id, gene_id, symbol, type
 
     if(any(grepl('promoters', annotations)) || any(grepl('1to5kb', annotations)) || any(grepl('intergenic', annotations))) {
         message('Building promoters...')
@@ -340,9 +349,10 @@ build_gene_annots = function(genome = supported_genomes(), annotations = support
             GenomicRanges::mcols(promoters_gr)$gene_id = id_maps[match(GenomicRanges::mcols(promoters_gr)$tx_id, id_maps$TXID), 'GENEID']
             GenomicRanges::mcols(promoters_gr)$symbol = eg2symbol[match(GenomicRanges::mcols(promoters_gr)$gene_id, eg2symbol$gene_id), 'symbol']
             GenomicRanges::mcols(promoters_gr)$type = sprintf('%s_genes_promoters', genome)
+            GenomicRanges::mcols(promoters_gr)$id = paste0('promoter:', seq_along(promoters_gr))
 
-            GenomicRanges::mcols(promoters_gr) = GenomicRanges::mcols(promoters_gr)[, c('tx_name','gene_id','symbol','type')]
-            colnames(GenomicRanges::mcols(promoters_gr)) = c('id','gene_id','symbol','type')
+            GenomicRanges::mcols(promoters_gr) = GenomicRanges::mcols(promoters_gr)[, c('id','tx_name','gene_id','symbol','type')]
+            colnames(GenomicRanges::mcols(promoters_gr)) = c('id','tx_id','gene_id','symbol','type')
 
         if(any(grepl('1to5kb', annotations)) || any(grepl('intergenic', annotations))) {
             message('Building 1to5kb upstream of TSS...')
@@ -350,6 +360,7 @@ build_gene_annots = function(genome = supported_genomes(), annotations = support
                 onetofive_gr = GenomicRanges::flank(promoters_gr, width = 4000, start = TRUE, both = FALSE)
                 onetofive_gr = GenomicRanges::trim(onetofive_gr)
                 # Add Entrez ID, symbol, and type (all but type are inherited from promoters_gr)
+                GenomicRanges::mcols(onetofive_gr)$id = paste0('1to5kb:', seq_along(onetofive_gr))
                 GenomicRanges::mcols(onetofive_gr)$type = sprintf('%s_genes_1to5kb', genome)
 
             if(any(grepl('intergenic', annotations))) {
@@ -364,6 +375,7 @@ build_gene_annots = function(genome = supported_genomes(), annotations = support
                     intergenic_gr = intergenic_gr[GenomicRanges::strand(intergenic_gr) == '*']
 
                     GenomicRanges::mcols(intergenic_gr)$id = paste0('intergenic:', seq_along(intergenic_gr))
+                    GenomicRanges::mcols(intergenic_gr)$tx_id = NA
                     GenomicRanges::mcols(intergenic_gr)$gene_id = NA
                     GenomicRanges::mcols(intergenic_gr)$symbol = NA
                     GenomicRanges::mcols(intergenic_gr)$type = sprintf('%s_genes_intergenic', genome)
@@ -385,9 +397,10 @@ build_gene_annots = function(genome = supported_genomes(), annotations = support
             GenomicRanges::mcols(cds_gr)$gene_id = id_maps[match(GenomicRanges::mcols(cds_gr)$tx_name, id_maps$TXNAME), 'GENEID']
             GenomicRanges::mcols(cds_gr)$symbol = eg2symbol[match(GenomicRanges::mcols(cds_gr)$gene_id, eg2symbol$gene_id), 'symbol']
             GenomicRanges::mcols(cds_gr)$type = sprintf('%s_genes_cds', genome)
+            GenomicRanges::mcols(cds_gr)$id = paste0('CDS:', seq_along(cds_gr))
 
-            GenomicRanges::mcols(cds_gr) = GenomicRanges::mcols(cds_gr)[, c('tx_name','gene_id','symbol','type')]
-            colnames(GenomicRanges::mcols(cds_gr)) = c('id','gene_id','symbol','type')
+            GenomicRanges::mcols(cds_gr) = GenomicRanges::mcols(cds_gr)[, c('id','tx_name','gene_id','symbol','type')]
+            colnames(GenomicRanges::mcols(cds_gr)) = c('id','tx_id','gene_id','symbol','type')
     }
 
     if(any(grepl('5UTR', annotations))) {
@@ -405,9 +418,10 @@ build_gene_annots = function(genome = supported_genomes(), annotations = support
             GenomicRanges::mcols(fiveUTRs_gr)$gene_id = id_maps[match(GenomicRanges::mcols(fiveUTRs_gr)$tx_name, id_maps$TXNAME), 'GENEID']
             GenomicRanges::mcols(fiveUTRs_gr)$symbol = eg2symbol[match(GenomicRanges::mcols(fiveUTRs_gr)$gene_id, eg2symbol$gene_id), 'symbol']
             GenomicRanges::mcols(fiveUTRs_gr)$type = sprintf('%s_genes_5UTRs', genome)
+            GenomicRanges::mcols(fiveUTRs_gr)$id = paste0('5UTR:', seq_along(fiveUTRs_gr))
 
-            GenomicRanges::mcols(fiveUTRs_gr) = GenomicRanges::mcols(fiveUTRs_gr)[, c('tx_name','gene_id','symbol','type')]
-            colnames(GenomicRanges::mcols(fiveUTRs_gr)) = c('id','gene_id','symbol','type')
+            GenomicRanges::mcols(fiveUTRs_gr) = GenomicRanges::mcols(fiveUTRs_gr)[, c('id','tx_name','gene_id','symbol','type')]
+            colnames(GenomicRanges::mcols(fiveUTRs_gr)) = c('id','tx_id','gene_id','symbol','type')
 
     }
 
@@ -425,9 +439,10 @@ build_gene_annots = function(genome = supported_genomes(), annotations = support
             GenomicRanges::mcols(threeUTRs_gr)$gene_id = id_maps[match(GenomicRanges::mcols(threeUTRs_gr)$tx_name, id_maps$TXNAME), 'GENEID']
             GenomicRanges::mcols(threeUTRs_gr)$symbol = eg2symbol[match(GenomicRanges::mcols(threeUTRs_gr)$gene_id, eg2symbol$gene_id), 'symbol']
             GenomicRanges::mcols(threeUTRs_gr)$type = sprintf('%s_genes_3UTRs', genome)
+            GenomicRanges::mcols(threeUTRs_gr)$id = paste0('3UTR:', seq_along(threeUTRs_gr))
 
-            GenomicRanges::mcols(threeUTRs_gr) = GenomicRanges::mcols(threeUTRs_gr)[, c('tx_name','gene_id','symbol','type')]
-            colnames(GenomicRanges::mcols(threeUTRs_gr)) = c('id','gene_id','symbol','type')
+            GenomicRanges::mcols(threeUTRs_gr) = GenomicRanges::mcols(threeUTRs_gr)[, c('id','tx_name','gene_id','symbol','type')]
+            colnames(GenomicRanges::mcols(threeUTRs_gr)) = c('id','tx_id','gene_id','symbol','type')
     }
 
     if(any(grepl('exon', annotations)) || any(grepl('intron', annotations))) {
@@ -445,6 +460,7 @@ build_gene_annots = function(genome = supported_genomes(), annotations = support
             GenomicRanges::mcols(exons_gr)$gene_id = id_maps[match(GenomicRanges::mcols(exons_gr)$tx_name, id_maps$TXNAME), 'GENEID']
             GenomicRanges::mcols(exons_gr)$symbol = eg2symbol[match(GenomicRanges::mcols(exons_gr)$gene_id, eg2symbol$gene_id), 'symbol']
             GenomicRanges::mcols(exons_gr)$type = sprintf('%s_genes_exons', genome)
+            GenomicRanges::mcols(exons_gr)$id = paste0('exon:', seq_along(exons_gr))
 
             # This needs to be here before we remove the exon_rank mcol in exons_gr
             if(any(grepl('firstexons', annotations))) {
@@ -453,13 +469,14 @@ build_gene_annots = function(genome = supported_genomes(), annotations = support
                     firstexons_gr = exons_gr[sapply(exons_gr$exon_rank, function(er){1 %in% er})]
                     # NOTE: The mcol() contents are CharacterLists and IntegerLists, which requires a different approach from previous
                     GenomicRanges::mcols(firstexons_gr)$type = sprintf('%s_genes_firstexons', genome)
+                    GenomicRanges::mcols(firstexons_gr)$id = paste0('firstexon:', seq_along(firstexons_gr))
 
-                    GenomicRanges::mcols(firstexons_gr) = GenomicRanges::mcols(firstexons_gr)[, c('tx_name','gene_id','symbol','type')]
-                    colnames(GenomicRanges::mcols(firstexons_gr)) = c('id','gene_id','symbol','type')
+                    GenomicRanges::mcols(firstexons_gr) = GenomicRanges::mcols(firstexons_gr)[, c('id','tx_name','gene_id','symbol','type')]
+                    colnames(GenomicRanges::mcols(firstexons_gr)) = c('id','tx_id','gene_id','symbol','type')
             }
 
-            GenomicRanges::mcols(exons_gr) = GenomicRanges::mcols(exons_gr)[, c('tx_name','gene_id','symbol','type')]
-            colnames(GenomicRanges::mcols(exons_gr)) = c('id','gene_id','symbol','type')
+            GenomicRanges::mcols(exons_gr) = GenomicRanges::mcols(exons_gr)[, c('id','tx_name','gene_id','symbol','type')]
+            colnames(GenomicRanges::mcols(exons_gr)) = c('id','tx_id','gene_id','symbol','type')
 
         message('Building introns...')
         ### introns
@@ -474,19 +491,31 @@ build_gene_annots = function(genome = supported_genomes(), annotations = support
             GenomicRanges::mcols(introns_gr)$gene_id = id_maps[match(GenomicRanges::mcols(introns_gr)$tx_name, id_maps$TXNAME), 'GENEID']
             GenomicRanges::mcols(introns_gr)$symbol = eg2symbol[match(GenomicRanges::mcols(introns_gr)$gene_id, eg2symbol$gene_id), 'symbol']
             GenomicRanges::mcols(introns_gr)$type = sprintf('%s_genes_introns', genome)
+            GenomicRanges::mcols(introns_gr)$id = paste0('intron:', seq_along(introns_gr))
 
-            GenomicRanges::mcols(introns_gr) = GenomicRanges::mcols(introns_gr)[, c('tx_name','gene_id','symbol','type')]
-            colnames(GenomicRanges::mcols(introns_gr)) = c('id','gene_id','symbol','type')
+            GenomicRanges::mcols(introns_gr) = GenomicRanges::mcols(introns_gr)[, c('id','tx_name','gene_id','symbol','type')]
+            colnames(GenomicRanges::mcols(introns_gr)) = c('id','tx_id','gene_id','symbol','type')
 
         if(any(grepl('intronexonboundaries', annotations))) {
             message('Building intron exon boundaries...')
             ### Intron/exon boundary
-                # Intron to exon transition will be the starts of exons_gr
-                intronexon_gr = GenomicRanges::GRanges(
-                    seqnames = seqnames(exons_gr),
-                    ranges = IRanges(start = start(exons_gr), end = start(exons_gr)),
-                    strand = GenomicRanges::strand(exons_gr))
-                GenomicRanges::mcols(intronexon_gr) = GenomicRanges::mcols(exons_gr)
+                # Intron to exon transition will be the starts of exons_gr for + strand
+                # and ends of exons_gr for - strand
+                split_exons = split(exons_gr, GenomicRanges::strand(exons_gr))
+
+                intronexon_plus_gr = GenomicRanges::GRanges(
+                    seqnames = seqnames(split_exons[['+']]),
+                    ranges = IRanges(start = start(split_exons[['+']]), end = start(split_exons[['+']])),
+                    strand = GenomicRanges::strand(split_exons[['+']]))
+                GenomicRanges::mcols(intronexon_plus_gr) = GenomicRanges::mcols(split_exons[['+']])
+
+                intronexon_minus_gr = GenomicRanges::GRanges(
+                    seqnames = seqnames(split_exons[['-']]),
+                    ranges = IRanges(start = end(split_exons[['-']]), end = end(split_exons[['-']])),
+                    strand = GenomicRanges::strand(split_exons[['-']]))
+                GenomicRanges::mcols(intronexon_minus_gr) = GenomicRanges::mcols(split_exons[['-']])
+
+                intronexon_gr = sort(c(intronexon_plus_gr, intronexon_minus_gr))
                 seqinfo(intronexon_gr) = seqinfo(exons_gr)
 
                 # Need to remove those boundaries that are TSSs
@@ -496,30 +525,45 @@ build_gene_annots = function(genome = supported_genomes(), annotations = support
                 # Expand 200bp up and down
                 intronexon_gr = GenomicRanges::flank(intronexon_gr, width = 200, both = TRUE)
                 GenomicRanges::mcols(intronexon_gr)$type = sprintf('%s_genes_intronexonboundaries', genome)
+                GenomicRanges::mcols(intronexon_gr)$id = paste0('intronexonboundary:', seq_along(intronexon_gr))
 
-                GenomicRanges::mcols(intronexon_gr) = GenomicRanges::mcols(intronexon_gr)[, c('id','gene_id','symbol','type')]
+                GenomicRanges::mcols(intronexon_gr) = GenomicRanges::mcols(intronexon_gr)[, c('id','tx_id','gene_id','symbol','type')]
         }
 
         if(any(grepl('exonintronboundaries', annotations))) {
             message('Building exon intron boundaries...')
             ### Exon/intron boundary
-                # Exon to intron transition will be the ends of exons_gr
-                exonintron_gr = GenomicRanges::GRanges(
-                    seqnames = seqnames(exons_gr),
-                    ranges = IRanges(start = end(exons_gr), end = end(exons_gr)),
-                    strand = GenomicRanges::strand(exons_gr))
-                GenomicRanges::mcols(exonintron_gr) = GenomicRanges::mcols(exons_gr)
+                if(!exists('split_exons')) {
+                    split_exons = split(exons_gr, GenomicRanges::strand(exons_gr))
+                }
+
+                # Exon to intron transition will be the ends of exons_gr for + strand
+                # and starts of exons_gr for - strand
+                exonintron_plus_gr = GenomicRanges::GRanges(
+                    seqnames = seqnames(split_exons[['+']]),
+                    ranges = IRanges(start = end(split_exons[['+']]), end = end(split_exons[['+']])),
+                    strand = GenomicRanges::strand(split_exons[['+']]))
+                GenomicRanges::mcols(exonintron_plus_gr) = GenomicRanges::mcols(split_exons[['+']])
+
+                exonintron_minus_gr = GenomicRanges::GRanges(
+                    seqnames = seqnames(split_exons[['-']]),
+                    ranges = IRanges(start = start(split_exons[['-']]), end = start(split_exons[['-']])),
+                    strand = GenomicRanges::strand(split_exons[['-']]))
+                GenomicRanges::mcols(exonintron_minus_gr) = GenomicRanges::mcols(split_exons[['-']])
+
+                exonintron_gr = sort(c(exonintron_plus_gr, exonintron_minus_gr))
                 seqinfo(exonintron_gr) = seqinfo(exons_gr)
 
-                # Need to remove those boundaries that are TESs
-                tes_idx = unique(S4Vectors::queryHits(GenomicRanges::findOverlaps(exonintron_gr, tes_gr)))
-                exonintron_gr = exonintron_gr[-tes_idx]
+                # Need to remove those boundaries that are TSSs
+                tss_idx = unique(S4Vectors::queryHits(GenomicRanges::findOverlaps(exonintron_gr, tss_gr)))
+                exonintron_gr = exonintron_gr[-tss_idx]
 
                 # Expand 200bp up and down
                 exonintron_gr = GenomicRanges::flank(exonintron_gr, width = 200, both = TRUE)
                 GenomicRanges::mcols(exonintron_gr)$type = sprintf('%s_genes_exonintronboundaries', genome)
+                GenomicRanges::mcols(exonintron_gr)$id = paste0('exonintronboundary:', seq_along(exonintron_gr))
 
-                GenomicRanges::mcols(exonintron_gr) = GenomicRanges::mcols(exonintron_gr)[, c('id','gene_id','symbol','type')]
+                GenomicRanges::mcols(exonintron_gr) = GenomicRanges::mcols(exonintron_gr)[, c('id','tx_id','gene_id','symbol','type')]
         }
     }
 
@@ -529,4 +573,88 @@ build_gene_annots = function(genome = supported_genomes(), annotations = support
     names(genes) = annotations
 
     return(genes)
+}
+
+#' A helper function to build lncRNA annotations.
+#'
+#' Using the \code{AnnotationHub} package, retrieve transcript level lncRNA annotations for either human (GRCh38) or mouse (GRCm38). If the genome is 'hg19', use the permalink from GENCODE and \code{rtracklayer::import()} to download and process.
+#'
+#' @param genome The genome assembly.
+#'
+#' @return A \code{GRanges} object with \code{id} giving the \code{transcript_type} from the GENCODE file, \code{tx_id} being the Ensembl transcript ID, \code{gene_id} being the Entrez ID coming from a mapping of gene symbol to Entrez ID, \code{symbol} being the gene_name from the GENCODE file, and the \code{type} being \code{[genome]_lncrna_gencode}.
+build_lncrna_annots = function(genome = c('hg19','hg38','mm10')) {
+    # Ensure valid arguments
+    genome = match.arg(genome)
+
+    # Get the org.XX.eg.db mapping from Entrez ID to gene symbol
+    # First element returned is package name, second is eg2SYMBOL name, third is egENSEMBLTRANS2EG name
+    orgdb_name = get_orgdb_name(genome)
+    library(sprintf('org.%s.eg.db', orgdb_name), character.only = TRUE)
+
+    # Get Entrez ID to gene symbol mappings
+    x = get(sprintf('org.%s.egSYMBOL', orgdb_name))
+    mapped_genes = mappedkeys(x)
+    eg2symbol = as.data.frame(x[mapped_genes])
+
+    if(genome == 'hg19') {
+        use_ah = FALSE
+        con = 'ftp://ftp.sanger.ac.uk/pub/gencode/Gencode_human/release_19/gencode.v19.long_noncoding_RNAs.gtf.gz'
+    } else if (genome == 'hg38') {
+        use_ah = TRUE
+        hub_genome = 'GRCh38'
+    } else if (genome == 'mm10') {
+        use_ah = TRUE
+        hub_genome = 'GRCm38'
+    }
+
+    if(use_ah) {
+        # Create AnnotationHub connection
+        ah = AnnotationHub::AnnotationHub()
+
+        # And do the query for available CpG Islands
+        query = AnnotationHub::query(ah, c('long_noncoding_RNAs'))
+
+        # Determine the correct ID to extract data from AnnotationHub
+        ID = row.names(GenomicRanges::mcols(query)[GenomicRanges::mcols(query)$genome == hub_genome, ])
+    }
+
+    # Each annotation should be a GRanges object with the following mcols:
+    # id, tx_id, gene_id, symbol, type
+
+    message('Building lncRNA transcripts...')
+    ### lncRNA transcripts
+        # Get the lncRNAs either with AnnotationHub or rtracklayer::import()
+        if(use_ah) {
+            lncrna_gr = ah[[ID]]
+        } else {
+            lncrna_gr = rtracklayer::import(con, genome = genome)
+        }
+        lncrna_gr = lncrna_gr[lncrna_gr$type == 'transcript']
+
+        # Subset the mcols()
+        GenomicRanges::mcols(lncrna_gr) = GenomicRanges::mcols(lncrna_gr)[, c('gene_name','transcript_id','transcript_type')]
+        colnames(GenomicRanges::mcols(lncrna_gr)) = c('symbol','tx_id','transcript_type')
+
+        # Give the lncRNAs their ids according to the transcript_type
+        lncrna_grl = split(lncrna_gr, GenomicRanges::mcols(lncrna_gr)$transcript)
+        lncrna_grl = IRanges::endoapply(lncrna_grl, function(gr){
+            GenomicRanges::mcols(gr)$id = paste0(GenomicRanges::mcols(gr)$transcript_type,':', seq_along(gr))
+            return(gr)
+        })
+        lncrna_gr = unlist(lncrna_grl, use.names=FALSE)
+        lncrna_gr = GenomicRanges::sort(lncrna_gr)
+
+        # Get the Entrez Gene IDs from the Gene Symbols
+        GenomicRanges::mcols(lncrna_gr)$gene_id = eg2symbol[match(GenomicRanges::mcols(lncrna_gr)$symbol, eg2symbol$symbol), 'gene_id']
+
+        # Give it the correct type
+        GenomicRanges::mcols(lncrna_gr)$type = sprintf('%s_lncrna_gencode', genome)
+
+        GenomicRanges::mcols(lncrna_gr) = GenomicRanges::mcols(lncrna_gr)[, c('id','tx_id','gene_id','symbol','type')]
+
+        if(use_ah) {
+            GenomeInfoDb::seqinfo(lncrna_gr) = GenomeInfoDb::Seqinfo(genome = genome)
+        }
+
+    return(lncrna_gr)
 }

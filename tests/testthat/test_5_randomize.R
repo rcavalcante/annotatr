@@ -16,7 +16,7 @@ context('Test randomize module')
             'regions must have class GRanges')
         expect_error(
             randomize_regions(regions = regions_nogenome),
-            'regions GRanges object must have valid seqlengths'
+            'GRanges object must have a valid genome'
             )
     })
 

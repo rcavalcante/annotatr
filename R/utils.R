@@ -14,9 +14,7 @@ TXDBS = c(
 # org.* family of packages
 ORGDBS = data.frame(
     genome = c('dm3','dm6','hg19','hg38','mm9','mm10','rn4','rn5','rn6'),
-    orgdb = c('org.Dm.eg.db', 'org.Dm.eg.db', 'org.Hs.eg.db', 'org.Hs.eg.db', 'org.Mm.eg.db', 'org.Mm.eg.db', 'org.Rn.eg.db', 'org.Rn.eg.db', 'org.Rn.eg.db'),
-    tosymbol = c('org.Dm.egSYMBOL', 'org.Dm.egSYMBOL', 'org.Hs.egSYMBOL', 'org.Hs.egSYMBOL', 'org.Mm.egSYMBOL', 'org.Mm.egSYMBOL', 'org.Rn.egSYMBOL', 'org.Rn.egSYMBOL', 'org.Rn.egSYMBOL'),
-    chrlengths = c('org.Dm.egCHRLENGTHS', 'org.Dm.egCHRLENGTHS', 'org.Hs.egCHRLENGTHS', 'org.Hs.egCHRLENGTHS', 'org.Mm.egCHRLENGTHS', 'org.Mm.egCHRLENGTHS', 'org.Rn.egCHRLENGTHS', 'org.Rn.egCHRLENGTHS', 'org.Rn.egCHRLENGTHS'),
+    org = c('Dm','Dm','Hs','Hs','Mm','Mm','Rn','Rn','Rn'),
     stringsAsFactors = FALSE)
 
 #' Function listing which annotations are available.
@@ -44,6 +42,7 @@ supported_annotations = function() {
     annots = as.character(apply(combos, 1, paste, collapse='_'))
     annots = c(annots, apply(expand.grid(supported_genomes(), shortcuts, stringsAsFactors = FALSE), 1, paste, collapse='_'))
     annots = c(annots, c('hg19_enhancers_fantom','mm9_enhancers_fantom'))
+    annots = c(annots, c('hg19_lncrna_gencode','hg38_lncrna_gencode','mm10_lncrna_gencode'))
     return(annots)
 }
 
@@ -77,16 +76,14 @@ get_txdb_name = function(genome = supported_genomes()) {
 #'
 #' @param genome A string giving the genome assembly.
 #'
-#' @return A string giving the name of the correct TxDb.* package name based on \code{genome}.
+#' @return A string giving the correct org for org.db packages. e.g. hg19 -> Hs.
 get_orgdb_name = function(genome = supported_genomes()) {
     # Ensure valid arguments
     genome = match.arg(genome)
 
-    db = ORGDBS[ORGDBS$genome == genome, 'orgdb']
-    tosymbol = ORGDBS[ORGDBS$genome == genome, 'tosymbol']
-    chrlengths = ORGDBS[ORGDBS$genome == genome, 'chrlengths']
+    org = ORGDBS[ORGDBS$genome == genome, 'org']
 
-    return(c(db, tosymbol, chrlengths))
+    return(org)
 }
 
 #' Function to tidy up annotation accessors for visualization
@@ -117,6 +114,8 @@ tidy_annotations = function(annotations) {
             return('enhancers')
         } else if (tokens[2] == 'custom') {
             return(tokens[3])
+        } else if (tokens[2] == 'lncrna') {
+            return('GENCODE lncRNA')
         }
     })
 

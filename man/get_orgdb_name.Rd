@@ -10,7 +10,7 @@ get_orgdb_name(genome = supported_genomes())
 \item{genome}{A string giving the genome assembly.}
 }
 \value{
-A string giving the name of the correct TxDb.* package name based on \code{genome}.
+A string giving the correct org for org.db packages. e.g. hg19 -> Hs.
 }
 \description{
 Function to get correct org.* package name based on genome

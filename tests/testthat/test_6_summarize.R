@@ -98,7 +98,7 @@ test_that('Test summarize_numerical() and summarize_categorical() over small dat
         by = c('group','diff_exp'),
         quiet = TRUE)
 
-    expect_equal( sn1[['mean']][which(sn1[['annot.id']] == 'uc010nxq.1')], expected = 66)
+    expect_equal( sn1[['mean']][which(sn1[['annot.id']] == 'promoter:1')], expected = 66)
     expect_equal( sn1[['mean']][which(sn1[['annot.id']] == 'island:1')], expected = 48)
     expect_equal( sn2[['mu0_mean']][which(sn2[['group']] == 'A')], expected = 30.14, tolerance = 0.01)
     expect_equal( sn2[['mu1_mean']][which(sn2[['group']] == 'B')], expected = 95)

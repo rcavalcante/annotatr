@@ -13,7 +13,7 @@
 #' @importClassesFrom GenomicRanges GRanges GRangesList
 #' @importClassesFrom GenomeInfoDb Seqinfo
 #' @importFrom GenomeInfoDb seqnames seqlengths
-#' @importFrom IRanges IRanges
+#' @importFrom IRanges IRanges endoapply
 #' @import methods
 #' @import org.Dm.eg.db
 #' @import org.Hs.eg.db

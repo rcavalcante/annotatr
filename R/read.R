@@ -84,7 +84,7 @@ read_annotations = function(con, name, genome = NA, format, extraCols = characte
         genome = 'genome'
     }
 
-    protected_extraCols = c('gene_id','symbol')
+    protected_extraCols = c('gene_id','symbol','tx_id')
 
     if(!missing(format)) {
         gr = rtracklayer::import(con = con, genome = genome, format = format, extraCols = extraCols, ...)
@@ -101,12 +101,15 @@ read_annotations = function(con, name, genome = NA, format, extraCols = characte
     if(any(missing_extraCols == 'symbol')) {
         GenomicRanges::mcols(gr)$symbol = NA
     }
+    if(any(missing_extraCols == 'tx_id')) {
+        GenomicRanges::mcols(gr)$tx_id = NA
+    }
 
     GenomicRanges::mcols(gr)$id = paste0(name,':',seq_along(gr))
     GenomicRanges::mcols(gr)$type = sprintf('%s_custom_%s', genome, name)
 
     # Make sure only the desired mcols make it out
-    GenomicRanges::mcols(gr) = GenomicRanges::mcols(gr)[,c('id','gene_id','symbol','type')]
+    GenomicRanges::mcols(gr) = GenomicRanges::mcols(gr)[,c('id','tx_id','gene_id','symbol','type')]
 
     ########################################################
     # Write the object named [genome]_custom_[name] to the annotatr_cache

@@ -10,7 +10,6 @@ bioc_required: true
 warnings_are_errors: false
 
 r_github_packages:
-  - rcavalcante/annotatr.data
   - jimhester/covr
 
 notifications:
