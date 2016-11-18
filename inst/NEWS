@@ -1,3 +1,14 @@
+CHANGES IN VERSION 1.1.2
+-------------------------
+
+  o Add minoverlaps parameter to annotate_regions() that is passed to
+    GenomicRanges::findOverlaps().
+
+CHANGES IN VERSION 1.1.1
+-------------------------
+
+  o Require GenomeInfoDb >= 1.10.1 because of a change to NCBI servers.
+
 CHANGES IN VERSION 0.99.13
 -------------------------
 

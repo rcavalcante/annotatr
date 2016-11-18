@@ -107,3 +107,20 @@ test_that('annotate_regions() works with only custom annotations', {
 
     expect_equal(length(a) == 5, expected = TRUE)
 })
+
+test_that('annotate_regions() uses minoverlap correctly', {
+    file = system.file('extdata', 'test_BED3.bed', package = 'annotatr')
+    r = read_regions(con = file, format = 'bed')
+
+    a_file = system.file('extdata', 'test_annotations_minoverlap.bed', package='annotatr')
+    read_annotations(con = a_file, name = 'TFBS', genome = 'hg19')
+    annotations = build_annotations(genome = 'hg19', annotations = 'hg19_custom_TFBS')
+
+    a = annotate_regions(
+        regions = r,
+        annotations = annotations,
+        minoverlap = 5)
+
+    expect_equal(length(a) == 2, expected = TRUE)
+    expect_true(all(GenomicRanges::start(a) == c(10791,28801)))
+})
