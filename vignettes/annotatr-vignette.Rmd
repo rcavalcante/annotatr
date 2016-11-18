@@ -107,7 +107,7 @@ print(dm_regions)
 
 Users may select annotations a la carte via the accessors listed with `supported_annotations()`, shortcuts, or use custom annotations as described above. The `hg19_cpgs` shortcut annotates regions to CpG islands, CpG shores, CpG shelves, and inter-CGI. The `hg19_basicgenes` shortcut annotates regions to 1-5Kb, promoters, 5'UTRs, exons, introns, and 3'UTRs. Shortcuts for other `supported_genomes()` are accessed in a similar way.
 
-`annotate_regions()` requires a `GRanges` object (either the result of `read_regions()` or an existing object), a `GRanges` object of the `annotations`, and a logical value indicating whether to `ignore.strand` when calling `GenomicRanges::findOverlaps()`.
+`annotate_regions()` requires a `GRanges` object (either the result of `read_regions()` or an existing object), a `GRanges` object of the `annotations`, and a logical value indicating whether to `ignore.strand` when calling `GenomicRanges::findOverlaps()`. The positive integer `minoverlap` is also passed to `GenomicRanges::findOverlaps()` and specifies the minimum overlap required for a region to be assigned to an annotation.
 
 Before annotating regions, they must be built with `build_annotations()` which requires a character vector of desired annotation codes.
 
