@@ -1,3 +1,13 @@
+CHANGES IN VERSION 1.1.3
+-------------------------
+
+  o Add support for CpG annotations for hg38, mm10, and rn6 via the UCSC
+    goldenpath URLs.
+
+    o Consequently, require readr as a prerequisite to get data from the URL.
+
+  o Minor vignette updates.
+
 CHANGES IN VERSION 1.1.2
 -------------------------
 

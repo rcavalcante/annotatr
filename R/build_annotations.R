@@ -136,26 +136,53 @@ build_cpg_annots = function(genome = supported_genomes(), annotations = supporte
         var = c('islands','shores','shelves','inter_cgi'),
         stringsAsFactors = FALSE)
 
-    # Create AnnotationHub connection
-    ah = AnnotationHub::AnnotationHub()
-
-    # And do the query for available CpG Islands
-    query = AnnotationHub::query(ah, c('CpG Islands'))
-
-    if(!(genome %in% query$genome)) {
-        stop(sprintf('AnnotationHub does not contain CpG Island annotations for %s', genome))
+    # Decide whether to use URL or AnnotationHub
+    if(genome == 'hg19' || genome == 'mm9' || genome == 'rn5' || genome == 'rn4') {
+        use_ah = TRUE
+    } else if (genome == 'hg38') {
+        use_ah = FALSE
+        con = 'http://hgdownload.cse.ucsc.edu/goldenpath/hg38/database/cpgIslandExt.txt.gz'
+    } else if (genome == 'mm10') {
+        use_ah = FALSE
+        con = 'http://hgdownload.cse.ucsc.edu/goldenpath/mm10/database/cpgIslandExt.txt.gz'
+    } else if (genome == 'rn6') {
+        use_ah = FALSE
+        con = 'http://hgdownload.cse.ucsc.edu/goldenpath/rn6/database/cpgIslandExt.txt.gz'
     }
 
-    # Determine the correct ID to extract data from AnnotationHub
-    ID = row.names(GenomicRanges::mcols(query)[GenomicRanges::mcols(query)$genome == genome, ])
+    if(use_ah) {
+        # Create AnnotationHub connection
+        ah = AnnotationHub::AnnotationHub()
+
+        # And do the query for available CpG Islands
+        query = AnnotationHub::query(ah, c('CpG Islands'))
+
+        # Determine the correct ID to extract data from AnnotationHub
+        ID = row.names(GenomicRanges::mcols(query)[GenomicRanges::mcols(query)$genome == genome, ])
+    }
 
     if(any(grepl('islands', annotations)) || any(grepl('shores', annotations)) || any(grepl('shelves', annotations)) || any(grepl('inter', annotations))) {
         message('Building CpG islands...')
         ### Islands
-            # Extract and sort the islands
-            islands = ah[[ID]]
-            GenomicRanges::strand(islands) = '*'
+            # Extract and sort the islands based on use_ah
+            if(use_ah) {
+                islands = ah[[ID]]
+            } else {
+                # Read from URL. There is surprisingly nothing in base that
+                # does this as easily, so here we are with readr again.
+                islands_tbl = readr::read_tsv(con,
+                    col_names = c('chr','start','end'),
+                    col_types = '-cii-------')
+                # Convert to GRanges
+                islands = GenomicRanges::GRanges(
+                    seqnames = islands_tbl$chr,
+                    ranges = IRanges::IRanges(start = islands_tbl$start, end = islands_tbl$end),
+                    strand = '*',
+                    seqinfo = GenomeInfoDb::Seqinfo(genome=genome)
+                    )
+            }
             islands = GenomicRanges::sort(islands)
+
 
             # Rename the islands
             GenomicRanges::mcols(islands)$id = paste0('island:', seq_along(islands))

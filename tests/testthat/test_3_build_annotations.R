@@ -17,13 +17,6 @@ test_that('Test error for non-existent custom annotations', {
     )
 })
 
-test_that('Test error for genome with no CpGs in AnnotationHub', {
-    expect_error(
-        build_annotations(genome = 'hg38', annotations = 'hg38_cpg_islands'),
-        'AnnotationHub does not contain CpG Island annotations'
-    )
-})
-
 ################################################################################
 # Test annotations that aren't otherwise tested
 # intergenic, cds, firstexons, and both boundaries
@@ -41,4 +34,13 @@ test_that('Test otherwise untested annotations', {
 
     annotations = build_annotations(genome = 'hg38', annotations = 'hg38_lncrna_gencode')
     expect_true( dplyr::setequal(unique(annotations$type), 'hg38_lncrna_gencode'))
+
+    annotations = build_annotations(genome = 'hg38', annotations = 'hg38_cpgs')
+    expect_true( dplyr::setequal(unique(annotations$type), c('hg38_cpg_islands','hg38_cpg_shores','hg38_cpg_shelves','hg38_cpg_inter')) )
+
+    annotations = build_annotations(genome = 'mm10', annotations = 'mm10_cpgs')
+    expect_true( dplyr::setequal(unique(annotations$type), c('mm10_cpg_islands','mm10_cpg_shores','mm10_cpg_shelves','mm10_cpg_inter')) )
+
+    annotations = build_annotations(genome = 'rn6', annotations = 'rn6_cpgs')
+    expect_true( dplyr::setequal(unique(annotations$type), c('rn6_cpg_islands','rn6_cpg_shores','rn6_cpg_shelves','rn6_cpg_inter')) )
 })
