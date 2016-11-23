@@ -14,20 +14,24 @@ vignette: >
 
 Genomic regions resulting from next-generation sequencing experiments and bioinformatics pipelines are more meaningful when annotated to genomic features. A SNP occurring in an exon, or an enhancer, is likely of greater interest than one occurring in an inter-genic region. It may be of interest to find that a particular transcription factor overwhelmingly binds in promoters, while another binds mostly in 3’UTRs. Hyper-methylation at promoters containing a CpG island may indicate different regulatory regimes in one condition compared to another.
 
-`annotatr` provides *pre-built* genomic annotations and a set of functions to read, intersect, summarize, and visualize genomic regions in the context of genomic annotations.
+`annotatr` provides genomic annotations and a set of functions to read, intersect, summarize, and visualize genomic regions in the context of genomic annotations.
 
 # Installation
 
-`annotatr` package source is available at [http://www.github.com/rcavalcante/annotatr](http://www.github.com/rcavalcante/annotatr). The package can be installed directly from GitHub with the [`devtools`](https://cran.r-project.org/web/packages/devtools/index.html) package.
+The release version of `annotatr` is available via [Bioconductor](http://bioconductor.org/packages/annotatr/), and can be installed as follows:
 
 ```{r, eval=FALSE}
-# Install BiocStyle, GenomeInfoDb, IRanges, and GenomicRanges first
-# install_github() does not support installation of Bioconductor dependencies
 source("http://bioconductor.org/biocLite.R")
-biocLite(c("BiocStyle","GenomeInfoDb","IRanges","GenomicRanges"))
+biocLite("annotatr")
+```
 
+The development version of `annotatr` can be obtained via the [GitHub repository](https://github.com/rcavalcante/annotatr) or [Bioconductor](https://bioconductor.org/packages/devel/bioc/html/annotatr.html). It is easiest to install development versions with the [`devtools`](https://cran.r-project.org/web/packages/devtools/index.html) package as follows:
+
+```{r, eval=FALSE}
 devtools::install_github('rcavalcante/annotatr')
 ```
+
+Changelogs for development releases will be detailed on [GitHub releases](https://github.com/rcavalcante/annotatr/releases).
 
 # Annotations
 

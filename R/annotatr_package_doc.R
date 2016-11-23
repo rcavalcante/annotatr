@@ -10,7 +10,7 @@
 #' @import dplyr
 #' @import ggplot2
 #' @import GenomicFeatures
-#' @importClassesFrom GenomicRanges GRanges GRangesList
+#' @import GenomicRanges
 #' @importClassesFrom GenomeInfoDb Seqinfo
 #' @importFrom GenomeInfoDb seqnames seqlengths
 #' @importFrom IRanges IRanges endoapply
@@ -19,6 +19,7 @@
 #' @import org.Hs.eg.db
 #' @import org.Mm.eg.db
 #' @import org.Rn.eg.db
+#' @importFrom readr read_tsv
 #' @importFrom reshape2 melt
 #' @importFrom regioneR randomizeRegions
 #' @import rtracklayer

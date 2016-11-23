@@ -1,7 +1,7 @@
 Package: annotatr
 Title: Annotation of Genomic Regions to Genomic Annotations
-Version: 1.1.2
-Date: 2016-11-18
+Version: 1.1.3
+Date: 2016-11-23
 Authors@R: c(
     person("Raymond G.", "Cavalcante", email = "rcavalca@umich.edu", role = c("aut", "cre")),
     person(c("Maureen A."), "Sartor", email = "sartorma@med.umich.edu", role = c("ths")))
@@ -22,6 +22,7 @@ Imports:
     org.Hs.eg.db,
     org.Mm.eg.db,
     org.Rn.eg.db,
+    readr,
     regioneR,
     reshape2,
     rtracklayer,
