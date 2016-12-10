@@ -22,7 +22,7 @@ test_that('Test error for non-existent custom annotations', {
 # intergenic, cds, firstexons, and both boundaries
 
 test_that('Test otherwise untested annotations', {
-    annots = c('hg19_basicgenes', 'hg19_cpgs', 'hg19_genes_intergenic', 'hg19_genes_cds', 'hg19_genes_firstexons', 'hg19_genes_intronexonboundaries', 'hg19_genes_exonintronboundaries', 'hg19_lncrna_gencode')
+    annots = c('hg19_basicgenes', 'hg19_cpgs', 'hg19_genes_intergenic', 'hg19_genes_cds', 'hg19_genes_firstexons', 'hg19_genes_intronexonboundaries', 'hg19_genes_exonintronboundaries', 'hg19_lncrna_gencode', 'hg19_Gm12878-chromatin')
     annotations = build_annotations(genome = 'hg19', annotations = annots)
     expect_true( dplyr::setequal(unique(annotations$type), expand_annotations(annots)) )
 

@@ -65,6 +65,10 @@ FANTOM5 permissive enhancers were determined from bi-directional CAGE transcript
 
 The long non-coding RNA (lncRNA) annotations are from [GENCODE](https://www.gencodegenes.org) for hg19, hg38, and mm10. The lncRNA transcripts are used, and we eventually plan to include the lncRNA introns/exons at a later date. The lncRNA annotations have populated `tx_id`, `gene_id`, and `symbol` columns. Respectively they are, the Ensembl transcript name, Entrez Gene ID, and gene symbol. As per the `transcript_type` field in the GENCODE anntotations, the [biotypes](https://www.gencodegenes.org/gencode_biotypes.html) are given in the `id` column.
 
+## Chromatin states from ChromHMM
+
+Chromatin states determined by chromHMM ([Ernst and Kellis (2012)](http://www.nature.com/nmeth/journal/v9/n3/full/nmeth.1906.html)) in hg19 are available for nine cell lines (Gm12878, H1hesc, Hepg2, Hmec, Hsmm, Huvec, K562, Nhek, and Nhlf) via the UCSC Genome Browser tracks. Annotations for all states can be built using a shortcut like `hg19_Gm12878-chromatin`, or specific chromatin states can be accessed via codes like `hg19_chromatin_Gm12878-StrongEnhancer` or `hg19_chromatin_Gm12878-Repressed`.
+
 ## Custom Annotations
 
 Users may load their own annotations from BED files using the `read_annotations()` function, which uses the `rtracklayer::import()` function. The output is a `GRanges` with `mcols()` for `id`, `tx_id`, `gene_id`, `symbol`, and `type`. If a user wants to include `tx_id`, `gene_id`, and/or `symbol` in their custom annotations they can be included as extra columns on a BED6 input file.

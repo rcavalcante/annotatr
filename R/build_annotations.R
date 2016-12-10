@@ -58,6 +58,7 @@ build_annotations = function(genome, annotations) {
     check_annotations(annotations)
     annotations = expand_annotations(annotations)
 
+    hmm_annotations = grep('_chromatin_', annotations, value=TRUE)
     enh_annotations = grep('_enhancers_', annotations, value=TRUE)
     gene_annotations = grep('_genes_', annotations, value=TRUE)
     cpg_annotations = grep('_cpg_', annotations, value=TRUE)
@@ -68,6 +69,9 @@ build_annotations = function(genome, annotations) {
 
     if(length(enh_annotations) != 0) {
         annots_grl = c(annots_grl, GenomicRanges::GRangesList(enhancers_fantom = suppressWarnings(build_enhancer_annots(genome = genome))))
+    }
+    if(length(hmm_annotations) != 0) {
+        annots_grl = c(annots_grl, GenomicRanges::GRangesList(chromatin = suppressWarnings(build_hmm_annots(genome = genome, annotations = hmm_annotations))))
     }
     if(length(gene_annotations) != 0) {
         annots_grl = c(annots_grl, suppressWarnings(build_gene_annots(genome = genome, annotations = gene_annotations)))
@@ -83,6 +87,69 @@ build_annotations = function(genome, annotations) {
     }
 
     return(unlist(annots_grl, use.names=FALSE))
+}
+
+#' A helper function to build chromHMM annotations for hg19 from UCSC Genome Browser.
+#'
+#' @param genome The genome assembly.
+#' @param annotations A character vector of valid chromatin state annotatin codes.
+#'
+#' @return A \code{GRanges} object.
+build_hmm_annots = function(genome = c('hg19'), annotations = supported_annotations()) {
+    # Ensure valid arguments
+    genome = match.arg(genome)
+    annotations = match.arg(annotations, several.ok = TRUE)
+
+    message('Building hmms...')
+
+    cell_lines = unique(sapply(annotations, get_cellline_from_code, USE.NAMES = FALSE))
+
+    # If chromHMMs for different cell lines are requested, need to get them all
+    hmms_list = GenomicRanges::GRangesList(lapply(cell_lines, function(line){
+        message(sprintf('Downloading chromHMM track for %s', line))
+        # Fetch the correct information for the line
+        con = sprintf('http://hgdownload.cse.ucsc.edu/goldenpath/%s/database/wgEncodeBroadHmm%sHMM.txt.gz', genome, line)
+        # Read from URL. There is surprisingly nothing in base that
+        # does this as easily, so here we are with readr again.
+        tbl = readr::read_tsv(con,
+            col_names = c('chr','start','end','type'),
+            col_types = '-ciic-----')
+
+        # Reformat types
+        types = sprintf('%s_chromatin_%s', genome, paste(line, reformat_hmm_codes(tbl$type), sep='-'))
+
+        # Convert to GRanges
+        gr = GenomicRanges::GRanges(
+            seqnames = tbl$chr,
+            ranges = IRanges::IRanges(start = tbl$start, end = tbl$end),
+            strand = '*',
+            type = types,
+            seqinfo = GenomeInfoDb::Seqinfo(genome=genome))
+
+        return(gr)
+    }))
+    hmms_gr = unlist(hmms_list, use.names = FALSE)
+
+    # Split the GRanges into a GRangesList for subsetting and id population
+    hmms_grl = IRanges::splitAsList(hmms_gr, GenomicRanges::mcols(hmms_gr)$type)
+
+    hmms_grl = hmms_grl[names(hmms_grl) %in% annotations]
+
+    hmms_grl = GenomicRanges::GRangesList(lapply(names(hmms_grl), function(n) {
+        gr = hmms_grl[[n]]
+        gr$id = paste0(n,':',seq_along(gr))
+        return(gr)
+    }))
+
+    hmms_gr = unlist(hmms_grl, use.names=FALSE)
+
+    GenomicRanges::mcols(hmms_gr)$tx_id = NA
+    GenomicRanges::mcols(hmms_gr)$gene_id = NA
+    GenomicRanges::mcols(hmms_gr)$symbol = NA
+
+    GenomicRanges::mcols(hmms_gr) = GenomicRanges::mcols(hmms_gr)[, c('id','tx_id','gene_id','symbol','type')]
+
+    return(hmms_gr)
 }
 
 #' A helper function to build enhancer annotations for hg19 and mm10 from FANTOM5.
