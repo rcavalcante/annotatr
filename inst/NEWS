@@ -1,3 +1,12 @@
+CHANGES IN VERSION 1.1.4
+-------------------------
+
+  o Add support for chromHMM tracks (chromatin state) from the UCSC Genome Browser.
+
+    o Users may annotate to chromatin states in multiple cell lines, if desired.
+
+  o Updated vignette to include chromHMM description.
+
 CHANGES IN VERSION 1.1.3
 -------------------------
 

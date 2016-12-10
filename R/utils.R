@@ -17,6 +17,34 @@ ORGDBS = data.frame(
     org = c('Dm','Dm','Hs','Hs','Mm','Mm','Rn','Rn','Rn'),
     stringsAsFactors = FALSE)
 
+HMMCELLLINES = c('Gm12878','H1hesc','Hepg2','Hmec','Hsmm','Huvec','K562','Nhek','Nhlf')
+
+HMMCODES = c('1_Active_Promoter', '2_Weak_Promoter' ,'3_Poised_Promoter' ,'4_Strong_Enhancer', '5_Strong_Enhancer', '6_Weak_Enhancer', '7_Weak_Enhancer', '8_Insulator', '9_Txn_Transition', '10_Txn_Elongation', '11_Weak_Txn', '12_Repressed', '13_Heterochrom/lo', '14_Repetitive/CNV')
+
+#' Function to recode classes from chromHMM type column
+#'
+#' @return A character vector of chromHMM classes with numbers and underscores removed.
+reformat_hmm_codes = function(hmm_codes) {
+    new_codes = sapply(hmm_codes,
+            function(hmm){paste(unlist(strsplit(hmm,'_'))[-1],collapse='')},
+            USE.NAMES=FALSE)
+    return(new_codes)
+}
+
+#' Function to return cell line from chromatin annotation shortcut
+#'
+#' @return A string of the cell line used in a chromatin annotation shortcut
+get_cellline_from_shortcut = function(shortcut) {
+    return(unlist(strsplit(unlist(strsplit(shortcut,'_'))[2], '-'))[1])
+}
+
+#' Function to return cell line from chromatin annotation code
+#'
+#' @return A string of the cell line used in a chromatin annotation code
+get_cellline_from_code = function(code) {
+    return(unlist(strsplit(unlist(strsplit(code,'_'))[3], '-'))[1])
+}
+
 #' Function listing which annotations are available.
 #'
 #' This includes the shortcuts. The \code{expand_annotations()} function helps
@@ -29,20 +57,50 @@ ORGDBS = data.frame(
 #'
 #' @export
 supported_annotations = function() {
-    shortcuts = c('basicgenes','cpgs')
+    # Create annotation code endings
+        shortcut_ends = c('basicgenes','cpgs')
 
-    genes = c('1to5kb', 'promoters', 'cds', '5UTRs', 'exons', 'firstexons', 'introns', 'intronexonboundaries', 'exonintronboundaries', '3UTRs', 'intergenic')
-    cpgs = c('islands', 'shores', 'shelves', 'inter')
+        # Gene codes
+        gene_ends = c('1to5kb', 'promoters', 'cds', '5UTRs', 'exons', 'firstexons', 'introns', 'intronexonboundaries', 'exonintronboundaries', '3UTRs', 'intergenic')
 
-    combos = rbind(
-        expand.grid(supported_genomes(), 'genes', genes, stringsAsFactors = FALSE),
-        expand.grid(supported_genomes(), 'cpg', cpgs, stringsAsFactors= FALSE)
-    )
+        # CpG codes
+        cpg_ends = c('islands', 'shores', 'shelves', 'inter')
 
-    annots = as.character(apply(combos, 1, paste, collapse='_'))
-    annots = c(annots, apply(expand.grid(supported_genomes(), shortcuts, stringsAsFactors = FALSE), 1, paste, collapse='_'))
-    annots = c(annots, c('hg19_enhancers_fantom','mm9_enhancers_fantom'))
-    annots = c(annots, c('hg19_lncrna_gencode','hg38_lncrna_gencode','mm10_lncrna_gencode'))
+        # Chromatin state codes
+        # Remove numbers, and underscores, and take unique
+        chromatin_recode = unique(reformat_hmm_codes(HMMCODES))
+
+        chromatin_ends = apply(
+            expand.grid(HMMCELLLINES, chromatin_recode, stringsAsFactors = FALSE),
+            1, paste, collapse='-')
+
+        chromatin_shortcut_ends = apply(
+            expand.grid(HMMCELLLINES, 'chromatin', stringsAsFactors = FALSE),
+            1, paste, collapse='-')
+
+    # Create full annotation codes
+        gene_codes = apply(
+            expand.grid(supported_genomes(), 'genes', gene_ends, stringsAsFactors = FALSE),
+            1, paste, collapse='_')
+        cpg_codes = apply(
+            expand.grid(supported_genomes(), 'cpg', cpg_ends, stringsAsFactors= FALSE),
+            1, paste, collapse='_')
+        chromatin_codes = apply(
+            expand.grid('hg19', 'chromatin', chromatin_ends, stringsAsFactors=FALSE),
+            1, paste, collapse='_')
+
+        enhancer_codes = c('hg19_enhancers_fantom','mm9_enhancers_fantom')
+        lncrna_codes = c('hg19_lncrna_gencode','hg38_lncrna_gencode','mm10_lncrna_gencode')
+
+        shortcut_codes = apply(
+            expand.grid(supported_genomes(), shortcut_ends, stringsAsFactors = FALSE),
+            1, paste, collapse='_')
+        chromatin_shortcut_codes = paste('hg19', chromatin_shortcut_ends, sep='_')
+
+    # Create the big vector of supported annotations
+    annots = c(gene_codes, cpg_codes, chromatin_codes, enhancer_codes, lncrna_codes,
+        shortcut_codes, chromatin_shortcut_codes)
+
     return(annots)
 }
 
@@ -112,6 +170,8 @@ tidy_annotations = function(annotations) {
             }
         } else if (tokens[2] == 'enhancers') {
             return('enhancers')
+        } else if (tokens[2] == 'chromatin') {
+            return(tokens[3])
         } else if (tokens[2] == 'custom') {
             return(tokens[3])
         } else if (tokens[2] == 'lncrna') {
@@ -168,13 +228,15 @@ check_annotations = function(annotations) {
 expand_annotations = function(annotations) {
     are_basicgenes = any(grepl('basicgenes', annotations))
     are_cpgs = any(grepl('cpgs', annotations))
-    which_are_shortcuts = c(which(grepl('basicgenes', annotations)), which(grepl('cpgs', annotations)))
+    are_hmms = any(grepl('chromatin', annotations))
+
+    which_are_shortcuts = c(which(grepl('basicgenes', annotations)), which(grepl('cpgs', annotations)), which(grepl('-chromatin', annotations)))
 
     # expand_shortcuts() will always be run after check_annotations() so we can be
     # sure that the genome prefixes are the same for all annotaitons.
     genome = unique( sapply(annotations, function(a){ unlist(strsplit(a, '_'))[1] }, USE.NAMES = FALSE) )
 
-    if(are_basicgenes || are_cpgs) {
+    if(are_basicgenes || are_cpgs || are_hmms) {
 
         # Check for shortcut annotation accessors 'cpgs', 'basicgenes'
         # and create the right annotations based on the genome
@@ -185,6 +247,18 @@ expand_annotations = function(annotations) {
         }
         if(are_basicgenes) {
             new_annotations = c(new_annotations, paste(genome, 'genes', c('1to5kb','promoters','5UTRs','exons','introns','3UTRs'), sep='_'))
+        }
+        if(are_hmms) {
+            # Could conceivably use shortcuts for multiple cell lines
+            hmms = grep('-chromatin', annotations, value = TRUE)
+            cell_lines = sapply(hmms, get_cellline_from_shortcut, USE.NAMES = FALSE)
+
+            new_hmm_codes = apply(
+                expand.grid(cell_lines, unique(reformat_hmm_codes(HMMCODES)), stringsAsFactors = FALSE),
+                1, paste, collapse='-')
+
+            new_annotations = c(new_annotations,
+                paste(genome, 'chromatin', new_hmm_codes, sep='_'))
         }
         annotations = base::setdiff(c(annotations, new_annotations), annotations[which_are_shortcuts])
     }
