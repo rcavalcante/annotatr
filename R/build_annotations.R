@@ -204,6 +204,7 @@ build_cpg_annots = function(genome = supported_genomes(), annotations = supporte
         stringsAsFactors = FALSE)
 
     # Decide whether to use URL or AnnotationHub
+    ah_genomes = c('hg19','mm9','rn5','rn4')
     if(genome == 'hg19' || genome == 'mm9' || genome == 'rn5' || genome == 'rn4') {
         use_ah = TRUE
     } else if (genome == 'hg38') {
@@ -215,6 +216,8 @@ build_cpg_annots = function(genome = supported_genomes(), annotations = supporte
     } else if (genome == 'rn6') {
         use_ah = FALSE
         con = 'http://hgdownload.cse.ucsc.edu/goldenpath/rn6/database/cpgIslandExt.txt.gz'
+    } else {
+        stop(sprintf('CpG features are not supported for genome %s', genome))
     }
 
     if(use_ah) {

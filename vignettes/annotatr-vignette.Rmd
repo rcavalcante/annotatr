@@ -43,6 +43,8 @@ Supported annotations are given by `supported_annotations()`. Additionally, cust
 
 The CpG islands are the basis for all CpG annotations, and are given by the `AnnotationHub` package for the given organism. CpG shores are defined as 2Kb upstream/downstream from the ends of the CpG islands, less the CpG islands. CpG shelves are defined as another 2Kb upstream/downstream of the farthest upstream/downstream limits of the CpG shores, less the CpG islands and CpG shores. The remaining genomic regions make up the inter-CGI annotation.
 
+CpG annotations are available for hg19, hg38, mm9, mm10, rn4, rn5, rn6.
+
 ![Schematic of CpG annotations.](annotatr_cpgs.jpeg)
 
 ## UCSC knownGenes
@@ -57,9 +59,11 @@ Non-intergenic gene annotations include Entrez ID and gene symbol information wh
 
 The genic annotations have populated `tx_id`, `gene_id`, and `symbol` columns. Respectively they are, the knownGene transcript name, Entrez Gene ID, and gene symbol.
 
+Genic annotations are available for all hg19, hg38, mm9, mm10, rn4, rn5, rn6, dm3, and dm6.
+
 ## FANTOM5 Permissive Enhancers
 
-FANTOM5 permissive enhancers were determined from bi-directional CAGE transcription as in [Andersson et al. (2014)](http://www.nature.com/nature/journal/v507/n7493/full/nature12787.html), and are downloaded and processed for **hg19** and **mm9** from the [FANTOM5](http://fantom.gsc.riken.jp/5/datafiles/phase2.0/extra/Enhancers/) resource.
+FANTOM5 permissive enhancers were determined from bi-directional CAGE transcription as in [Andersson et al. (2014)](http://www.nature.com/nature/journal/v507/n7493/full/nature12787.html), and are downloaded and processed for hg19 and mm9 from the [FANTOM5](http://fantom.gsc.riken.jp/5/datafiles/phase2.0/extra/Enhancers/) resource.
 
 ## GENCODE lncRNA transcripts
 

@@ -61,9 +61,11 @@ supported_annotations = function() {
         shortcut_ends = c('basicgenes','cpgs')
 
         # Gene codes
+        gene_genomes = supported_genomes()
         gene_ends = c('1to5kb', 'promoters', 'cds', '5UTRs', 'exons', 'firstexons', 'introns', 'intronexonboundaries', 'exonintronboundaries', '3UTRs', 'intergenic')
 
         # CpG codes
+        cpg_genomes = base::setdiff(supported_genomes(),c('dm3','dm6'))
         cpg_ends = c('islands', 'shores', 'shelves', 'inter')
 
         # Chromatin state codes
@@ -80,10 +82,10 @@ supported_annotations = function() {
 
     # Create full annotation codes
         gene_codes = apply(
-            expand.grid(supported_genomes(), 'genes', gene_ends, stringsAsFactors = FALSE),
+            expand.grid(gene_genomes, 'genes', gene_ends, stringsAsFactors = FALSE),
             1, paste, collapse='_')
         cpg_codes = apply(
-            expand.grid(supported_genomes(), 'cpg', cpg_ends, stringsAsFactors= FALSE),
+            expand.grid(cpg_genomes, 'cpg', cpg_ends, stringsAsFactors= FALSE),
             1, paste, collapse='_')
         chromatin_codes = apply(
             expand.grid('hg19', 'chromatin', chromatin_ends, stringsAsFactors=FALSE),
@@ -92,14 +94,17 @@ supported_annotations = function() {
         enhancer_codes = c('hg19_enhancers_fantom','mm9_enhancers_fantom')
         lncrna_codes = c('hg19_lncrna_gencode','hg38_lncrna_gencode','mm10_lncrna_gencode')
 
-        shortcut_codes = apply(
-            expand.grid(supported_genomes(), shortcut_ends, stringsAsFactors = FALSE),
+        gene_shortcut_codes = apply(
+            expand.grid(gene_genomes, 'basicgenes', stringsAsFactors = FALSE),
+            1, paste, collapse='_')
+        cpg_shortcut_codes = apply(
+            expand.grid(cpg_genomes, 'cpgs', stringsAsFactors = FALSE),
             1, paste, collapse='_')
         chromatin_shortcut_codes = paste('hg19', chromatin_shortcut_ends, sep='_')
 
     # Create the big vector of supported annotations
     annots = c(gene_codes, cpg_codes, chromatin_codes, enhancer_codes, lncrna_codes,
-        shortcut_codes, chromatin_shortcut_codes)
+        gene_shortcut_codes, cpg_shortcut_codes, chromatin_shortcut_codes)
 
     return(annots)
 }
