@@ -1,3 +1,19 @@
+CHANGES IN VERSION 1.1.6
+-------------------------
+
+  o Change scale_fill_brewer() to scale_fill_hue() in plot_categorical() to enable
+    more categories.
+
+CHANGES IN VERSION 1.1.6
+-------------------------
+
+  o Removed some unit tests that took too long to run on build infrastructure.
+
+CHANGES IN VERSION 1.1.5
+-------------------------
+
+  o Fix bug that mistakenly displayed some supported annotations.
+
 CHANGES IN VERSION 1.1.4
 -------------------------
 
