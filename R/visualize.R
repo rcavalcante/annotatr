@@ -651,9 +651,9 @@ plot_categorical = function(annotated_regions, annotated_random, x, fill=NULL, x
 
     # Change the fill scale and name if legend_title isn't null
     if(!missing(legend_title)) {
-        plot = plot + scale_fill_brewer(name=legend_title)
+        plot = plot + scale_fill_hue(name=legend_title)
     } else {
-        plot = plot + scale_fill_brewer()
+        plot = plot + scale_fill_hue()
     }
 
     # Deal with the x-axis labels to make sure the order is correct
