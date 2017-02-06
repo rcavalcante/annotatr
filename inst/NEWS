@@ -1,4 +1,9 @@
-CHANGES IN VERSION 1.1.6
+CHANGES IN VERSION 1.1.8
+-------------------------
+
+  o Require GenomeInfoDb >= 1.10.3 because of changes to NCBI servers.
+
+CHANGES IN VERSION 1.1.7
 -------------------------
 
   o Change scale_fill_brewer() to scale_fill_hue() in plot_categorical() to enable
