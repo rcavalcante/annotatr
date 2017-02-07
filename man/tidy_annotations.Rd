@@ -15,4 +15,3 @@ A list of mappings from original annotation names to names ready for visualizati
 \description{
 Function to tidy up annotation accessors for visualization
 }
-

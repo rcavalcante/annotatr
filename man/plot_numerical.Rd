@@ -91,4 +91,3 @@ This function produces either histograms over \code{facet}, or x-y scatterplots 
        y_label = 'Group 1')
 
 }
-

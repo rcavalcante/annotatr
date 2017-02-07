@@ -61,4 +61,3 @@ Given a \code{GRanges} of annotated regions, plot the number of regions with the
        annotated_random = chip_rnd_annots, annotation_order = annots_order)
 
 }
-

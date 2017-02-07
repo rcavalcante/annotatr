@@ -44,4 +44,3 @@ NOTE: The \code{name} (4th) and \code{score} (5th) columns are so named. If thes
        rename_name = 'DM_status', rename_score = 'pval')
 
 }
-

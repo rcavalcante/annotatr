@@ -57,4 +57,3 @@ For example, if a region is annotated to both a CpG shore and to two different e
        plot_title = 'Co-occurrence of Annotations')
 
 }
-

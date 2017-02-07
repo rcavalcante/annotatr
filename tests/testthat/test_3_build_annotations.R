@@ -3,13 +3,6 @@ context('Test build annotations module')
 ################################################################################
 # Test errors
 
-test_that('Test error for genome without enhancers', {
-    expect_error(
-        build_annotations(genome = 'hg38', annotations = 'hg38_enhancer_fantom'),
-        'not supported'
-    )
-})
-
 test_that('Test error for non-existent custom annotations', {
     expect_error(
         build_annotations(genome = 'hg19', annotations = 'hg19_custom_ezh2'),
@@ -26,11 +19,11 @@ test_that('Test error for non-existent custom annotations', {
 #     annotations = build_annotations(genome = 'hg19', annotations = annots)
 #     expect_true( dplyr::setequal(unique(annotations$type), expand_annotations(annots)) )
 #
-#     annots = c('hg38_basicgenes', 'hg38_cpgs', 'hg38_genes_intergenic', 'hg38_genes_cds', 'hg38_genes_firstexons', 'hg38_genes_intronexonboundaries', 'hg38_genes_exonintronboundaries', 'hg38_lncrna_gencode')
+#     annots = c('hg38_basicgenes', 'hg38_cpgs', 'hg38_genes_intergenic', 'hg38_genes_cds', 'hg38_genes_firstexons', 'hg38_genes_intronexonboundaries', 'hg38_genes_exonintronboundaries', 'hg38_lncrna_gencode', 'hg38_enhancers_fantom')
 #     annotations = build_annotations(genome = 'hg38', annotations = annots)
 #     expect_true( dplyr::setequal(unique(annotations$type), expand_annotations(annots)) )
 #
-#     annots = c('mm10_basicgenes', 'mm10_cpgs', 'mm10_genes_intergenic', 'mm10_genes_cds', 'mm10_genes_firstexons', 'mm10_genes_intronexonboundaries', 'mm10_genes_exonintronboundaries', 'mm10_lncrna_gencode')
+#     annots = c('mm10_basicgenes', 'mm10_cpgs', 'mm10_genes_intergenic', 'mm10_genes_cds', 'mm10_genes_firstexons', 'mm10_genes_intronexonboundaries', 'mm10_genes_exonintronboundaries', 'mm10_lncrna_gencode', 'mm10_enhancers_fantom')
 #     annotations = build_annotations(genome = 'mm10', annotations = annots)
 #     expect_true( dplyr::setequal(unique(annotations$type), expand_annotations(annots)) )
 #

@@ -63,7 +63,7 @@ Genic annotations are available for all hg19, hg38, mm9, mm10, rn4, rn5, rn6, dm
 
 ## FANTOM5 Permissive Enhancers
 
-FANTOM5 permissive enhancers were determined from bi-directional CAGE transcription as in [Andersson et al. (2014)](http://www.nature.com/nature/journal/v507/n7493/full/nature12787.html), and are downloaded and processed for hg19 and mm9 from the [FANTOM5](http://fantom.gsc.riken.jp/5/datafiles/phase2.0/extra/Enhancers/) resource.
+FANTOM5 permissive enhancers were determined from bi-directional CAGE transcription as in [Andersson et al. (2014)](http://www.nature.com/nature/journal/v507/n7493/full/nature12787.html), and are downloaded and processed for hg19 and mm9 from the [FANTOM5](http://fantom.gsc.riken.jp/5/datafiles/phase2.0/extra/Enhancers/) resource. Using the `rtracklayer::liftOver()` function, enhancers from hg19 are lifted to hg38, and mm9 to mm10.
 
 ## GENCODE lncRNA transcripts
 

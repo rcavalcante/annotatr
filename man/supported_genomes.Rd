@@ -16,4 +16,3 @@ Function returning supported TxDb.* genomes
 supported_genomes()
 
 }
-

@@ -15,4 +15,3 @@ A string giving the correct org for org.db packages. e.g. hg19 -> Hs.
 \description{
 Function to get correct org.* package name based on genome
 }
-

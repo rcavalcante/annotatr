@@ -55,4 +55,3 @@ If a region is annotated to multiple annotations of the same \code{annot.type}, 
        annotated_random = rnd_annots)
 
 }
-

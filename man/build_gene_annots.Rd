@@ -18,4 +18,3 @@ A list of \code{GRanges} objects with unique \code{id} of the form \code{[type]:
 \description{
 Using the \code{TxDb.*} group of packages, construct genic annotations consisting of any combination of 1-5kb upstream of a TSS, promoters (< 1kb from TSS), 5UTRs, CDS, exons, first exons, introns, intron/exon and exon/intron boundaries, 3UTRs, and intergenic.
 }
-

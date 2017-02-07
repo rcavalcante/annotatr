@@ -57,4 +57,3 @@ Annotate genomic regions to selected genomic annotations while preserving the da
        ignore.strand = TRUE)
 
 }
-

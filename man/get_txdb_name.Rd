@@ -15,4 +15,3 @@ A string giving the name of the correct TxDb.* package name based on \code{genom
 \description{
 Function to get correct TxDb.* package name based on genome
 }
-

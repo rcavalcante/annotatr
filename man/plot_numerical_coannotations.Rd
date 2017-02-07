@@ -63,4 +63,3 @@ For example, a CpG with associated percent methylation annotated to a CpG island
        x_label = 'Percent Methylation')
 
 }
-

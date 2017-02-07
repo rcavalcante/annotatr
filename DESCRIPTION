@@ -1,6 +1,6 @@
 Package: annotatr
 Title: Annotation of Genomic Regions to Genomic Annotations
-Version: 1.1.8
+Version: 1.1.9
 Date: 2017-02-06
 Authors@R: c(
     person("Raymond G.", "Cavalcante", email = "rcavalca@umich.edu", role = c("aut", "cre")),
@@ -49,5 +49,5 @@ VignetteBuilder: knitr
 BugReports: https://www.github.com/rcavalcante/annotatr/issues
 License: GPL-3
 LazyData: true
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1
 biocViews: Software, Annotation, GenomeAnnotation, FunctionalGenomics, Visualization

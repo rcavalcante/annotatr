@@ -34,4 +34,3 @@ A \code{GRanges} object stored in \code{annotatr_cache}. To view a custom annota
  annotations = build_annotations(genome = 'hg19', annotations = 'hg19_custom_test')
 
 }
-

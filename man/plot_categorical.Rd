@@ -97,4 +97,3 @@ For example, if a differentially methylated region has the categorical label hyp
        y_label = 'Proportion')
 
 }
-

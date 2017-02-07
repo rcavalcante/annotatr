@@ -1,3 +1,8 @@
+CHANGES IN VERSION 1.1.9
+-------------------------
+
+  o Use rtracklayer::liftOver to lift hg19 and mm9 enhancers into hg38 and mm10.
+
 CHANGES IN VERSION 1.1.8
 -------------------------
 

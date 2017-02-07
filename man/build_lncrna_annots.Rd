@@ -15,4 +15,3 @@ A \code{GRanges} object with \code{id} giving the \code{transcript_type} from th
 \description{
 Using the \code{AnnotationHub} package, retrieve transcript level lncRNA annotations for either human (GRCh38) or mouse (GRCm38). If the genome is 'hg19', use the permalink from GENCODE and \code{rtracklayer::import()} to download and process.
 }
-

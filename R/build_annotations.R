@@ -157,7 +157,7 @@ build_hmm_annots = function(genome = c('hg19'), annotations = supported_annotati
 #' @param genome The genome assembly.
 #'
 #' @return A \code{GRanges} object.
-build_enhancer_annots = function(genome = c('hg19','mm9')) {
+build_enhancer_annots = function(genome = c('hg19','hg38','mm9','mm10')) {
     # Ensure valid arguments
     genome = match.arg(genome)
 
@@ -168,8 +168,28 @@ build_enhancer_annots = function(genome = c('hg19','mm9')) {
     # Get the enhancer annotations from FANTOM5
     if(genome == 'hg19') {
         enhancers = rtracklayer::import.bed('http://fantom.gsc.riken.jp/5/datafiles/phase2.0/extra/Enhancers/human_permissive_enhancers_phase_1_and_2.bed.gz', genome = 'hg19')
+    } else if(genome == 'hg38') {
+        # Create AnnotationHub connection
+        ah = AnnotationHub::AnnotationHub()
+        chain = ah[['AH14150']]
+
+        # Get hg19 enhancers
+        hg19_enhancers = rtracklayer::import.bed('http://fantom.gsc.riken.jp/5/datafiles/phase2.0/extra/Enhancers/human_permissive_enhancers_phase_1_and_2.bed.gz', genome = 'hg19')
+
+        enhancers = rtracklayer::liftOver(x = hg19_enhancers, chain = chain)
+        enhancers = sort(unlist(enhancers))
     } else if (genome == 'mm9') {
         enhancers = rtracklayer::import.bed('http://fantom.gsc.riken.jp/5/datafiles/phase2.0/extra/Enhancers/mouse_permissive_enhancers_phase_1_and_2.bed.gz', genome = 'mm9')
+    } else if (genome == 'mm10') {
+        # Create AnnotationHub connection
+        ah = AnnotationHub::AnnotationHub()
+        chain = ah[['AH14596']]
+
+        # Get hg19 enhancers
+        mm9_enhancers = rtracklayer::import.bed('http://fantom.gsc.riken.jp/5/datafiles/phase2.0/extra/Enhancers/mouse_permissive_enhancers_phase_1_and_2.bed.gz', genome = 'mm9')
+
+        enhancers = rtracklayer::liftOver(x = mm9_enhancers, chain = chain)
+        enhancers = sort(unlist(enhancers))
     }
 
     enhancers = GenomicRanges::granges(enhancers)

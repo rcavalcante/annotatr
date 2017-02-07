@@ -18,4 +18,3 @@ A list of \code{GRanges} objects.
 \description{
 Using the \code{AnnotationHub} package, extract CpG island track for the appropriate \code{genome} and construct the shores, shelves, and interCGI annotations as desired.
 }
-

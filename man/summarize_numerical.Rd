@@ -55,4 +55,3 @@ sn2 = summarize_numerical(
        over = c('coverage', 'mu1', 'mu0'))
 
 }
-

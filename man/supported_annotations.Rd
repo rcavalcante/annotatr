@@ -17,4 +17,3 @@ handle the shortcuts.
 supported_annotations()
 
 }
-

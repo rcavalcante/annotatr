@@ -91,7 +91,7 @@ supported_annotations = function() {
             expand.grid('hg19', 'chromatin', chromatin_ends, stringsAsFactors=FALSE),
             1, paste, collapse='_')
 
-        enhancer_codes = c('hg19_enhancers_fantom','mm9_enhancers_fantom')
+        enhancer_codes = c('hg19_enhancers_fantom','hg38_enhancers_fantom','mm9_enhancers_fantom','mm10_enhancers_fantom')
         lncrna_codes = c('hg19_lncrna_gencode','hg38_lncrna_gencode','mm10_lncrna_gencode')
 
         gene_shortcut_codes = apply(

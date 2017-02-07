@@ -30,4 +30,3 @@ annots = c('hg19_genes_promoters','hg19_custom_test')
 annots_gr = build_annotations(genome = 'hg19', annotations = annots)
 
 }
-

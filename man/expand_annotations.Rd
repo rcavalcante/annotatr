@@ -15,4 +15,3 @@ A vector of data accession-ized names that are ordered from upstream to downstre
 \description{
 Function to expand annotation shortcuts
 }
-

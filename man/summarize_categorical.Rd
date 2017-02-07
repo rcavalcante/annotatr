@@ -44,4 +44,3 @@ If a region is annotated to multiple annotations of the same \code{annot.type}, 
        quiet = FALSE)
 
 }
-

@@ -33,4 +33,3 @@ NOTE: The data associated with the input \code{regions} are not passed on to the
    random_r = randomize_regions(regions = r)
 
 }
-

@@ -19,4 +19,3 @@ A modified version of \code{summary} with \code{col} subsetted by \code{col_orde
 \description{
 Function to subset a tbl_df or grouped_df by a column
 }
-
