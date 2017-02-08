@@ -6,6 +6,9 @@
 \usage{
 get_cellline_from_code(code)
 }
+\arguments{
+\item{code}{The annotation code, used in \code{build_annotations()}.}
+}
 \value{
 A string of the cell line used in a chromatin annotation code
 }

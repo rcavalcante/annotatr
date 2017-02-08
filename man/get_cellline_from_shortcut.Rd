@@ -6,6 +6,9 @@
 \usage{
 get_cellline_from_shortcut(shortcut)
 }
+\arguments{
+\item{shortcut}{The annotation shortcut, used in \code{build_annotations()}.}
+}
 \value{
 A string of the cell line used in a chromatin annotation shortcut
 }

@@ -23,6 +23,8 @@ HMMCODES = c('1_Active_Promoter', '2_Weak_Promoter' ,'3_Poised_Promoter' ,'4_Str
 
 #' Function to recode classes from chromHMM type column
 #'
+#' @param hmm_codes in the original form from UCSC Genome Browser track.
+#'
 #' @return A character vector of chromHMM classes with numbers and underscores removed.
 reformat_hmm_codes = function(hmm_codes) {
     new_codes = sapply(hmm_codes,
@@ -33,12 +35,16 @@ reformat_hmm_codes = function(hmm_codes) {
 
 #' Function to return cell line from chromatin annotation shortcut
 #'
+#' @param shortcut The annotation shortcut, used in \code{build_annotations()}.
+#'
 #' @return A string of the cell line used in a chromatin annotation shortcut
 get_cellline_from_shortcut = function(shortcut) {
     return(unlist(strsplit(unlist(strsplit(shortcut,'_'))[2], '-'))[1])
 }
 
 #' Function to return cell line from chromatin annotation code
+#'
+#' @param code The annotation code, used in \code{build_annotations()}.
 #'
 #' @return A string of the cell line used in a chromatin annotation code
 get_cellline_from_code = function(code) {

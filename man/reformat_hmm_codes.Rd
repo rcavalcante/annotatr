@@ -6,6 +6,9 @@
 \usage{
 reformat_hmm_codes(hmm_codes)
 }
+\arguments{
+\item{hmm_codes}{in the original form from UCSC Genome Browser track.}
+}
 \value{
 A character vector of chromHMM classes with numbers and underscores removed.
 }
