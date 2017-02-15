@@ -59,19 +59,19 @@ get_cellline_from_code = function(code) {
 #' @return A character vector of available annotations.
 #'
 #' @examples
-#' supported_annotations()
+#' builtin_annotations()
 #'
 #' @export
-supported_annotations = function() {
+builtin_annotations = function() {
     # Create annotation code endings
         shortcut_ends = c('basicgenes','cpgs')
 
         # Gene codes
-        gene_genomes = supported_genomes()
+        gene_genomes = builtin_genomes()
         gene_ends = c('1to5kb', 'promoters', 'cds', '5UTRs', 'exons', 'firstexons', 'introns', 'intronexonboundaries', 'exonintronboundaries', '3UTRs', 'intergenic')
 
         # CpG codes
-        cpg_genomes = base::setdiff(supported_genomes(),c('dm3','dm6'))
+        cpg_genomes = base::setdiff(builtin_genomes(),c('dm3','dm6'))
         cpg_ends = c('islands', 'shores', 'shelves', 'inter')
 
         # Chromatin state codes
@@ -120,10 +120,10 @@ supported_annotations = function() {
 #' @return A character vector of genomes for supported TxDb.* packages
 #'
 #' @examples
-#' supported_genomes()
+#' builtin_genomes()
 #'
 #' @export
-supported_genomes = function() {
+builtin_genomes = function() {
     return(c('dm3','dm6','hg19','hg38','mm9','mm10','rn4','rn5','rn6'))
 }
 
@@ -132,7 +132,7 @@ supported_genomes = function() {
 #' @param genome A string giving the genome assembly.
 #'
 #' @return A string giving the name of the correct TxDb.* package name based on \code{genome}.
-get_txdb_name = function(genome = supported_genomes()) {
+get_txdb_name = function(genome = builtin_genomes()) {
     # Ensure valid arguments
     genome = match.arg(genome)
 
@@ -146,7 +146,7 @@ get_txdb_name = function(genome = supported_genomes()) {
 #' @param genome A string giving the genome assembly.
 #'
 #' @return A string giving the correct org for org.db packages. e.g. hg19 -> Hs.
-get_orgdb_name = function(genome = supported_genomes()) {
+get_orgdb_name = function(genome = builtin_genomes()) {
     # Ensure valid arguments
     genome = match.arg(genome)
 
@@ -187,6 +187,8 @@ tidy_annotations = function(annotations) {
             return(tokens[3])
         } else if (tokens[2] == 'lncrna') {
             return('GENCODE lncRNA')
+        } else {
+            return(sprintf('%s %s', tokens[2], tokens[3]))
         }
     })
 
@@ -198,7 +200,7 @@ tidy_annotations = function(annotations) {
 
 #' Function to check for valid annotations
 #'
-#' Gives errors if any annotations are not in supported_annotations() (and they are not in the required custom format), basicgenes are used, or the genome prefixes are not the same for all annotations.
+#' Gives errors if any annotations are not in builtin_annotations() (and they are not in the required custom format), basicgenes are used, or the genome prefixes are not the same for all annotations.
 #'
 #' @param annotations A character vector of annotations possibly using the shortcuts
 #' @return If all the checks on the annotations pass, returns NULL to allow code to move forward.
@@ -208,10 +210,10 @@ check_annotations = function(annotations) {
     annotations = base::setdiff(annotations, custom_annotations)
 
     # Check that the annotations are supported, tell the user which are unsupported
-    if( !all(annotations %in% supported_annotations()) ) {
-        unsupported = base::setdiff(annotations, supported_annotations())
+    if( !all(annotations %in% builtin_annotations()) ) {
+        unsupported = base::setdiff(annotations, builtin_annotations())
 
-        stop(sprintf('Error: "%s" is(are) not supported. See supported_annotations().',
+        stop(sprintf('Error: "%s" is(are) not supported. See builtin_annotations().',
             paste(unsupported, collapse=', ')))
     }
 

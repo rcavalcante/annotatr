@@ -33,10 +33,10 @@ annotatr_cache <- local({
 
 #' A function to build annotations from TxDb.* and AnnotationHub resources
 #'
-#' Create a \code{GRanges} object consisting of all the desired \code{annotations}. Supported annotation codes are listed by \code{supported_annotations()}. The basis for enhancer annotations are FANTOM5 data, the basis for CpG related annotations are CpG island tracks from \code{AnnotationHub}, and the basis for genic annotations are from the \code{TxDb.*} and \code{org.db} group of packages.
+#' Create a \code{GRanges} object consisting of all the desired \code{annotations}. Supported annotation codes are listed by \code{builtin_annotations()}. The basis for enhancer annotations are FANTOM5 data, the basis for CpG related annotations are CpG island tracks from \code{AnnotationHub}, and the basis for genic annotations are from the \code{TxDb.*} and \code{org.db} group of packages.
 #'
 #' @param genome The genome assembly.
-#' @param annotations A character vector of annotations to build. Valid annotation codes are listed with \code{supported_annotations()}. The "basicgenes" shortcut builds the following regions: 1-5Kb upstream of TSSs, promoters, 5UTRs, exons, introns, and 3UTRs. The "cpgs" shortcut builds the following regions: CpG islands, shores, shelves, and interCGI regions. NOTE: Shortcuts need to be appended by the genome, e.g. \code{hg19_basicgenes}.
+#' @param annotations A character vector of annotations to build. Valid annotation codes are listed with \code{builtin_annotations()}. The "basicgenes" shortcut builds the following regions: 1-5Kb upstream of TSSs, promoters, 5UTRs, exons, introns, and 3UTRs. The "cpgs" shortcut builds the following regions: CpG islands, shores, shelves, and interCGI regions. NOTE: Shortcuts need to be appended by the genome, e.g. \code{hg19_basicgenes}.
 #' Custom annotations whose names are of the form \code{[genome]_custom_[name]} should also be included. Custom annotations should be read in and converted to \code{GRanges} with \code{read_annotations()}. They can be for a \code{supported_genome()}, or for an unsupported genome.
 #'
 #' @return A \code{GRanges} object of all the \code{annotations} combined. The \code{mcols} are \code{id, tx_id, gene_id, symbol, type}. The \code{id} column is a unique name, the \code{tx_id} column is either a UCSC knownGene transcript ID (genic annotations) or a Ensembl transcript ID (lncRNA annotations), the \code{gene_id} is the Entrez ID, the \code{symbol} is the gene symbol from the \code{org.*.eg.db} mapping from the Entrez ID, and the \code{type} is of the form \code{[genome]_[type]_[name]}.
@@ -54,19 +54,33 @@ annotatr_cache <- local({
 #'
 #' @export
 build_annotations = function(genome, annotations) {
-    # Check annotations and expand any shortcuts
-    check_annotations(annotations)
+    # Expand annotations first
     annotations = expand_annotations(annotations)
 
+    # Collect built-in annotations
     hmm_annotations = grep('_chromatin_', annotations, value=TRUE)
     enh_annotations = grep('_enhancers_', annotations, value=TRUE)
     gene_annotations = grep('_genes_', annotations, value=TRUE)
     cpg_annotations = grep('_cpg_', annotations, value=TRUE)
     lncrna_annotations = grep('_lncrna_', annotations, value=TRUE)
-    custom_annotations = grep('_custom_', annotations, value=TRUE)
+    builtin_annotations = c(hmm_annotations, enh_annotations, gene_annotations, cpg_annotations, lncrna_annotations)
 
+    # Check builtin_annotations
+    if(length(builtin_annotations) > 0) {
+        check_annotations(builtin_annotations)
+    }
+
+    # Collect custom and AnnotationHub annotations
+    other_annotations = setdiff(annotations, builtin_annotations)
+
+    # Container for the annotations
     annots_grl = GenomicRanges::GRangesList()
 
+    # Do the other_annotations first because we don't want to fail unexpectedly at the end
+    if(length(other_annotations) > 0) {
+        annots_grl = c(annots_grl, GenomicRanges::GRangesList(sapply(other_annotations, function(ca){annotatr_cache$get(ca)})))
+    }
+    # Take the builtin_annotations piece by piece
     if(length(enh_annotations) != 0) {
         annots_grl = c(annots_grl, GenomicRanges::GRangesList(enhancers_fantom = suppressWarnings(build_enhancer_annots(genome = genome))))
     }
@@ -82,11 +96,71 @@ build_annotations = function(genome, annotations) {
     if(length(lncrna_annotations) != 0) {
         annots_grl = c(annots_grl, GenomicRanges::GRangesList(lncrna_gencode = suppressWarnings(build_lncrna_annots(genome = genome))))
     }
-    if(length(custom_annotations) > 0) {
-        annots_grl = c(annots_grl, GenomicRanges::GRangesList(sapply(custom_annotations, function(ca){annotatr_cache$get(ca)})))
-    }
 
     return(unlist(annots_grl, use.names=FALSE))
+}
+
+#' A helper function to build arbitrary annotatinos from AnnotationHub
+#'
+#' @param genome The genome assembly.
+#' @param ah_codes A named character vector giving the AnnotationHub accession number (e.g. AH23256), and whose name describes what the annotation is (e.g. Gm12878_H3K4me3).
+#' @param annotation_class A string to name the group of annotations in \code{ah_codes}
+#'
+#' @return A \code{GRanges} object stored in \code{annotatr_cache}. To view an annotation built with this function, do \code{annotatr_cache$get(name)}. To add these annotations to a set of annotations, include \code{'[genome]_[annotation_class]_[name]'} in the call to \code{build_annotations()}. See example below.
+#' @examples
+#'
+#' # Create a named vector for the AnnotationHub accession codes with desired names
+#' h3k4me3_codes = c('Gm12878' = 'AH23256', 'H1hesc' = 'AH23273')
+#' # Fetch ah_codes from AnnotationHub and create annotations annotatr understands
+#' build_ah_annots(genome = 'hg19', ah_codes = h3k4me3_codes, annotation_class = 'H3K4me3')
+#' # The annotations as they appear in annotatr_cache
+#' annot_names = c('hg19_H3K4me3_Gm12878','hg19_H3K4me3_H1hesc')
+#' # Build the annotations right before annotating any regions
+#' annotations = build_annotations(genome = 'hg19', annotations = annot_names)
+#'
+#' @export
+build_ah_annots = function(genome, ah_codes, annotation_class) {
+    # Check that all ah_codes have non-empty names
+    ah_names = names(ah_codes)
+    if(any(ah_names == '')) {
+        stop('All ah_codes should have non-empty names.')
+    }
+
+    # Create an AnnotationHub instance and get all the accession codes
+    ah = AnnotationHub::AnnotationHub()
+    all_ah_codes = names(ah)
+
+    # Check that ah_codes are valid and throw informative error
+    invalid_ah_codes = setdiff(ah_codes, all_ah_codes)
+    if(length(invalid_ah_codes) > 0) {
+        stop(sprintf('The following ah_codes are invalid: %s.', paste(invalid_ah_codes, collapse=', ')))
+    }
+
+    # Check that ah_codes are GRanges and throw informative error
+    ah_rdataclass = ah[ah_codes]$rdataclass
+    if(any(ah_rdataclass != 'GRanges')) {
+        non_rdataclass = which(ah_rdataclass != 'GRanges')
+        stop(sprintf('The following ah_codes are not GRanges: %s. Only AnnotationHub accessions with rdataclass == GRanges are allowed.', paste(ah_codes[non_rdataclass], collapse=', ')))
+    }
+
+    for(i in seq_along(ah_codes)) {
+        message(sprintf('Building annotation %s from AnnotationHub resource %s ...', names(ah_codes)[i], ah_codes[i]))
+        gr = ah[[ah_codes[i]]]
+        gr = GenomicRanges::granges(gr)
+        gr = GenomicRanges::sort(gr)
+
+        GenomicRanges::mcols(gr)$id = paste0(sprintf('%s_%s:', annotation_class, names(ah_codes[i])), seq_along(gr))
+        GenomicRanges::mcols(gr)$tx_id = NA
+        GenomicRanges::mcols(gr)$gene_id = NA
+        GenomicRanges::mcols(gr)$symbol = NA
+        GenomicRanges::mcols(gr)$type = sprintf('%s_%s_%s', genome, annotation_class, names(ah_codes[i]))
+
+        GenomicRanges::mcols(gr) = GenomicRanges::mcols(gr)[, c('id','tx_id','gene_id','symbol','type')]
+
+        ########################################################
+        # Write the object named [genome]_[annotation_class]_[name] to the annotatr_cache
+        annotatr_cache$set(sprintf('%s_%s_%s', genome, annotation_class, names(ah_codes[i])), gr)
+    }
 }
 
 #' A helper function to build chromHMM annotations for hg19 from UCSC Genome Browser.
@@ -95,7 +169,7 @@ build_annotations = function(genome, annotations) {
 #' @param annotations A character vector of valid chromatin state annotatin codes.
 #'
 #' @return A \code{GRanges} object.
-build_hmm_annots = function(genome = c('hg19'), annotations = supported_annotations()) {
+build_hmm_annots = function(genome = c('hg19'), annotations = builtin_annotations()) {
     # Ensure valid arguments
     genome = match.arg(genome)
     annotations = match.arg(annotations, several.ok = TRUE)
@@ -210,7 +284,7 @@ build_enhancer_annots = function(genome = c('hg19','hg38','mm9','mm10')) {
 #' @param annotations A character vector with entries of the form \code{[genome]_cpg_{islands,shores,shelves,inter}}.
 #'
 #' @return A list of \code{GRanges} objects.
-build_cpg_annots = function(genome = supported_genomes(), annotations = supported_annotations()) {
+build_cpg_annots = function(genome = builtin_genomes(), annotations = builtin_annotations()) {
     # Ensure valid arguments
     genome = match.arg(genome)
     annotations = match.arg(annotations, several.ok = TRUE)
@@ -397,7 +471,7 @@ build_cpg_annots = function(genome = supported_genomes(), annotations = supporte
 #' @param annotations A character vector with entries of the form \code{[genome]_genes_{1to5kb,promoters,5UTRs,cds,exons,firstexons,introns,intronexonboundaries,exonintronboundaries,3UTRs,intergenic}}.
 #'
 #' @return A list of \code{GRanges} objects with unique \code{id} of the form \code{[type]:i}, \code{tx_id} being the UCSC knownGene transcript name, \code{gene_id} being the Entrez Gene ID, \code{symbol} being the gene symbol from the Entrez ID to symbol mapping in \code{org.db} for that species, and \code{type} being the annotation type.
-build_gene_annots = function(genome = supported_genomes(), annotations = supported_annotations()) {
+build_gene_annots = function(genome = builtin_genomes(), annotations = builtin_annotations()) {
     # Ensure valid arguments
     genome = match.arg(genome)
     annotations = match.arg(annotations, several.ok = TRUE)

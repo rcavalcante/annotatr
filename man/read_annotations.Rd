@@ -21,7 +21,7 @@ read_annotations(con, name, genome = NA, format, extraCols = character(),
 \item{...}{Parameters to pass onto the format-specific method of \code{rtracklayer::import()}.}
 }
 \value{
-A \code{GRanges} object stored in \code{annotatr_cache}. To view a custom annotation, do \code{annotatr_cache$get(name)}. To add a custom annotation to the set of annotations, include \code{'[name]_custom_[genome]'} in the call to \code{build_annotations()}. See example below.
+A \code{GRanges} object stored in \code{annotatr_cache}. To view a custom annotation, do \code{annotatr_cache$get(name)}. To add a custom annotation to the set of annotations, include \code{'[genome]_custom_[name]'} in the call to \code{build_annotations()}. See example below.
 }
 \description{
 \code{read_annotations()} is a wrapper for the \code{rtracklayer::import()} function that creates a \code{GRanges} object matching the structure of annotations built with \code{build_annotations()}. The structure is defined by \code{GRanges}, with the \code{mcols()} with names \code{c('id','gene_id','symbol','type')}.
