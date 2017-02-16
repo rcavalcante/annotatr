@@ -4,7 +4,7 @@
 \alias{get_orgdb_name}
 \title{Function to get correct org.* package name based on genome}
 \usage{
-get_orgdb_name(genome = supported_genomes())
+get_orgdb_name(genome = builtin_genomes())
 }
 \arguments{
 \item{genome}{A string giving the genome assembly.}

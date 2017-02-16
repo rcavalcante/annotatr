@@ -4,7 +4,7 @@
 \alias{get_txdb_name}
 \title{Function to get correct TxDb.* package name based on genome}
 \usage{
-get_txdb_name(genome = supported_genomes())
+get_txdb_name(genome = builtin_genomes())
 }
 \arguments{
 \item{genome}{A string giving the genome assembly.}

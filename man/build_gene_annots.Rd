@@ -4,8 +4,8 @@
 \alias{build_gene_annots}
 \title{A helper function to build genic annotations.}
 \usage{
-build_gene_annots(genome = supported_genomes(),
-  annotations = supported_annotations())
+build_gene_annots(genome = builtin_genomes(),
+  annotations = builtin_annotations())
 }
 \arguments{
 \item{genome}{The genome assembly.}
