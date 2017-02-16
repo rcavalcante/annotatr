@@ -13,5 +13,5 @@ check_annotations(annotations)
 If all the checks on the annotations pass, returns NULL to allow code to move forward.
 }
 \description{
-Gives errors if any annotations are not in supported_annotations() (and they are not in the required custom format), basicgenes are used, or the genome prefixes are not the same for all annotations.
+Gives errors if any annotations are not in builtin_annotations() (and they are not in the required custom format), basicgenes are used, or the genome prefixes are not the same for all annotations.
 }

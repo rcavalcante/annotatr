@@ -83,7 +83,7 @@ chr9	28949	29048	DMdown	0.5530	*	0.07	0.12	0.05
 ## Annotate regions with `annotate_regions()`
 
 - Select any combination of annotations:
-    - A la carte from `supported_annotations()`.
+    - A la carte from `builtin_annotations()`.
     - Using shortcuts.
         - For example, the `hg19_basicgenes` shortcut annotates regions to 1-5Kb upstream of promoters, promoters, 5'UTRs, exons, introns, and 3'UTRs.
     - Custom annotations with `read_annotations()`.

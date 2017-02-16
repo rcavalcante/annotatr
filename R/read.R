@@ -65,7 +65,7 @@ read_regions = function(con, genome = NA, format, extraCols = character(), renam
 #' @param extraCols From \code{rtracklayer::import.bed()}: A character vector in the same form as 'colClasses' from 'read.table'.  It should indicate the name and class of each extra/special column to read from the BED file. As BED does not encode column names, these are assumed to be the last columns in the file. This enables parsing of the various BEDX+Y formats.
 #' @param ... Parameters to pass onto the format-specific method of \code{rtracklayer::import()}.
 #'
-#' @return A \code{GRanges} object stored in \code{annotatr_cache}. To view a custom annotation, do \code{annotatr_cache$get(name)}. To add a custom annotation to the set of annotations, include \code{'[name]_custom_[genome]'} in the call to \code{build_annotations()}. See example below.
+#' @return A \code{GRanges} object stored in \code{annotatr_cache}. To view a custom annotation, do \code{annotatr_cache$get(name)}. To add a custom annotation to the set of annotations, include \code{'[genome]_custom_[name]'} in the call to \code{build_annotations()}. See example below.
 #'
 #' @examples
 #'

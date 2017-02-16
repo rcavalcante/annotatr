@@ -30,8 +30,8 @@ test_that('Test check_annotations()', {
     annots2 = c('hello','hg19_genes_promoters','hg19_cpgs')
     annots3 = c('hg19_genes_promoters', 'mm9_cpg_islands')
 
-    expect_error( check_annotations(annots1), 'not supported. See supported_annotations()' )
-    expect_error( check_annotations(annots2), 'not supported. See supported_annotations()' )
+    expect_error( check_annotations(annots1), 'not supported. See builtin_annotations()' )
+    expect_error( check_annotations(annots2), 'not supported. See builtin_annotations()' )
     expect_error( check_annotations(annots3), 'genome prefix on all annotations must be the same' )
 })
 

@@ -3,7 +3,7 @@
 #' Annotate genomic regions to selected genomic annotations while preserving the data associated with the genomic regions.
 #'
 #' @param regions The GRanges object returned by \code{read_regions()}.
-#' @param annotations A character vector of annotations to build. Valid annotation codes are listed with \code{supported_annotations()}. The "basicgenes" shortcut builds the following regions: 1-5Kb upstream of TSSs, promoters, 5UTRs, exons, introns, and 3UTRs. The "cpgs" shortcut builds the following regions: CpG islands, shores, shelves, and interCGI regions. NOTE: Shortcuts need to be appended by the genome, e.g. \code{hg19_basicgenes}.
+#' @param annotations A character vector of annotations to build. Valid annotation codes are listed with \code{builtin_annotations()}. The "basicgenes" shortcut builds the following regions: 1-5Kb upstream of TSSs, promoters, 5UTRs, exons, introns, and 3UTRs. The "cpgs" shortcut builds the following regions: CpG islands, shores, shelves, and interCGI regions. NOTE: Shortcuts need to be appended by the genome, e.g. \code{hg19_basicgenes}.
 #' Custom annotations whose names are of the form \code{[genome]_custom_[name]} should also be included. Custom annotations should be read in and converted to \code{GRanges} with \code{read_annotations()}. They can be for a \code{supported_genome()}, or for an unsupported genome.
 #' @param minoverlap A scalar, positive integer, indicating the minimum required overlap of regions with annotations.
 #' @param ignore.strand Logical indicating whether strandedness should be respected in findOverlaps(). Default FALSE.

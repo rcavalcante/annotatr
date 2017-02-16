@@ -35,9 +35,11 @@ Changelogs for development releases will be detailed on [GitHub releases](https:
 
 # Annotations
 
-We rely on the [`AnnotationHub`](https://bioconductor.org/packages/release/bioc/html/AnnotationHub.html) package for CpG annotations, the [`GenomicFeatures`](https://bioconductor.org/packages/release/bioc/html/GenomicFeatures.html), `TxDb.*`, and `org.*.eg.db` packages for genic annotations, and the [`rtracklayer`](http://bioconductor.org/packages/release/bioc/html/rtracklayer.html) package for enhancer annotations from FANTOM5.
+There are three types of annotations available to annotatr:
 
-Supported annotations are given by `supported_annotations()`. Additionally, custom annotations can be loaded with `read_annotations()`.
+1. Built-in annotations including CpG annotations, genic annotations, enhancers, GENCODE lncRNAs, and chromatin states from chromHMM. Base data for each of these annotations is retrieved and processed in some way. See each below for details on data source and processing.
+2. AnnotationHub annotations include any GRanges resource within the Bioconductor AnnotationHub web resource.
+3. Custom annotations provided by the user.
 
 ## CpG Annotations
 
@@ -47,7 +49,7 @@ CpG annotations are available for hg19, hg38, mm9, mm10, rn4, rn5, rn6.
 
 ![Schematic of CpG annotations.](annotatr_cpgs.jpeg)
 
-## UCSC knownGenes
+## Genic Annotations
 
 The genic annotations are determined by functions from `GenomicFeatures` and data from the `TxDb.*` and `org.*.eg.db` packages. Genic annotations include 1-5Kb upstream of the TSS, the promoter (< 1Kb upstream of the TSS), 5'UTR, first exons, exons, introns, CDS, 3'UTR, and intergenic regions (the intergenic regions exclude the previous list of annotations). The schematic below illustrates the relationship between the different annotations as extracted from the `TxDb.*` packages via `GenomicFeatures` functions.
 
@@ -73,13 +75,33 @@ The long non-coding RNA (lncRNA) annotations are from [GENCODE](https://www.genc
 
 Chromatin states determined by chromHMM ([Ernst and Kellis (2012)](http://www.nature.com/nmeth/journal/v9/n3/full/nmeth.1906.html)) in hg19 are available for nine cell lines (Gm12878, H1hesc, Hepg2, Hmec, Hsmm, Huvec, K562, Nhek, and Nhlf) via the UCSC Genome Browser tracks. Annotations for all states can be built using a shortcut like `hg19_Gm12878-chromatin`, or specific chromatin states can be accessed via codes like `hg19_chromatin_Gm12878-StrongEnhancer` or `hg19_chromatin_Gm12878-Repressed`.
 
-## Custom Annotations
+## `AnnotationHub` Annotations
 
-Users may load their own annotations from BED files using the `read_annotations()` function, which uses the `rtracklayer::import()` function. The output is a `GRanges` with `mcols()` for `id`, `tx_id`, `gene_id`, `symbol`, and `type`. If a user wants to include `tx_id`, `gene_id`, and/or `symbol` in their custom annotations they can be included as extra columns on a BED6 input file.
+The `AnnotationHub` Bioconductor package is a client for the AnnotationHub web resource. From the package description:
+
+> The AnnotationHub web resource provides a central location where genomic files (e.g., VCF, bed, wig) and other resources from standard locations (e.g., UCSC, Ensembl) can be discovered. The resource includes metadata about each resource, e.g., a textual description, tags, and date of modification. The client creates and manages a local cache of files retrieved by the user, helping with quick and reproducible access.
+
+Using the `build_ah_annots()` function, users can turn any resource of class `GRanges` into an annotation for use in `annotatr`. As an example, we create annotations for H3K4me3 ChIP-seq peaks in Gm12878 and H1-hesc cells.
 
 ```{r, echo=FALSE}
 suppressWarnings(suppressMessages(suppressPackageStartupMessages(library(annotatr))))
 ```
+
+```{r, warning = FALSE, message = FALSE}
+# Create a named vector for the AnnotationHub accession codes with desired names
+h3k4me3_codes = c('Gm12878' = 'AH23256', 'H1hesc' = 'AH23273')
+# Fetch ah_codes from AnnotationHub and create annotations annotatr understands
+build_ah_annots(genome = 'hg19', ah_codes = h3k4me3_codes, annotation_class = 'H3K4me3')
+# The annotations as they appear in annotatr_cache
+ah_names = c('hg19_H3K4me3_Gm12878', 'hg19_H3K4me3_H1hesc')
+
+print(annotatr_cache$get('hg19_H3K4me3_Gm12878'))
+print(annotatr_cache$get('hg19_H3K4me3_H1hesc'))
+```
+
+## Custom Annotations
+
+Users may load their own annotations from BED files using the `read_annotations()` function, which uses the `rtracklayer::import()` function. The output is a `GRanges` with `mcols()` for `id`, `tx_id`, `gene_id`, `symbol`, and `type`. If a user wants to include `tx_id`, `gene_id`, and/or `symbol` in their custom annotations they can be included as extra columns on a BED6 input file.
 
 ```{r, warning = FALSE, message = FALSE}
 ## Use ENCODE ChIP-seq peaks for EZH2 in GM12878 and CJUN in K562
@@ -117,7 +139,7 @@ print(dm_regions)
 
 ## Annotating Regions
 
-Users may select annotations a la carte via the accessors listed with `supported_annotations()`, shortcuts, or use custom annotations as described above. The `hg19_cpgs` shortcut annotates regions to CpG islands, CpG shores, CpG shelves, and inter-CGI. The `hg19_basicgenes` shortcut annotates regions to 1-5Kb, promoters, 5'UTRs, exons, introns, and 3'UTRs. Shortcuts for other `supported_genomes()` are accessed in a similar way.
+Users may select annotations a la carte via the accessors listed with `builtin_annotations()`, shortcuts, or use custom annotations as described above. The `hg19_cpgs` shortcut annotates regions to CpG islands, CpG shores, CpG shelves, and inter-CGI. The `hg19_basicgenes` shortcut annotates regions to 1-5Kb, promoters, 5'UTRs, exons, introns, and 3'UTRs. Shortcuts for other `builtin_genomes()` are accessed in a similar way.
 
 `annotate_regions()` requires a `GRanges` object (either the result of `read_regions()` or an existing object), a `GRanges` object of the `annotations`, and a logical value indicating whether to `ignore.strand` when calling `GenomicRanges::findOverlaps()`. The positive integer `minoverlap` is also passed to `GenomicRanges::findOverlaps()` and specifies the minimum overlap required for a region to be assigned to an annotation.
 
@@ -128,7 +150,8 @@ Before annotating regions, they must be built with `build_annotations()` which r
 # Note inclusion of custom annotation, and use of shortcuts
 annots = c('hg19_cpgs', 'hg19_basicgenes', 'hg19_genes_intergenic',
     'hg19_enhancers_fantom', 'hg19_genes_firstexons', 'hg19_genes_intronexonboundaries',
-    'hg19_lncrna_gencode', 'hg19_custom_ezh2', 'hg19_custom_cjun')
+    'hg19_lncrna_gencode', 'hg19_custom_ezh2', 'hg19_custom_cjun',
+    'hg19_H3K4me3_Gm12878', 'hg19_H3K4me3_H1hesc')
 
 # Build the annotations (a single GRanges object)
 annotations = build_annotations(genome = 'hg19', annotations = annots)
@@ -145,7 +168,7 @@ print(dm_annotated)
 
 ## Randomizing Regions
 
-Given a set of annotated regions, it is important to know how the annotations compare to those of a randomized set of regions. The `randomize_regions()` function is a wrapper of `regioneR::randomizeRegions()` from the [`regioneR`](http://bioconductor.org/packages/release/bioc/html/regioneR.html) package that creates a set of random regions given a `GRanges` object. After creating the random set, they must be annotated with `annotate_regions()` for later use. Only `supported_genomes()` can be used in our wrapper function. Downstream functions that support using random region annotations are `summarize_annotations()`, `plot_annotation()`, and `plot_categorical()`.
+Given a set of annotated regions, it is important to know how the annotations compare to those of a randomized set of regions. The `randomize_regions()` function is a wrapper of `regioneR::randomizeRegions()` from the [`regioneR`](http://bioconductor.org/packages/release/bioc/html/regioneR.html) package that creates a set of random regions given a `GRanges` object. After creating the random set, they must be annotated with `annotate_regions()` for later use. Only `builtin_genomes()` can be used in our wrapper function. Downstream functions that support using random region annotations are `summarize_annotations()`, `plot_annotation()`, and `plot_categorical()`.
 
 It is important to note that if the regions to be randomized have a particular property, for example they are CpGs, the `randomize_regions()` wrapper will not preserve that property! Instead, we recommend using `regioneR::resampleRegions()` with `universe` being the superset of the data regions you want to sample from.
 
@@ -254,6 +277,8 @@ plot_categorical(annotated_regions, annotated_random, x, fill = NULL,
 annots_order = c(
     'hg19_custom_ezh2',
     'hg19_custom_cjun',
+    'hg19_H3K4me3_Gm12878',
+    'hg19_H3K4me3_H1hesc',
     'hg19_enhancers_fantom',
     'hg19_genes_1to5kb',
     'hg19_genes_promoters',
@@ -281,6 +306,8 @@ The `plot_annotation()` can also use the annotated random regions in the `annota
 annots_order = c(
     'hg19_custom_ezh2',
     'hg19_custom_cjun',
+    'hg19_H3K4me3_Gm12878',
+    'hg19_H3K4me3_H1hesc',
     'hg19_enhancers_fantom',
     'hg19_genes_1to5kb',
     'hg19_genes_promoters',
@@ -308,14 +335,12 @@ print(dm_vs_kg_annotations_wrandom)
 # View a heatmap of regions occurring in pairs of annotations
 annots_order = c(
     'hg19_custom_ezh2',
+    'hg19_H3K4me3_Gm12878',
     'hg19_custom_cjun',
     'hg19_enhancers_fantom',
-    'hg19_genes_1to5kb',
     'hg19_genes_promoters',
     'hg19_genes_5UTRs',
-    'hg19_genes_firstexons',
     'hg19_genes_exons',
-    'hg19_genes_intronexonboundaries',
     'hg19_genes_introns',
     'hg19_genes_3UTRs',
     'hg19_genes_intergenic',

@@ -4,8 +4,8 @@
 \alias{build_cpg_annots}
 \title{A helper function to build CpG related annotations.}
 \usage{
-build_cpg_annots(genome = supported_genomes(),
-  annotations = supported_annotations())
+build_cpg_annots(genome = builtin_genomes(),
+  annotations = builtin_annotations())
 }
 \arguments{
 \item{genome}{The genome assembly.}
