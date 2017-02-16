@@ -827,7 +827,7 @@ build_lncrna_annots = function(genome = c('hg19','hg38','mm10')) {
         colnames(GenomicRanges::mcols(lncrna_gr)) = c('symbol','tx_id','transcript_type')
 
         # Give the lncRNAs their ids according to the transcript_type
-        lncrna_grl = split(lncrna_gr, GenomicRanges::mcols(lncrna_gr)$transcript)
+        lncrna_grl = split(lncrna_gr, GenomicRanges::mcols(lncrna_gr)$transcript_type)
         lncrna_grl = IRanges::endoapply(lncrna_grl, function(gr){
             GenomicRanges::mcols(gr)$id = paste0(GenomicRanges::mcols(gr)$transcript_type,':', seq_along(gr))
             return(gr)
