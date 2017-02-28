@@ -190,25 +190,7 @@ dm_random_annotated = annotate_regions(
 
 ## Summarizing Over Annotations
 
-The three summarization functions below take the `GRanges` objects output from `annotate_regions()` as their input, and output either a `dplyr::tbl_df` (for `summarize_annotations()`) or `dplyr::grouped_df` (for the others).
-
-```{r, eval=FALSE}
-# Usage of summarize functions with defaults
-summarize_annotations(annotated_regions, annotated_random, quiet = FALSE)
-
-summarize_numerical(
-    annotated_regions,
-    by = c("annot.type", "annot.id"),
-    over,
-    quiet = FALSE)
-
-summarize_categorical(
-    annotated_regions,
-    by = c("annot.type", "annot.id"),
-    quiet = FALSE)
-```
-
-When there is no categorical (`name` column) or numerical (`score` column) information associated with the regions, `summarize_annotations()` is the only possible function to use. It gives the counts of regions in each annotation type (see example below). If there is categorical and/or numerical information, then `summarize_numerical()` and/or `summarize_categorical()` may be used. Using random region annotations is only available for `summarize_annotations()`.
+When there is no categorical or numerical information associated with the regions, `summarize_annotations()` is the only possible summarization function to use. It gives the counts of regions in each annotation type (see example below). If there is categorical and/or numerical information, then `summarize_numerical()` and/or `summarize_categorical()` may be used. Using random region annotations is only available for `summarize_annotations()`.
 
 ```{r, warning = FALSE, message = FALSE}
 # Find the number of regions per annotation type
@@ -246,27 +228,6 @@ print(dm_catsum)
 ## Plotting
 
 The 5 plot functions described below are to be used on the object returned by `annotate_regions()`. The plot functions return an object of type `ggplot` that can be viewed (`print`), saved (`ggsave`), or modified with additional `ggplot2` code.
-
-```{r, eval=FALSE}
-# Usage of plot functions with defaults
-
-plot_annotation(annotated_regions, annotated_random, annotation_order = NULL,
-  plot_title, x_label, y_label, quiet = FALSE)
-
-plot_coannotations(annotated_regions, annotation_order = NULL, plot_title,
-  axes_label, quiet = FALSE)
-
-plot_numerical(annotated_regions, x, y, facet = "annot.type",
-  facet_order = NULL, bin_width = 10, plot_title, x_label, y_label,
-  quiet = FALSE)
-
-plot_numerical_coannotations(annotated_regions, x, y, annot1, annot2,
-  bin_width = 10, plot_title, x_label, y_label, quiet = FALSE)
-
-plot_categorical(annotated_regions, annotated_random, x, fill = NULL,
-  x_order = NULL, fill_order = NULL, position = "stack", plot_title,
-  legend_title, x_label, y_label, quiet = FALSE)
-```
 
 ### Plotting Regions per Annotation
 

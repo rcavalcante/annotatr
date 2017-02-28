@@ -1,3 +1,23 @@
+CHANGES IN VERSION 1.1.12
+-------------------------
+
+  o Documentation updates.
+
+CHANGES IN VERSION 1.1.11
+-------------------------
+
+  o Add a function to build annotations from AnnotationHub resources, build_ah_annots().
+  o Change supported_annotations() and supported_genomes() into builtin_annotations()
+    and builtin_genomes(). This enables more flexibility required for AnnotationHub
+    annotations.
+  o Fix a bug in lncRNA annotation building caused by incomplete reference.
+
+CHANGES IN VERSION 1.1.10
+-------------------------
+
+  o Update internal function documentation, specifically those functions related
+    to HMM annotations. Want to avoid any WARNINGs in the builds.
+
 CHANGES IN VERSION 1.1.9
 -------------------------
 
