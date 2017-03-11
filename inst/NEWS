@@ -1,3 +1,8 @@
+CHANGES IN VERSION 1.1.13
+-------------------------
+
+  o Remove meta/ folder which shouldn't have been along for the ride anyhow.
+
 CHANGES IN VERSION 1.1.12
 -------------------------
 
