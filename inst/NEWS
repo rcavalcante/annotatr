@@ -1,3 +1,9 @@
+CHANGES IN VERSION 1.1.14
+-------------------------
+
+  o Added documentation for coercing result of annotate_regions() to data.frame
+    and subsetting based on gene symbol to the vignette.
+
 CHANGES IN VERSION 1.1.13
 -------------------------
 

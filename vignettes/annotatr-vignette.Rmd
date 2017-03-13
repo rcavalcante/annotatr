@@ -166,6 +166,20 @@ dm_annotated = annotate_regions(
 print(dm_annotated)
 ```
 
+The `annotate_regions()` function returns a `GRanges`, but it may be more convenient to manipulate a coerced `data.frame`. For example,
+
+```{r, warning = FALSE, message = FALSE}
+# Coerce to a data.frame
+df_dm_annotated = data.frame(dm_annotated)
+
+# See the GRanges column of dm_annotaed expanded
+print(head(df_dm_annotated))
+
+# Subset based on a gene symbol, in this case NOTCH1
+notch1_subset = subset(df_dm_annotated, annot.symbol == 'NOTCH1')
+print(head(notch1_subset))
+```
+
 ## Randomizing Regions
 
 Given a set of annotated regions, it is important to know how the annotations compare to those of a randomized set of regions. The `randomize_regions()` function is a wrapper of `regioneR::randomizeRegions()` from the [`regioneR`](http://bioconductor.org/packages/release/bioc/html/regioneR.html) package that creates a set of random regions given a `GRanges` object. After creating the random set, they must be annotated with `annotate_regions()` for later use. Only `builtin_genomes()` can be used in our wrapper function. Downstream functions that support using random region annotations are `summarize_annotations()`, `plot_annotation()`, and `plot_categorical()`.
