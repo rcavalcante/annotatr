@@ -1,25 +1,25 @@
 context('Test summarize module')
 
 annots = c('hg19_cpgs')
-annotations = build_annotations(genome = 'hg19', annotations = annots)
+annotations = suppressMessages(build_annotations(genome = 'hg19', annotations = annots))
 
 bed = system.file('extdata', 'IDH2mut_v_NBM_multi_data_chr9.txt.gz', package = 'annotatr')
 extraCols = c(diff_meth = 'numeric', mu1 = 'numeric', mu0 = 'numeric')
-r = read_regions(con = bed, genome = 'hg19', extraCols = extraCols, rename_score = 'pval', rename_name = 'DM_status', format = 'bed')
+r = suppressMessages(read_regions(con = bed, genome = 'hg19', extraCols = extraCols, rename_score = 'pval', rename_name = 'DM_status', format = 'bed'))
 
-a = annotate_regions(
+a = suppressMessages(annotate_regions(
     regions = r,
     annotations = annotations,
     ignore.strand = TRUE,
-    quiet = TRUE)
+    quiet = TRUE))
 
-rnd = randomize_regions(regions = r)
+rnd = suppressMessages(randomize_regions(regions = r))
 
-rnd_annot = annotate_regions(
+rnd_annot = suppressMessages(annotate_regions(
     regions = rnd,
     annotations = annotations,
     ignore.strand = TRUE,
-    quiet = TRUE)
+    quiet = TRUE))
 
 ################################################################################
 # Test errors

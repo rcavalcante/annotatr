@@ -1,92 +1,36 @@
-CHANGES IN VERSION 1.1.14
--------------------------
+CHANGES IN VERSION 1.2.0
+------------------------
 
-  o Added documentation for coercing result of annotate_regions() to data.frame
-    and subsetting based on gene symbol to the vignette.
+NEW FEATURES
 
-CHANGES IN VERSION 1.1.13
--------------------------
-
-  o Remove meta/ folder which shouldn't have been along for the ride anyhow.
-
-CHANGES IN VERSION 1.1.12
--------------------------
-
-  o Documentation updates.
-
-CHANGES IN VERSION 1.1.11
--------------------------
-
+  o Add support for CpG annotations for hg38, mm10, and rn6 via the UCSC goldenpath URLs.
   o Add a function to build annotations from AnnotationHub resources, build_ah_annots().
-  o Change supported_annotations() and supported_genomes() into builtin_annotations()
-    and builtin_genomes(). This enables more flexibility required for AnnotationHub
-    annotations.
-  o Fix a bug in lncRNA annotation building caused by incomplete reference.
-
-CHANGES IN VERSION 1.1.10
--------------------------
-
-  o Update internal function documentation, specifically those functions related
-    to HMM annotations. Want to avoid any WARNINGs in the builds.
-
-CHANGES IN VERSION 1.1.9
--------------------------
-
+  o Add support for chromHMM tracks (chromatin state) from the UCSC Genome Browser.
+    o Users may annotate to chromatin states in multiple cell lines, if desired.
   o Use rtracklayer::liftOver to lift hg19 and mm9 enhancers into hg38 and mm10.
 
-CHANGES IN VERSION 1.1.8
--------------------------
-
-  o Require GenomeInfoDb >= 1.10.3 because of changes to NCBI servers.
-
-CHANGES IN VERSION 1.1.7
--------------------------
-
-  o Change scale_fill_brewer() to scale_fill_hue() in plot_categorical() to enable
-    more categories.
-
-CHANGES IN VERSION 1.1.6
--------------------------
-
-  o Removed some unit tests that took too long to run on build infrastructure.
-
-CHANGES IN VERSION 1.1.5
--------------------------
-
-  o Fix bug that mistakenly displayed some supported annotations.
-
-CHANGES IN VERSION 1.1.4
--------------------------
-
-  o Add support for chromHMM tracks (chromatin state) from the UCSC Genome Browser.
-
-    o Users may annotate to chromatin states in multiple cell lines, if desired.
-
-  o Updated vignette to include chromHMM description.
-
-CHANGES IN VERSION 1.1.3
--------------------------
-
-  o Add support for CpG annotations for hg38, mm10, and rn6 via the UCSC
-    goldenpath URLs.
-
-    o Consequently, require readr as a prerequisite to get data from the URL.
-
-  o Minor vignette updates.
-
-CHANGES IN VERSION 1.1.2
--------------------------
+USER-FACING CHANGES
 
   o Add minoverlaps parameter to annotate_regions() that is passed to
     GenomicRanges::findOverlaps().
+  o Change supported_annotations() and supported_genomes() into builtin_annotations()
+    and builtin_genomes(). This enables more flexibility required for AnnotationHub
+    annotations.
+  o Added documentation for coercing result of annotate_regions() to data.frame
+     and subsetting based on gene symbol to the vignette.
 
-CHANGES IN VERSION 1.1.1
--------------------------
+BUGFIXES
 
-  o Require GenomeInfoDb >= 1.10.1 because of a change to NCBI servers.
+  o Fixed a bug in coercion of GRanges to data.frame where row.names could be
+    duplicated. Thanks to @kdkorthauer.
+  o Require GenomeInfoDb >= 1.10.3 because of changes to NCBI servers.
+  o Change scale_fill_brewer() to scale_fill_hue() in plot_categorical() to enable
+    more categories and avoid plotting abnormalities.
+  o Fixed bug that mistakenly displayed some supported annotations.
+  o Fixed a bug in lncRNA annotation building caused by incomplete reference.
 
 CHANGES IN VERSION 0.99.13
--------------------------
+--------------------------
 
 PKG FEATURES
 

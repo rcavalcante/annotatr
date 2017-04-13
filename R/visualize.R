@@ -49,7 +49,7 @@ plot_annotation = function(annotated_regions, annotated_random, annotation_order
     plot_title, x_label, y_label, quiet = FALSE) {
 
     # Tidy the GRanges into a tbl_df for use with dplyr functions
-    annotated_regions = as.data.frame(annotated_regions)
+    annotated_regions = as.data.frame(annotated_regions, row.names = NULL)
 
     ########################################################################
     # Order and subset the annotations
@@ -65,7 +65,7 @@ plot_annotation = function(annotated_regions, annotated_random, annotation_order
     # Do particular things if annotated_random isn't NULL
     if(!missing(annotated_random)) {
         # Tidy the GRanges into a tbl_df for use with dplyr functions
-        annotated_random = as.data.frame(annotated_random)
+        annotated_random = as.data.frame(annotated_random, row.names = NULL)
 
         # Order and subset the randomized annotations
         annotated_random = subset_order_tbl(tbl = annotated_random, col='annot.type', col_order=annotation_order)
@@ -165,7 +165,7 @@ plot_coannotations = function(annotated_regions, annotation_order = NULL,
     plot_title, axes_label, quiet = FALSE) {
 
     # Tidy the GRanges into a tbl_df for use with dplyr functions
-    annotated_regions = as.data.frame(annotated_regions)
+    annotated_regions = as.data.frame(annotated_regions, row.names = NULL)
 
     ########################################################################
     # Order and subset the annotations
@@ -192,7 +192,7 @@ plot_coannotations = function(annotated_regions, annotation_order = NULL,
     # NOTE: binwidth may need to be a parameter
     plot = ggplot(pac_m, aes_string('Var1', 'Var2')) +
         geom_raster(aes_string(fill = 'Counts')) +
-        geom_text(aes_string(fill = 'Counts', label = 'Counts')) +
+        geom_text(aes_string(label = 'Counts')) +
         scale_fill_gradient(low = "white", high = "steelblue") +
         theme(axis.text.x = element_text(angle = 30, hjust = 1), axis.text.y = element_text(angle = 30, hjust = 1))
 
@@ -286,7 +286,7 @@ plot_numerical = function(annotated_regions, x, y, facet = 'annot.type', facet_o
     plot_title, x_label, y_label, quiet = FALSE) {
 
     # Tidy the GRanges into a tbl_df for use with dplyr functions
-    tbl = as.data.frame(annotated_regions)
+    tbl = as.data.frame(annotated_regions, row.names = NULL)
 
     ########################################################################
     # Order and subset the annotations
@@ -396,7 +396,7 @@ plot_numerical_coannotations = function(annotated_regions, x, y, annot1, annot2,
     plot_title, x_label, y_label, quiet = FALSE) {
 
     # Tidy the GRanges into a tbl_df for use with dplyr functions
-    tbl = as.data.frame(annotated_regions)
+    tbl = as.data.frame(annotated_regions, row.names = NULL)
 
     ########################################################################
     # Order and subset the annotations
@@ -572,7 +572,7 @@ plot_categorical = function(annotated_regions, annotated_random, x, fill=NULL, x
     # Argument parsing and error handling
 
     # Tidy the GRanges into a tbl_df for use with dplyr functions
-    annotated_regions = as.data.frame(annotated_regions)
+    annotated_regions = as.data.frame(annotated_regions, row.names = NULL)
 
     # Ensure the value of x is a column name in summarized_cats
     if( !(x %in% colnames(annotated_regions)) ) {
@@ -619,7 +619,7 @@ plot_categorical = function(annotated_regions, annotated_random, x, fill=NULL, x
     # Do particular things if annotated_random isn't NULL
     if(!missing(annotated_random)) {
         # Tidy the GRanges into a tbl_df for use with dplyr functions
-        annotated_random = as.data.frame(annotated_random)
+        annotated_random = as.data.frame(annotated_random, row.names = NULL)
 
         # Order and subset the randomized annotations
         annotated_random = subset_order_tbl(tbl = annotated_random, col=fill, col_order=fill_order)

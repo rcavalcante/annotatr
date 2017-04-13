@@ -7,7 +7,7 @@ context('Test intersect/annotate module')
     annotations = c('hg19_cpg_islands')
 
     bed = system.file('extdata', 'test_intersect.bed', package = 'annotatr')
-    r = read_regions(con = bed, format = 'bed')
+    r = suppressMessages(read_regions(con = bed, format = 'bed'))
 
     expect_error(
         annotate_regions(
@@ -25,7 +25,7 @@ context('Test intersect/annotate module')
             quiet = TRUE),
         "GRanges")
 
-    annotations = build_annotations(genome = 'hg19', annotations = 'hg19_enhancers_fantom')
+    annotations = suppressMessages(build_annotations(genome = 'hg19', annotations = 'hg19_enhancers_fantom'))
     expect_error(
         annotate_regions(
             regions = r,

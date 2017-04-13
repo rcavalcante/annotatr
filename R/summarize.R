@@ -45,7 +45,7 @@
 #' @export
 summarize_annotations = function(annotated_regions, annotated_random, quiet = FALSE) {
     # Tidy the GRanges into a tbl_df for use with dplyr functions
-    annotated_regions = as.data.frame(annotated_regions)
+    annotated_regions = as.data.frame(annotated_regions, row.names = NULL)
 
     ########################################################################
     # If a region has multiple annotation types that are the same, count only one
@@ -58,7 +58,7 @@ summarize_annotations = function(annotated_regions, annotated_random, quiet = FA
     # otherwise tally over data only
     if(!missing(annotated_random)) {
         # Tidy the GRanges into a tbl_df for use with dplyr functions
-        annotated_random = as.data.frame(annotated_random)
+        annotated_random = as.data.frame(annotated_random, row.names = NULL)
 
         # If a region has multiple annotation types that are the same, count only one
         # from each type of annotation
@@ -134,7 +134,7 @@ summarize_annotations = function(annotated_regions, annotated_random, quiet = FA
 #' @export
 summarize_numerical = function(annotated_regions, by = c('annot.type', 'annot.id'), over, quiet = FALSE) {
     # Tidy the GRanges into a tbl_df for use with dplyr functions
-    annotated_regions = as.data.frame(annotated_regions)
+    annotated_regions = as.data.frame(annotated_regions, row.names = NULL)
 
     if(missing(over)) {
         stop("Error: over cannot be missing.")
@@ -187,7 +187,7 @@ summarize_numerical = function(annotated_regions, by = c('annot.type', 'annot.id
 #' @export
 summarize_categorical = function(annotated_regions, by = c('annot.type', 'annot.id'), quiet = FALSE) {
     # Tidy the GRanges into a tbl_df for use with dplyr functions
-    annotated_regions = as.data.frame(annotated_regions)
+    annotated_regions = as.data.frame(annotated_regions, row.names = NULL)
 
     ########################################################################
     # If a region has multiple annotation types that are the same, count only one

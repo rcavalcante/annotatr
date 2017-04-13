@@ -3,40 +3,40 @@ context('Test plot module')
 ################################################################################
 # Setup annotation objects
 annots = c('hg19_cpgs','hg19_enhancers_fantom')
-annotations = build_annotations(genome = 'hg19', annotations = annots)
+annotations = suppressMessages(build_annotations(genome = 'hg19', annotations = annots))
 
 ################################################################################
 # Setup objects for plot_annotation()
 
 chip_file = system.file('extdata', 'Gm12878_Ezh2_sorted_scores.narrowPeak.gz', package = 'annotatr')
-chip_regions = read_regions(con = chip_file, format = 'bed')
+chip_regions = suppressMessages(read_regions(con = chip_file, format = 'bed'))
 
-chip_annots = annotate_regions(
+chip_annots = suppressMessages(annotate_regions(
     regions = chip_regions,
     annotations = annotations,
     ignore.strand = TRUE,
-    quiet = TRUE)
+    quiet = TRUE))
 
 ################################################################################
 # Setup objects for plot_categorical()
 
 dm_file = system.file('extdata', 'IDH2mut_v_NBM_multi_data_chr9.txt.gz', package = 'annotatr')
 extraCols = c(diff_meth = 'numeric', mu1 = 'numeric', mu0 = 'numeric')
-dm_regions = read_regions(con = dm_file, genome = 'hg19', extraCols = extraCols, rename_score = 'pval', rename_name = 'DM_status', format = 'bed')
+dm_regions = suppressMessages(read_regions(con = dm_file, genome = 'hg19', extraCols = extraCols, rename_score = 'pval', rename_name = 'DM_status', format = 'bed'))
 
-dm_random_regions = randomize_regions(regions = dm_regions)
+dm_random_regions = suppressMessages(randomize_regions(regions = dm_regions))
 
-dm_annots = annotate_regions(
+dm_annots = suppressMessages(annotate_regions(
     regions = dm_regions,
     annotations = annotations,
     ignore.strand = TRUE,
-    quiet = TRUE)
+    quiet = TRUE))
 
-dm_random_annots = annotate_regions(
+dm_random_annots = suppressMessages(annotate_regions(
     regions = dm_random_regions,
     annotations = annotations,
     ignore.strand = TRUE,
-    quiet = TRUE)
+    quiet = TRUE))
 
 ################################################################################
 # Setup order vectors and plots that will work
