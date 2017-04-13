@@ -42,15 +42,11 @@ annotatr_cache <- local({
 #' @return A \code{GRanges} object of all the \code{annotations} combined. The \code{mcols} are \code{id, tx_id, gene_id, symbol, type}. The \code{id} column is a unique name, the \code{tx_id} column is either a UCSC knownGene transcript ID (genic annotations) or a Ensembl transcript ID (lncRNA annotations), the \code{gene_id} is the Entrez ID, the \code{symbol} is the gene symbol from the \code{org.*.eg.db} mapping from the Entrez ID, and the \code{type} is of the form \code{[genome]_[type]_[name]}.
 #'
 #' @examples
-#' # Example with hg19
-#' annots = c('hg19_cpg_islands','hg19_cpg_shores','hg19_genes_promoters')
+#' # Example with hg19 gene promoters
+#' annots = c('hg19_genes_promoters')
 #' annots_gr = build_annotations(genome = 'hg19', annotations = annots)
 #'
-#' # Example with a custom annotation
-#' file = system.file('extdata', 'test_annotations_3.bed', package='annotatr')
-#' read_annotations(con = file, name = 'test', genome = 'hg19')
-#' annots = c('hg19_genes_promoters','hg19_custom_test')
-#' annots_gr = build_annotations(genome = 'hg19', annotations = annots)
+#' # See vignette for an example with custom annotation
 #'
 #' @export
 build_annotations = function(genome, annotations) {
@@ -110,13 +106,13 @@ build_annotations = function(genome, annotations) {
 #' @examples
 #'
 #' # Create a named vector for the AnnotationHub accession codes with desired names
-#' h3k4me3_codes = c('Gm12878' = 'AH23256', 'H1hesc' = 'AH23273')
+#' h3k4me3_code = c('Gm12878' = 'AH23256')
 #' # Fetch ah_codes from AnnotationHub and create annotations annotatr understands
-#' build_ah_annots(genome = 'hg19', ah_codes = h3k4me3_codes, annotation_class = 'H3K4me3')
+#' build_ah_annots(genome = 'hg19', ah_codes = h3k4me3_code, annotation_class = 'H3K4me3')
 #' # The annotations as they appear in annotatr_cache
-#' annot_names = c('hg19_H3K4me3_Gm12878','hg19_H3K4me3_H1hesc')
+#' annot_name = c('hg19_H3K4me3_Gm12878')
 #' # Build the annotations right before annotating any regions
-#' annotations = build_annotations(genome = 'hg19', annotations = annot_names)
+#' annotations = build_annotations(genome = 'hg19', annotations = annot_name)
 #'
 #' @export
 build_ah_annots = function(genome, ah_codes, annotation_class) {

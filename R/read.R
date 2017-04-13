@@ -16,10 +16,6 @@
 #'
 #' @examples
 #'
-#'    # Example of reading a BED3 file
-#'    file = system.file('extdata', 'Gm12878_Stat3_chr2.bed.gz', package = 'annotatr')
-#'    gr = read_regions(con = file, genome = 'hg19')
-#'
 #'    # Example of reading a BED6+3 file where the last 3 columns are non-standard
 #'    file = system.file('extdata', 'IDH2mut_v_NBM_multi_data_chr9.txt.gz', package = 'annotatr')
 #'    extraCols = c(diff_meth = 'numeric', mu0 = 'numeric', mu1 = 'numeric')
@@ -72,7 +68,9 @@ read_regions = function(con, genome = NA, format, extraCols = character(), renam
 #'  # Read in a BED3 file as a custom annotation
 #'  file = system.file('extdata', 'test_annotations_3.bed', package='annotatr')
 #'  read_annotations(con = file, name = 'test', genome = 'hg19')
-#'  annotations = build_annotations(genome = 'hg19', annotations = 'hg19_custom_test')
+#'  build_annotations(genome = 'hg19', annotations = 'hg19_custom_test')
+#'
+#'  print(annotatr_cache$get('hg19_custom_test'))
 #'
 #' @export
 read_annotations = function(con, name, genome = NA, format, extraCols = character(), ...) {

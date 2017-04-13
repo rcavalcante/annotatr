@@ -25,9 +25,8 @@ If a region is annotated to multiple annotations of the same \code{annot.type}, 
 \examples{
    ### An example of ChIP-seq peaks with signalValue
 
-   # Select and build annotations
-   annots = c('hg19_cpg_islands','hg19_cpg_shores')
-   annotations = build_annotations(genome = 'hg19', annotations = annots)
+   # Get premade CpG annotations
+   data('example_annotations', package = 'annotatr')
 
    file = system.file('extdata', 'Gm12878_Stat3_chr2.bed.gz', package = 'annotatr')
    r = read_regions(con = file, genome = 'hg19')

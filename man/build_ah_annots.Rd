@@ -22,12 +22,12 @@ A helper function to build arbitrary annotatinos from AnnotationHub
 \examples{
 
 # Create a named vector for the AnnotationHub accession codes with desired names
-h3k4me3_codes = c('Gm12878' = 'AH23256', 'H1hesc' = 'AH23273')
+h3k4me3_code = c('Gm12878' = 'AH23256')
 # Fetch ah_codes from AnnotationHub and create annotations annotatr understands
-build_ah_annots(genome = 'hg19', ah_codes = h3k4me3_codes, annotation_class = 'H3K4me3')
+build_ah_annots(genome = 'hg19', ah_codes = h3k4me3_code, annotation_class = 'H3K4me3')
 # The annotations as they appear in annotatr_cache
-annot_names = c('hg19_H3K4me3_Gm12878','hg19_H3K4me3_H1hesc')
+annot_name = c('hg19_H3K4me3_Gm12878')
 # Build the annotations right before annotating any regions
-annotations = build_annotations(genome = 'hg19', annotations = annot_names)
+annotations = build_annotations(genome = 'hg19', annotations = annot_name)
 
 }

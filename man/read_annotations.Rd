@@ -31,6 +31,8 @@ A \code{GRanges} object stored in \code{annotatr_cache}. To view a custom annota
  # Read in a BED3 file as a custom annotation
  file = system.file('extdata', 'test_annotations_3.bed', package='annotatr')
  read_annotations(con = file, name = 'test', genome = 'hg19')
- annotations = build_annotations(genome = 'hg19', annotations = 'hg19_custom_test')
+ build_annotations(genome = 'hg19', annotations = 'hg19_custom_test')
+
+ print(annotatr_cache$get('hg19_custom_test'))
 
 }

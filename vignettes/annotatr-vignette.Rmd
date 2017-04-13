@@ -89,14 +89,13 @@ suppressWarnings(suppressMessages(suppressPackageStartupMessages(library(annotat
 
 ```{r, warning = FALSE, message = FALSE}
 # Create a named vector for the AnnotationHub accession codes with desired names
-h3k4me3_codes = c('Gm12878' = 'AH23256', 'H1hesc' = 'AH23273')
+h3k4me3_codes = c('Gm12878' = 'AH23256')
 # Fetch ah_codes from AnnotationHub and create annotations annotatr understands
 build_ah_annots(genome = 'hg19', ah_codes = h3k4me3_codes, annotation_class = 'H3K4me3')
 # The annotations as they appear in annotatr_cache
-ah_names = c('hg19_H3K4me3_Gm12878', 'hg19_H3K4me3_H1hesc')
+ah_names = c('hg19_H3K4me3_Gm12878')
 
 print(annotatr_cache$get('hg19_H3K4me3_Gm12878'))
-print(annotatr_cache$get('hg19_H3K4me3_H1hesc'))
 ```
 
 ## Custom Annotations
@@ -104,17 +103,14 @@ print(annotatr_cache$get('hg19_H3K4me3_H1hesc'))
 Users may load their own annotations from BED files using the `read_annotations()` function, which uses the `rtracklayer::import()` function. The output is a `GRanges` with `mcols()` for `id`, `tx_id`, `gene_id`, `symbol`, and `type`. If a user wants to include `tx_id`, `gene_id`, and/or `symbol` in their custom annotations they can be included as extra columns on a BED6 input file.
 
 ```{r, warning = FALSE, message = FALSE}
-## Use ENCODE ChIP-seq peaks for EZH2 in GM12878 and CJUN in K562
+## Use ENCODE ChIP-seq peaks for EZH2 in GM12878
 ## These files contain chr, start, and end columns
 ezh2_file = system.file('extdata', 'Gm12878_Ezh2_peak_annotations.txt.gz', package = 'annotatr')
-cjun_file = system.file('extdata', 'K562_Cjun_peak_annotations.txt.gz', package = 'annotatr')
 
 ## Custom annotation objects are given names of the form genome_custom_name
 read_annotations(con = ezh2_file, genome = 'hg19', name = 'ezh2', format = 'bed')
-read_annotations(con = cjun_file, genome = 'hg19', name = 'cjun', format = 'bed')
 
 print(annotatr_cache$get('hg19_custom_ezh2'))
-print(annotatr_cache$get('hg19_custom_cjun'))
 ```
 
 # Usage
@@ -134,6 +130,8 @@ dm_file = system.file('extdata', 'IDH2mut_v_NBM_multi_data_chr9.txt.gz', package
 extraCols = c(diff_meth = 'numeric', mu0 = 'numeric', mu1 = 'numeric')
 dm_regions = read_regions(con = dm_file, genome = 'hg19', extraCols = extraCols, format = 'bed',
     rename_name = 'DM_status', rename_score = 'pval')
+# Use less regions to speed things up
+dm_regions = dm_regions[1:2000]
 print(dm_regions)
 ```
 
@@ -149,9 +147,8 @@ Before annotating regions, they must be built with `build_annotations()` which r
 # Select annotations for intersection with regions
 # Note inclusion of custom annotation, and use of shortcuts
 annots = c('hg19_cpgs', 'hg19_basicgenes', 'hg19_genes_intergenic',
-    'hg19_enhancers_fantom', 'hg19_genes_firstexons', 'hg19_genes_intronexonboundaries',
-    'hg19_lncrna_gencode', 'hg19_custom_ezh2', 'hg19_custom_cjun',
-    'hg19_H3K4me3_Gm12878', 'hg19_H3K4me3_H1hesc')
+    'hg19_enhancers_fantom', 'hg19_genes_intronexonboundaries',
+    'hg19_custom_ezh2', 'hg19_H3K4me3_Gm12878')
 
 # Build the annotations (a single GRanges object)
 annotations = build_annotations(genome = 'hg19', annotations = annots)
@@ -251,14 +248,11 @@ The 5 plot functions described below are to be used on the object returned by `a
 # associated with the regions.
 annots_order = c(
     'hg19_custom_ezh2',
-    'hg19_custom_cjun',
     'hg19_H3K4me3_Gm12878',
-    'hg19_H3K4me3_H1hesc',
     'hg19_enhancers_fantom',
     'hg19_genes_1to5kb',
     'hg19_genes_promoters',
     'hg19_genes_5UTRs',
-    'hg19_genes_firstexons',
     'hg19_genes_exons',
     'hg19_genes_intronexonboundaries',
     'hg19_genes_introns',
@@ -280,20 +274,16 @@ The `plot_annotation()` can also use the annotated random regions in the `annota
 # of randomized regions
 annots_order = c(
     'hg19_custom_ezh2',
-    'hg19_custom_cjun',
     'hg19_H3K4me3_Gm12878',
-    'hg19_H3K4me3_H1hesc',
     'hg19_enhancers_fantom',
     'hg19_genes_1to5kb',
     'hg19_genes_promoters',
     'hg19_genes_5UTRs',
-    'hg19_genes_firstexons',
     'hg19_genes_exons',
     'hg19_genes_intronexonboundaries',
     'hg19_genes_introns',
     'hg19_genes_3UTRs',
-    'hg19_genes_intergenic',
-    'hg19_lncrna_gencode')
+    'hg19_genes_intergenic')
 dm_vs_kg_annotations_wrandom = plot_annotation(
     annotated_regions = dm_annotated,
     annotated_random = dm_random_annotated,
@@ -311,15 +301,13 @@ print(dm_vs_kg_annotations_wrandom)
 annots_order = c(
     'hg19_custom_ezh2',
     'hg19_H3K4me3_Gm12878',
-    'hg19_custom_cjun',
     'hg19_enhancers_fantom',
     'hg19_genes_promoters',
     'hg19_genes_5UTRs',
     'hg19_genes_exons',
     'hg19_genes_introns',
     'hg19_genes_3UTRs',
-    'hg19_genes_intergenic',
-    'hg19_lncrna_gencode')
+    'hg19_genes_intergenic')
 dm_vs_coannotations = plot_coannotations(
     annotated_regions = dm_annotated,
     annotation_order = annots_order,
@@ -339,8 +327,7 @@ dm_vs_regions_annot = plot_numerical(
     facet = 'annot.type',
     facet_order = c('hg19_genes_1to5kb','hg19_genes_promoters',
         'hg19_genes_5UTRs','hg19_genes_3UTRs', 'hg19_custom_ezh2',
-        'hg19_custom_cjun', 'hg19_genes_intergenic', 'hg19_cpg_islands',
-        'hg19_lncrna_gencode'),
+        'hg19_genes_intergenic', 'hg19_cpg_islands'),
     bin_width = 5,
     plot_title = 'Group 0 Region Methylation In Genes',
     x_label = 'Group 0')
@@ -355,8 +342,7 @@ dm_vs_regions_name = plot_numerical(
     facet = 'annot.type',
     facet_order = c('hg19_genes_1to5kb','hg19_genes_promoters',
         'hg19_genes_5UTRs','hg19_genes_3UTRs', 'hg19_custom_ezh2',
-        'hg19_custom_cjun', 'hg19_genes_intergenic', 'hg19_cpg_islands',
-        'hg19_cpg_shores'),
+        'hg19_genes_intergenic', 'hg19_cpg_islands', 'hg19_cpg_shores'),
     plot_title = 'Region Methylation: Group 0 vs Group 1',
     x_label = 'Group 0',
     y_label = 'Group 1')
@@ -448,7 +434,6 @@ print(dm_vs_cpg_cat_random)
 # The orders for the x-axis labels.
 x_order = c(
     'hg19_custom_ezh2',
-    'hg19_custom_cjun',
     'hg19_enhancers_fantom',
     'hg19_genes_1to5kb',
     'hg19_genes_promoters',
@@ -456,8 +441,7 @@ x_order = c(
     'hg19_genes_exons',
     'hg19_genes_introns',
     'hg19_genes_3UTRs',
-    'hg19_genes_intergenic',
-    'hg19_lncrna_gencode')
+    'hg19_genes_intergenic')
 # The orders for the fill labels.
 fill_order = c(
     'hyper',

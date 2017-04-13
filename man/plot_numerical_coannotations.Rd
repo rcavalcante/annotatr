@@ -38,15 +38,14 @@ Plot numerical data associated with regions occurring in \code{annot1}, \code{an
 For example, a CpG with associated percent methylation annotated to a CpG island and a promoter will count once in the All distribution and once in the CpG island / promoter facet distribution. However, a CpG associated only with a promoter will count once in the All distribution and once in the promoter / promoter distribution.
 }
 \examples{
-
-   # Select and build annotations
-   annots = c('hg19_cpg_islands','hg19_genes_promoters')
-   annotations = build_annotations(genome = 'hg19', annotations = annots)
+   # Get premade CpG annotations
+   data('example_annotations', package = 'annotatr')
 
    dm_file = system.file('extdata', 'IDH2mut_v_NBM_multi_data_chr9.txt.gz', package = 'annotatr')
    extraCols = c(diff_meth = 'numeric', mu1 = 'numeric', mu0 = 'numeric')
    dm_regions = read_regions(con = dm_file, extraCols = extraCols, genome = 'hg19',
        rename_score = 'pval', rename_name = 'DM_status', format = 'bed')
+   dm_regions = dm_regions[1:1000]
 
    dm_annots = annotate_regions(
        regions = dm_regions,
@@ -57,7 +56,7 @@ For example, a CpG with associated percent methylation annotated to a CpG island
        annotated_regions = dm_annots,
        x = 'mu0',
        annot1 = 'hg19_cpg_islands',
-       annot2 = 'hg19_genes_promoters',
+       annot2 = 'hg19_cpg_shelves',
        bin_width = 5,
        plot_title = 'Group 0 Perc. Meth. in CpG Islands and Promoters',
        x_label = 'Percent Methylation')

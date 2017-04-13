@@ -32,9 +32,8 @@ Given a \code{GRanges} of annotated regions, plot the number of regions with the
    ########################################################################
    # An example of ChIP-seq peaks with signalValue used for score
 
-   # Select and build annotations
-   annots = c('hg19_cpg_islands','hg19_cpg_shores')
-   annotations = build_annotations(genome = 'hg19', annotations = annots)
+   # Get premade CpG annotations
+   data('example_annotations', package = 'annotatr')
 
    chip_bed = system.file('extdata', 'Gm12878_Stat3_chr2.bed.gz', package = 'annotatr')
    chip_regions = read_regions(con = chip_bed, genome = 'hg19')

@@ -33,10 +33,6 @@ NOTE: The \code{name} (4th) and \code{score} (5th) columns are so named. If thes
 }
 \examples{
 
-   # Example of reading a BED3 file
-   file = system.file('extdata', 'Gm12878_Stat3_chr2.bed.gz', package = 'annotatr')
-   gr = read_regions(con = file, genome = 'hg19')
-
    # Example of reading a BED6+3 file where the last 3 columns are non-standard
    file = system.file('extdata', 'IDH2mut_v_NBM_multi_data_chr9.txt.gz', package = 'annotatr')
    extraCols = c(diff_meth = 'numeric', mu0 = 'numeric', mu1 = 'numeric')

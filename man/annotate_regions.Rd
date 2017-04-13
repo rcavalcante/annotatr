@@ -26,30 +26,12 @@ A \code{GRanges} where the \code{granges} are from the regions, and the \code{mc
 Annotate genomic regions to selected genomic annotations while preserving the data associated with the genomic regions.
 }
 \examples{
-   ### An example using Gm12878 Stat3 ChIP-seq from ENCODE and an annotation shortcut
-   file = system.file('extdata', 'Gm12878_Stat3_chr2.bed.gz', package = 'annotatr')
-   r = read_regions(con = file, genome = 'hg19')
-
-   # Select and build annotations
-   annots = 'hg19_cpg_islands'
-   annotations = build_annotations(genome = 'hg19', annotations = annots)
-
-   a = annotate_regions(
-       regions = r,
-       annotations = annotations,
-       ignore.strand = TRUE)
-
-   ### An example with built-in and custom annotations
-   a = system.file('extdata', 'test_annotations_3.bed', package='annotatr')
-   read_annotations(con = a, name = 'TFBS', genome = 'hg19')
-
    r_file = system.file('extdata', 'test_read_multiple_data_nohead.bed', package='annotatr')
    extraCols = c(pval = 'numeric', mu1 = 'integer', mu0 = 'integer', diff_exp = 'character')
    r = read_regions(con = r_file, genome = 'hg19', extraCols = extraCols, rename_score = 'coverage')
 
-   # Select and build annotations
-   annots = c('hg19_cpg_islands','hg19_custom_TFBS')
-   annotations = build_annotations(genome = 'hg19', annotations = annots)
+   # Get premade CpG annotations
+   data('example_annotations', package = 'annotatr')
 
    a = annotate_regions(
        regions = r,

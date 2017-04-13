@@ -25,9 +25,8 @@ If a region is annotated to multiple annotations of the same \code{annot.type}, 
 }
 \examples{
 
-   # Select and build annotations
-   annots = c('hg19_cpg_islands', 'hg19_genes_promoters')
-   annotations = build_annotations(genome = 'hg19', annotations = annots)
+   # Get premade CpG annotations
+   data('example_annotations', package = 'annotatr')
 
    r_file = system.file('extdata', 'test_read_multiple_data_nohead.bed', package='annotatr')
    extraCols = c(pval = 'numeric', mu1 = 'integer', mu0 = 'integer', diff_exp = 'character')

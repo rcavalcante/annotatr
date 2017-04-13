@@ -38,14 +38,14 @@ This function produces either histograms over \code{facet}, or x-y scatterplots 
 \examples{
    # An example with multi-columned data
 
-   # Select and build annotations
-   annots = c('hg19_cpgs')
-   annotations = build_annotations(genome = 'hg19', annotations = annots)
+   # Get premade CpG annotations
+   data('example_annotations', package = 'annotatr')
 
    dm_file = system.file('extdata', 'IDH2mut_v_NBM_multi_data_chr9.txt.gz', package = 'annotatr')
    extraCols = c(diff_meth = 'numeric', mu1 = 'numeric', mu0 = 'numeric')
    dm_regions = read_regions(con = dm_file, extraCols = extraCols, genome = 'hg19',
        rename_score = 'pval', rename_name = 'DM_status', format = 'bed')
+   dm_regions = dm_regions[1:1000]
 
    # Annotate the regions
    dm_annots = annotate_regions(

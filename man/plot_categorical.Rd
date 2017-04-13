@@ -43,14 +43,14 @@ Given a \code{GRanges} of annotated regions from \code{annotate_regions()}, visu
 For example, if a differentially methylated region has the categorical label hyper, and is annotated to a promoter, a 5UTR, two exons, and an intron. Each annotation will appear in the All bar once. Likewise for the hyper bar if the differential methylation status is chosen as \code{x} with \code{annot.type} chosen as \code{fill}.
 }
 \examples{
-   # Select and build annotations
-   annots = c('hg19_cpgs')
-   annotations = build_annotations(genome = 'hg19', annotations = annots)
+   # Get premade CpG annotations
+   data('example_annotations', package = 'annotatr')
 
    dm_file = system.file('extdata', 'IDH2mut_v_NBM_multi_data_chr9.txt.gz', package = 'annotatr')
    extraCols = c(diff_meth = 'numeric', mu1 = 'numeric', mu0 = 'numeric')
    dm_regions = read_regions(con = dm_file, extraCols = extraCols, genome = 'hg19',
        rename_score = 'pval', rename_name = 'DM_status', format = 'bed')
+   dm_regions = dm_regions[1:1000]
 
    dm_annots = annotate_regions(
        regions = dm_regions,

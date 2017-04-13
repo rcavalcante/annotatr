@@ -19,14 +19,10 @@ A \code{GRanges} object of all the \code{annotations} combined. The \code{mcols}
 Create a \code{GRanges} object consisting of all the desired \code{annotations}. Supported annotation codes are listed by \code{builtin_annotations()}. The basis for enhancer annotations are FANTOM5 data, the basis for CpG related annotations are CpG island tracks from \code{AnnotationHub}, and the basis for genic annotations are from the \code{TxDb.*} and \code{org.db} group of packages.
 }
 \examples{
-# Example with hg19
-annots = c('hg19_cpg_islands','hg19_cpg_shores','hg19_genes_promoters')
+# Example with hg19 gene promoters
+annots = c('hg19_genes_promoters')
 annots_gr = build_annotations(genome = 'hg19', annotations = annots)
 
-# Example with a custom annotation
-file = system.file('extdata', 'test_annotations_3.bed', package='annotatr')
-read_annotations(con = file, name = 'test', genome = 'hg19')
-annots = c('hg19_genes_promoters','hg19_custom_test')
-annots_gr = build_annotations(genome = 'hg19', annotations = annots)
+# See vignette for an example with custom annotation
 
 }

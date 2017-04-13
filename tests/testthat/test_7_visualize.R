@@ -2,20 +2,7 @@ context('Test plot module')
 
 ################################################################################
 # Setup annotation objects
-annots = c('hg19_cpgs','hg19_enhancers_fantom')
-annotations = suppressMessages(build_annotations(genome = 'hg19', annotations = annots))
-
-################################################################################
-# Setup objects for plot_annotation()
-
-chip_file = system.file('extdata', 'Gm12878_Ezh2_sorted_scores.narrowPeak.gz', package = 'annotatr')
-chip_regions = suppressMessages(read_regions(con = chip_file, format = 'bed'))
-
-chip_annots = suppressMessages(annotate_regions(
-    regions = chip_regions,
-    annotations = annotations,
-    ignore.strand = TRUE,
-    quiet = TRUE))
+data('example_annotations', package = 'annotatr')
 
 ################################################################################
 # Setup objects for plot_categorical()
@@ -23,6 +10,7 @@ chip_annots = suppressMessages(annotate_regions(
 dm_file = system.file('extdata', 'IDH2mut_v_NBM_multi_data_chr9.txt.gz', package = 'annotatr')
 extraCols = c(diff_meth = 'numeric', mu1 = 'numeric', mu0 = 'numeric')
 dm_regions = suppressMessages(read_regions(con = dm_file, genome = 'hg19', extraCols = extraCols, rename_score = 'pval', rename_name = 'DM_status', format = 'bed'))
+dm_regions = dm_regions[1:1000]
 
 dm_random_regions = suppressMessages(randomize_regions(regions = dm_regions))
 
@@ -49,29 +37,28 @@ cpgs_order = c(
     'hg19_cpg_islands',
     'hg19_cpg_shores',
     'hg19_cpg_shelves',
-    'hg19_cpg_inter',
-    'hg19_enhancers_fantom')
+    'hg19_cpg_inter')
 
 ################################################################################
 # Test plot_annotation()
 
 test_that('Test plot_annotation() errors', {
     expect_warning(
-        plot_annotation(annotated_regions = chip_annots, annotation_order = dm_order),
+        plot_annotation(annotated_regions = dm_annots, annotation_order = c('hypor','hype','')),
         'elements in col_order that are not present')
 })
 
 test_that('Test plot_annotation() success', {
-    chip_va_min = plot_annotation(annotated_regions = chip_annots)
+    dm_va_min = plot_annotation(annotated_regions = dm_annots)
 
-    chip_va = plot_annotation(
-        annotated_regions = chip_annots,
+    dm_va = plot_annotation(
+        annotated_regions = dm_annots,
         annotation_order = cpgs_order,
         plot_title = 'Testing plot title',
         x_label = 'Test x-label',
         y_label = 'Test y-label')
 
-    dm_va = plot_annotation(
+    dm_va_rnd = plot_annotation(
         annotated_regions = dm_annots,
         annotated_random = dm_random_annots,
         annotation_order = NULL,
@@ -79,9 +66,9 @@ test_that('Test plot_annotation() success', {
         x_label = 'Annotation Type',
         y_label = 'Count')
 
-    expect_equal( dplyr::setequal(class(chip_va_min), c('gg','ggplot')), expected = TRUE)
-    expect_equal( dplyr::setequal(class(chip_va), c('gg','ggplot')), expected = TRUE)
+    expect_equal( dplyr::setequal(class(dm_va_min), c('gg','ggplot')), expected = TRUE)
     expect_equal( dplyr::setequal(class(dm_va), c('gg','ggplot')), expected = TRUE)
+    expect_equal( dplyr::setequal(class(dm_va_rnd), c('gg','ggplot')), expected = TRUE)
 })
 
 ################################################################################

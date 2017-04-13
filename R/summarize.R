@@ -13,9 +13,8 @@
 #' @examples
 #'    ### An example of ChIP-seq peaks with signalValue
 #'
-#'    # Select and build annotations
-#'    annots = c('hg19_cpg_islands','hg19_cpg_shores')
-#'    annotations = build_annotations(genome = 'hg19', annotations = annots)
+#'    # Get premade CpG annotations
+#'    data('example_annotations', package = 'annotatr')
 #'
 #'    file = system.file('extdata', 'Gm12878_Stat3_chr2.bed.gz', package = 'annotatr')
 #'    r = read_regions(con = file, genome = 'hg19')
@@ -105,9 +104,8 @@ summarize_annotations = function(annotated_regions, annotated_random, quiet = FA
 #' @examples
 #' ### Test on a very simple bed file to demonstrate different options
 #'
-#' # Select and build annotations
-#' annots = c('hg19_cpg_islands', 'hg19_genes_promoters')
-#' annotations = build_annotations(genome = 'hg19', annotations = annots)
+#' # Get premade CpG annotations
+#' data('example_annotations', package = 'annotatr')
 #'
 #' r_file = system.file('extdata', 'test_read_multiple_data_nohead.bed', package='annotatr')
 #' extraCols = c(pval = 'numeric', mu1 = 'integer', mu0 = 'integer', diff_exp = 'character')
@@ -166,9 +164,8 @@ summarize_numerical = function(annotated_regions, by = c('annot.type', 'annot.id
 #'
 #' @examples
 #'
-#'    # Select and build annotations
-#'    annots = c('hg19_cpg_islands', 'hg19_genes_promoters')
-#'    annotations = build_annotations(genome = 'hg19', annotations = annots)
+#'    # Get premade CpG annotations
+#'    data('example_annotations', package = 'annotatr')
 #'
 #'    r_file = system.file('extdata', 'test_read_multiple_data_nohead.bed', package='annotatr')
 #'    extraCols = c(pval = 'numeric', mu1 = 'integer', mu0 = 'integer', diff_exp = 'character')

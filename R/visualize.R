@@ -16,9 +16,8 @@
 #'    ########################################################################
 #'    # An example of ChIP-seq peaks with signalValue used for score
 #'
-#'    # Select and build annotations
-#'    annots = c('hg19_cpg_islands','hg19_cpg_shores')
-#'    annotations = build_annotations(genome = 'hg19', annotations = annots)
+#'    # Get premade CpG annotations
+#'    data('example_annotations', package = 'annotatr')
 #'
 #'    chip_bed = system.file('extdata', 'Gm12878_Stat3_chr2.bed.gz', package = 'annotatr')
 #'    chip_regions = read_regions(con = chip_bed, genome = 'hg19')
@@ -134,14 +133,14 @@ plot_annotation = function(annotated_regions, annotated_random, annotation_order
 #' @return A \code{ggplot} object which can be viewed by calling it, saved with \code{ggplot2::ggsave}, or edited.
 #'
 #' @examples
-#'    # Select and build annotations
-#'    annots = c('hg19_cpgs')
-#'    annotations = build_annotations(genome = 'hg19', annotations = annots)
+#'    # Get premade CpG annotations
+#'    data('example_annotations', package = 'annotatr')
 #'
 #'    dm_file = system.file('extdata', 'IDH2mut_v_NBM_multi_data_chr9.txt.gz', package = 'annotatr')
 #'    extraCols = c(diff_meth = 'numeric', mu1 = 'numeric', mu0 = 'numeric')
 #'    dm_regions = read_regions(con = dm_file, extraCols = extraCols, genome = 'hg19',
 #'        rename_score = 'pval', rename_name = 'DM_status', format = 'bed')
+#'    dm_regions = dm_regions[1:1000]
 #'
 #'    dm_annots = annotate_regions(
 #'        regions = dm_regions,
@@ -229,14 +228,14 @@ plot_coannotations = function(annotated_regions, annotation_order = NULL,
 #' @examples
 #'    # An example with multi-columned data
 #'
-#'    # Select and build annotations
-#'    annots = c('hg19_cpgs')
-#'    annotations = build_annotations(genome = 'hg19', annotations = annots)
+#'    # Get premade CpG annotations
+#'    data('example_annotations', package = 'annotatr')
 #'
 #'    dm_file = system.file('extdata', 'IDH2mut_v_NBM_multi_data_chr9.txt.gz', package = 'annotatr')
 #'    extraCols = c(diff_meth = 'numeric', mu1 = 'numeric', mu0 = 'numeric')
 #'    dm_regions = read_regions(con = dm_file, extraCols = extraCols, genome = 'hg19',
 #'        rename_score = 'pval', rename_name = 'DM_status', format = 'bed')
+#'    dm_regions = dm_regions[1:1000]
 #'
 #'    # Annotate the regions
 #'    dm_annots = annotate_regions(
@@ -367,15 +366,14 @@ plot_numerical = function(annotated_regions, x, y, facet = 'annot.type', facet_o
 #' @return A \code{ggplot} object which can be viewed by calling it, or saved with \code{ggplot2::ggsave}.
 #'
 #' @examples
-#'
-#'    # Select and build annotations
-#'    annots = c('hg19_cpg_islands','hg19_genes_promoters')
-#'    annotations = build_annotations(genome = 'hg19', annotations = annots)
+#'    # Get premade CpG annotations
+#'    data('example_annotations', package = 'annotatr')
 #'
 #'    dm_file = system.file('extdata', 'IDH2mut_v_NBM_multi_data_chr9.txt.gz', package = 'annotatr')
 #'    extraCols = c(diff_meth = 'numeric', mu1 = 'numeric', mu0 = 'numeric')
 #'    dm_regions = read_regions(con = dm_file, extraCols = extraCols, genome = 'hg19',
 #'        rename_score = 'pval', rename_name = 'DM_status', format = 'bed')
+#'    dm_regions = dm_regions[1:1000]
 #'
 #'    dm_annots = annotate_regions(
 #'        regions = dm_regions,
@@ -386,7 +384,7 @@ plot_numerical = function(annotated_regions, x, y, facet = 'annot.type', facet_o
 #'        annotated_regions = dm_annots,
 #'        x = 'mu0',
 #'        annot1 = 'hg19_cpg_islands',
-#'        annot2 = 'hg19_genes_promoters',
+#'        annot2 = 'hg19_cpg_shelves',
 #'        bin_width = 5,
 #'        plot_title = 'Group 0 Perc. Meth. in CpG Islands and Promoters',
 #'        x_label = 'Percent Methylation')
@@ -511,14 +509,14 @@ plot_numerical_coannotations = function(annotated_regions, x, y, annot1, annot2,
 #' @return A \code{ggplot} object which can be viewed by calling it, or saved with \code{ggplot2::ggsave}.
 #'
 #' @examples
-#'    # Select and build annotations
-#'    annots = c('hg19_cpgs')
-#'    annotations = build_annotations(genome = 'hg19', annotations = annots)
+#'    # Get premade CpG annotations
+#'    data('example_annotations', package = 'annotatr')
 #'
 #'    dm_file = system.file('extdata', 'IDH2mut_v_NBM_multi_data_chr9.txt.gz', package = 'annotatr')
 #'    extraCols = c(diff_meth = 'numeric', mu1 = 'numeric', mu0 = 'numeric')
 #'    dm_regions = read_regions(con = dm_file, extraCols = extraCols, genome = 'hg19',
 #'        rename_score = 'pval', rename_name = 'DM_status', format = 'bed')
+#'    dm_regions = dm_regions[1:1000]
 #'
 #'    dm_annots = annotate_regions(
 #'        regions = dm_regions,

@@ -30,14 +30,14 @@ As with \code{plot_annotation()}, the number in each cell is the number of uniqu
 For example, if a region is annotated to both a CpG shore and to two different exons simultaneously, the region will only be counted once in the CpG shore / exon cell. NOTE, this same region will count once in both the CpG shore and exon cells on the diagonal.
 }
 \examples{
-   # Select and build annotations
-   annots = c('hg19_cpgs')
-   annotations = build_annotations(genome = 'hg19', annotations = annots)
+   # Get premade CpG annotations
+   data('example_annotations', package = 'annotatr')
 
    dm_file = system.file('extdata', 'IDH2mut_v_NBM_multi_data_chr9.txt.gz', package = 'annotatr')
    extraCols = c(diff_meth = 'numeric', mu1 = 'numeric', mu0 = 'numeric')
    dm_regions = read_regions(con = dm_file, extraCols = extraCols, genome = 'hg19',
        rename_score = 'pval', rename_name = 'DM_status', format = 'bed')
+   dm_regions = dm_regions[1:1000]
 
    dm_annots = annotate_regions(
        regions = dm_regions,
