@@ -14,7 +14,7 @@
 #'    ### An example of ChIP-seq peaks with signalValue
 #'
 #'    # Get premade CpG annotations
-#'    data('example_annotations', package = 'annotatr')
+#'    data('annotations', package = 'annotatr')
 #'
 #'    file = system.file('extdata', 'Gm12878_Stat3_chr2.bed.gz', package = 'annotatr')
 #'    r = read_regions(con = file, genome = 'hg19')
@@ -105,7 +105,7 @@ summarize_annotations = function(annotated_regions, annotated_random, quiet = FA
 #' ### Test on a very simple bed file to demonstrate different options
 #'
 #' # Get premade CpG annotations
-#' data('example_annotations', package = 'annotatr')
+#' data('annotations', package = 'annotatr')
 #'
 #' r_file = system.file('extdata', 'test_read_multiple_data_nohead.bed', package='annotatr')
 #' extraCols = c(pval = 'numeric', mu1 = 'integer', mu0 = 'integer', diff_exp = 'character')
@@ -165,7 +165,7 @@ summarize_numerical = function(annotated_regions, by = c('annot.type', 'annot.id
 #' @examples
 #'
 #'    # Get premade CpG annotations
-#'    data('example_annotations', package = 'annotatr')
+#'    data('annotations', package = 'annotatr')
 #'
 #'    r_file = system.file('extdata', 'test_read_multiple_data_nohead.bed', package='annotatr')
 #'    extraCols = c(pval = 'numeric', mu1 = 'integer', mu0 = 'integer', diff_exp = 'character')

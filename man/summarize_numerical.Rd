@@ -29,7 +29,7 @@ NOTE: We do not take the distinct values of \code{seqnames}, \code{start}, \code
 ### Test on a very simple bed file to demonstrate different options
 
 # Get premade CpG annotations
-data('example_annotations', package = 'annotatr')
+data('annotations', package = 'annotatr')
 
 r_file = system.file('extdata', 'test_read_multiple_data_nohead.bed', package='annotatr')
 extraCols = c(pval = 'numeric', mu1 = 'integer', mu0 = 'integer', diff_exp = 'character')

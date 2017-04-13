@@ -2,7 +2,7 @@ context('Test plot module')
 
 ################################################################################
 # Setup annotation objects
-data('example_annotations', package = 'annotatr')
+data('annotations', package = 'annotatr')
 
 ################################################################################
 # Setup objects for plot_categorical()

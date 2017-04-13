@@ -43,7 +43,7 @@ test_that('Test error thrown for non-GRanges regions object in annotate_regions(
 test_that('Test a la carte annotations in annotate_regions()',{
     # Get premade CpG annotations
     annots = expand_annotations('hg19_cpgs')
-    data('example_annotations', package = 'annotatr')
+    data('annotations', package = 'annotatr')
 
     bed = system.file('extdata', 'test_intersect.bed', package = 'annotatr')
     r = read_regions(con = bed, format = 'bed')
@@ -54,11 +54,11 @@ test_that('Test a la carte annotations in annotate_regions()',{
         ignore.strand = TRUE,
         quiet = TRUE)
 
-    expect_true( dplyr::setequal(unique(i$annot$type), annots) )
+    expect_true( all(unique(i$annot$type) %in% expand_annotations(annots)) )
 })
 
 test_that('Test a la carte and shortcut annotations in annotate_regions()',{
-    data('example_annotations', package = 'annotatr')
+    data('annotations', package = 'annotatr')
 
     file = system.file('extdata', 'Gm12878_Stat3_chr2.bed.gz', package = 'annotatr')
     r = read_regions(con = file, format = 'bed')

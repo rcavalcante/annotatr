@@ -44,7 +44,7 @@ For example, if a differentially methylated region has the categorical label hyp
 }
 \examples{
    # Get premade CpG annotations
-   data('example_annotations', package = 'annotatr')
+   data('annotations', package = 'annotatr')
 
    dm_file = system.file('extdata', 'IDH2mut_v_NBM_multi_data_chr9.txt.gz', package = 'annotatr')
    extraCols = c(diff_meth = 'numeric', mu1 = 'numeric', mu0 = 'numeric')

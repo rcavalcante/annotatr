@@ -14,10 +14,10 @@
 #' @examples
 #'    r_file = system.file('extdata', 'test_read_multiple_data_nohead.bed', package='annotatr')
 #'    extraCols = c(pval = 'numeric', mu1 = 'integer', mu0 = 'integer', diff_exp = 'character')
-#'    r = read_regions(con = r_file, genome = 'hg19', extraCols = extraCols, rename_score = 'coverage')
+#'    r = read_regions(con = r_file, extraCols = extraCols, rename_score = 'coverage')
 #'
 #'    # Get premade CpG annotations
-#'    data('example_annotations', package = 'annotatr')
+#'    data('annotations', package = 'annotatr')
 #'
 #'    a = annotate_regions(
 #'        regions = r,

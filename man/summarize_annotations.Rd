@@ -26,7 +26,7 @@ If a region is annotated to multiple annotations of the same \code{annot.type}, 
    ### An example of ChIP-seq peaks with signalValue
 
    # Get premade CpG annotations
-   data('example_annotations', package = 'annotatr')
+   data('annotations', package = 'annotatr')
 
    file = system.file('extdata', 'Gm12878_Stat3_chr2.bed.gz', package = 'annotatr')
    r = read_regions(con = file, genome = 'hg19')

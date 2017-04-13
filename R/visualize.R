@@ -17,7 +17,7 @@
 #'    # An example of ChIP-seq peaks with signalValue used for score
 #'
 #'    # Get premade CpG annotations
-#'    data('example_annotations', package = 'annotatr')
+#'    data('annotations', package = 'annotatr')
 #'
 #'    chip_bed = system.file('extdata', 'Gm12878_Stat3_chr2.bed.gz', package = 'annotatr')
 #'    chip_regions = read_regions(con = chip_bed, genome = 'hg19')
@@ -134,11 +134,11 @@ plot_annotation = function(annotated_regions, annotated_random, annotation_order
 #'
 #' @examples
 #'    # Get premade CpG annotations
-#'    data('example_annotations', package = 'annotatr')
+#'    data('annotations', package = 'annotatr')
 #'
 #'    dm_file = system.file('extdata', 'IDH2mut_v_NBM_multi_data_chr9.txt.gz', package = 'annotatr')
 #'    extraCols = c(diff_meth = 'numeric', mu1 = 'numeric', mu0 = 'numeric')
-#'    dm_regions = read_regions(con = dm_file, extraCols = extraCols, genome = 'hg19',
+#'    dm_regions = read_regions(con = dm_file, extraCols = extraCols,
 #'        rename_score = 'pval', rename_name = 'DM_status', format = 'bed')
 #'    dm_regions = dm_regions[1:1000]
 #'
@@ -229,11 +229,11 @@ plot_coannotations = function(annotated_regions, annotation_order = NULL,
 #'    # An example with multi-columned data
 #'
 #'    # Get premade CpG annotations
-#'    data('example_annotations', package = 'annotatr')
+#'    data('annotations', package = 'annotatr')
 #'
 #'    dm_file = system.file('extdata', 'IDH2mut_v_NBM_multi_data_chr9.txt.gz', package = 'annotatr')
 #'    extraCols = c(diff_meth = 'numeric', mu1 = 'numeric', mu0 = 'numeric')
-#'    dm_regions = read_regions(con = dm_file, extraCols = extraCols, genome = 'hg19',
+#'    dm_regions = read_regions(con = dm_file, extraCols = extraCols,
 #'        rename_score = 'pval', rename_name = 'DM_status', format = 'bed')
 #'    dm_regions = dm_regions[1:1000]
 #'
@@ -367,11 +367,11 @@ plot_numerical = function(annotated_regions, x, y, facet = 'annot.type', facet_o
 #'
 #' @examples
 #'    # Get premade CpG annotations
-#'    data('example_annotations', package = 'annotatr')
+#'    data('annotations', package = 'annotatr')
 #'
 #'    dm_file = system.file('extdata', 'IDH2mut_v_NBM_multi_data_chr9.txt.gz', package = 'annotatr')
 #'    extraCols = c(diff_meth = 'numeric', mu1 = 'numeric', mu0 = 'numeric')
-#'    dm_regions = read_regions(con = dm_file, extraCols = extraCols, genome = 'hg19',
+#'    dm_regions = read_regions(con = dm_file, extraCols = extraCols,
 #'        rename_score = 'pval', rename_name = 'DM_status', format = 'bed')
 #'    dm_regions = dm_regions[1:1000]
 #'
@@ -510,7 +510,7 @@ plot_numerical_coannotations = function(annotated_regions, x, y, annot1, annot2,
 #'
 #' @examples
 #'    # Get premade CpG annotations
-#'    data('example_annotations', package = 'annotatr')
+#'    data('annotations', package = 'annotatr')
 #'
 #'    dm_file = system.file('extdata', 'IDH2mut_v_NBM_multi_data_chr9.txt.gz', package = 'annotatr')
 #'    extraCols = c(diff_meth = 'numeric', mu1 = 'numeric', mu0 = 'numeric')

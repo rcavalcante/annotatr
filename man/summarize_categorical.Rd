@@ -26,7 +26,7 @@ If a region is annotated to multiple annotations of the same \code{annot.type}, 
 \examples{
 
    # Get premade CpG annotations
-   data('example_annotations', package = 'annotatr')
+   data('annotations', package = 'annotatr')
 
    r_file = system.file('extdata', 'test_read_multiple_data_nohead.bed', package='annotatr')
    extraCols = c(pval = 'numeric', mu1 = 'integer', mu0 = 'integer', diff_exp = 'character')

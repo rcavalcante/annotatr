@@ -1,6 +1,6 @@
 context('Test summarize module')
 
-data('example_annotations', package = 'annotatr')
+data('annotations', package = 'annotatr')
 
 bed = system.file('extdata', 'IDH2mut_v_NBM_multi_data_chr9.txt.gz', package = 'annotatr')
 extraCols = c(diff_meth = 'numeric', mu1 = 'numeric', mu0 = 'numeric')
