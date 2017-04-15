@@ -147,7 +147,7 @@ Before annotating regions, they must be built with `build_annotations()` which r
 # Select annotations for intersection with regions
 # Note inclusion of custom annotation, and use of shortcuts
 annots = c('hg19_cpgs', 'hg19_basicgenes', 'hg19_genes_intergenic',
-    'hg19_enhancers_fantom', 'hg19_genes_intronexonboundaries',
+    'hg19_genes_intronexonboundaries',
     'hg19_custom_ezh2', 'hg19_H3K4me3_Gm12878')
 
 # Build the annotations (a single GRanges object)
@@ -249,7 +249,6 @@ The 5 plot functions described below are to be used on the object returned by `a
 annots_order = c(
     'hg19_custom_ezh2',
     'hg19_H3K4me3_Gm12878',
-    'hg19_enhancers_fantom',
     'hg19_genes_1to5kb',
     'hg19_genes_promoters',
     'hg19_genes_5UTRs',
@@ -275,7 +274,6 @@ The `plot_annotation()` can also use the annotated random regions in the `annota
 annots_order = c(
     'hg19_custom_ezh2',
     'hg19_H3K4me3_Gm12878',
-    'hg19_enhancers_fantom',
     'hg19_genes_1to5kb',
     'hg19_genes_promoters',
     'hg19_genes_5UTRs',
@@ -301,7 +299,6 @@ print(dm_vs_kg_annotations_wrandom)
 annots_order = c(
     'hg19_custom_ezh2',
     'hg19_H3K4me3_Gm12878',
-    'hg19_enhancers_fantom',
     'hg19_genes_promoters',
     'hg19_genes_5UTRs',
     'hg19_genes_exons',
@@ -434,7 +431,6 @@ print(dm_vs_cpg_cat_random)
 # The orders for the x-axis labels.
 x_order = c(
     'hg19_custom_ezh2',
-    'hg19_enhancers_fantom',
     'hg19_genes_1to5kb',
     'hg19_genes_promoters',
     'hg19_genes_5UTRs',
