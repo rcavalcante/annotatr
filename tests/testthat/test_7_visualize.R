@@ -97,7 +97,9 @@ test_that('Test plot_numerical() success', {
         facet_order = c('hg19_cpg_islands','hg19_cpg_shores','hg19_cpg_shelves','hg19_cpg_inter'),
         bin_width = 5,
         plot_title = 'Group 1 Methylation over CpG Annotations',
-        x_label = 'Group 1 Methylation')
+        x_label = 'Group 1 Methylation',
+        legend_facet_label = 'Group 1 Methylation Rate in Annotation',
+        legend_cum_label = 'Overall Group 1 Methylation Rate')
 
     dm_vs_regions_annot = plot_numerical(
         annotated_regions = dm_annots,
@@ -135,7 +137,9 @@ test_that('Test plot_numerical_coannotations()', {
     annot2 = 'hg19_cpg_shores',
     bin_width = 5,
     plot_title = 'Group 0 Perc. Meth. in CpG Islands and Promoters',
-    x_label = 'Percent Methylation')
+    x_label = 'Percent Methylation',
+    legend_facet_label = 'Perc. Methylation in annotation pair',
+    legend_cum_label = 'Overall Perc. Methylation')
 
   dm_vs_num_co2 = plot_numerical_coannotations(
     annotated_regions = dm_annots,

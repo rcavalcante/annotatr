@@ -5,7 +5,8 @@
 \title{Plot numerical data occurring in pairs of annotations}
 \usage{
 plot_numerical_coannotations(annotated_regions, x, y, annot1, annot2,
-  bin_width = 10, plot_title, x_label, y_label, quiet = FALSE)
+  bin_width = 10, plot_title, x_label, y_label, legend_facet_label,
+  legend_cum_label, quiet = FALSE)
 }
 \arguments{
 \item{annotated_regions}{A \code{GRanges} returned from \code{annotate_regions()}.}
@@ -25,6 +26,10 @@ plot_numerical_coannotations(annotated_regions, x, y, annot1, annot2,
 \item{x_label}{A string used for the x-axis label. If missing, no x-axis label is displayed.}
 
 \item{y_label}{A string used for the y-axis label. If missing, no y-axis label is displayed.}
+
+\item{legend_facet_label}{A string used to label the gray bar portion of the legend. Defaults to "x in annot pair".}
+
+\item{legend_cum_label}{A string used to label the red outline portion of the legend. Defaults to "All x".}
 
 \item{quiet}{Print progress messages (FALSE) or not (TRUE).}
 }
