@@ -55,7 +55,7 @@ test_that('Test summarize_numerical()', {
         over = 'diff_meth',
         quiet = TRUE)
 
-    expect_equal( mean(s[['mean']]), expected = 2.424537, tolerance = 0.01)
+    expect_equal( mean(s[['diff_meth_mean']]), expected = 2.424537, tolerance = 0.01)
 })
 
 test_that('Test summarize_numerical() and summarize_categorical() over small data', {
@@ -77,7 +77,7 @@ test_that('Test summarize_numerical() and summarize_categorical() over small dat
         by = c('annot.type', 'DM_status'),
         quiet = FALSE)
 
-    expect_equal( sn1[['mean']][which(sn1[['annot.id']] == 'inter:8599')], expected = -1.0066888, tolerance = 0.01)
+    expect_equal( sn1[['diff_meth_mean']][which(sn1[['annot.id']] == 'inter:8599')], expected = -1.0066888, tolerance = 0.01)
     expect_equal( sn2[['mu0_mean']][which(sn2[['DM_status']] == 'hyper')], expected = 16.34614, tolerance = 0.01)
 
     expect_equal( sc1[['n']][which(sc1[['annot.type']] == 'hg19_cpg_inter' & sc1[,'DM_status'] == 'hyper')], expected = 19)
