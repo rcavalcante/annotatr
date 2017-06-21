@@ -6,7 +6,7 @@
 \usage{
 plot_numerical(annotated_regions, x, y, facet = "annot.type",
   facet_order = NULL, bin_width = 10, plot_title, x_label, y_label,
-  quiet = FALSE)
+  legend_facet_label, legend_cum_label, quiet = FALSE)
 }
 \arguments{
 \item{annotated_regions}{A \code{GRanges} returned from \code{annotate_regions()}. If the data is not summarized, the data is at the region level. If it is summarized, it represents the average or standard deviation of the regions by the character vector used for \code{by} in \code{summarize_numerical()}.}
@@ -26,6 +26,10 @@ plot_numerical(annotated_regions, x, y, facet = "annot.type",
 \item{x_label}{A string used for the x-axis label. If missing, no x-axis label is displayed.}
 
 \item{y_label}{A string used for the y-axis label. If missing, no y-axis label is displayed.}
+
+\item{legend_facet_label}{A string used to label the gray bar portion of the legend. Defaults to "x in facet".}
+
+\item{legend_cum_label}{A string used to label the red outline portion of the legend. Defaults to "All in x".}
 
 \item{quiet}{Print progress messages (FALSE) or not (TRUE).}
 }

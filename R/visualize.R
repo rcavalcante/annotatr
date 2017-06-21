@@ -221,6 +221,8 @@ plot_coannotations = function(annotated_regions, annotation_order = NULL,
 #' @param plot_title A string used for the title of the plot. If missing, no title is displayed.
 #' @param x_label A string used for the x-axis label. If missing, no x-axis label is displayed.
 #' @param y_label A string used for the y-axis label. If missing, no y-axis label is displayed.
+#' @param legend_facet_label A string used to label the gray bar portion of the legend. Defaults to "x in facet".
+#' @param legend_cum_label A string used to label the red outline portion of the legend. Defaults to "All in x".
 #' @param quiet Print progress messages (FALSE) or not (TRUE).
 #'
 #' @return A \code{ggplot} object which can be viewed by calling it, or saved with \code{ggplot2::ggsave}.
@@ -282,7 +284,7 @@ plot_coannotations = function(annotated_regions, annotation_order = NULL,
 #'
 #' @export
 plot_numerical = function(annotated_regions, x, y, facet = 'annot.type', facet_order = NULL, bin_width=10,
-    plot_title, x_label, y_label, quiet = FALSE) {
+    plot_title, x_label, y_label, legend_facet_label, legend_cum_label, quiet = FALSE) {
 
     # Tidy the GRanges into a tbl_df for use with dplyr functions
     tbl = as.data.frame(annotated_regions, row.names = NULL)
@@ -302,10 +304,14 @@ plot_numerical = function(annotated_regions, x, y, facet = 'annot.type', facet_o
     # display of the overall distribution.
 
     if(missing(y)) {
-        legend_facet = sprintf('%s in %s', x, facet)
-        legend_cum = sprintf('All %s', x)
+        if(missing(legend_facet_label)) {
+            legend_facet_label = sprintf('%s in %s', x, facet)
+        }
+        if(missing(legend_cum_label)) {
+            legend_cum_label = sprintf('All %s', x)
+        }
         fill_man = c(NA, 'gray')
-        names(fill_man) = c(legend_cum, legend_facet)
+        names(fill_man) = c(legend_cum_label, legend_facet_label)
 
         # Make the base histogram ggplot
         plot =
@@ -313,12 +319,12 @@ plot_numerical = function(annotated_regions, x, y, facet = 'annot.type', facet_o
             ggplot(
                 data = facet_data,
                 aes_string(x=x, y='..density..')) +
-            geom_histogram(binwidth=bin_width, aes(fill = legend_facet)) +
+            geom_histogram(binwidth=bin_width, aes(fill = legend_facet_label)) +
             facet_wrap( stats::as.formula(paste("~", facet)) ) + # Over the facets
             # All hist is plotted with distinct (seqnames, start, end) combinations
             geom_histogram(
                 data = all_data,
-                binwidth=bin_width, aes(fill = legend_cum, color = 'red')) + # All the data
+                binwidth=bin_width, aes(fill = legend_cum_label, color = 'red')) + # All the data
             theme_bw() +
             scale_fill_manual(values = fill_man) +
             guides(color = FALSE) +
@@ -361,6 +367,8 @@ plot_numerical = function(annotated_regions, x, y, facet = 'annot.type', facet_o
 #' @param plot_title A string used for the title of the plot. If missing, no title is displayed.
 #' @param x_label A string used for the x-axis label. If missing, no x-axis label is displayed.
 #' @param y_label A string used for the y-axis label. If missing, no y-axis label is displayed.
+#' @param legend_facet_label A string used to label the gray bar portion of the legend. Defaults to "x in annot pair".
+#' @param legend_cum_label A string used to label the red outline portion of the legend. Defaults to "All x".
 #' @param quiet Print progress messages (FALSE) or not (TRUE).
 #'
 #' @return A \code{ggplot} object which can be viewed by calling it, or saved with \code{ggplot2::ggsave}.
@@ -391,7 +399,7 @@ plot_numerical = function(annotated_regions, x, y, facet = 'annot.type', facet_o
 #'
 #' @export
 plot_numerical_coannotations = function(annotated_regions, x, y, annot1, annot2, bin_width=10,
-    plot_title, x_label, y_label, quiet = FALSE) {
+    plot_title, x_label, y_label, legend_facet_label, legend_cum_label, quiet = FALSE) {
 
     # Tidy the GRanges into a tbl_df for use with dplyr functions
     tbl = as.data.frame(annotated_regions, row.names = NULL)
@@ -443,10 +451,14 @@ plot_numerical_coannotations = function(annotated_regions, x, y, annot1, annot2,
     # display of the overall distribution.
 
     if(missing(y)) {
-        legend_facet = sprintf('%s in %s', x, 'annot pair')
-        legend_cum = sprintf('All %s', x)
+        if(missing(legend_facet_label)) {
+            legend_facet_label = sprintf('%s in %s', x, 'annot pair')
+        }
+        if(missing(legend_cum_label)) {
+            legend_cum_label = sprintf('All %s', x)
+        }
         fill_man = c(NA, 'gray')
-        names(fill_man) = c(legend_cum, legend_facet)
+        names(fill_man) = c(legend_cum_label, legend_facet_label)
 
         # Make the base histogram ggplot
         plot =
@@ -454,12 +466,12 @@ plot_numerical_coannotations = function(annotated_regions, x, y, annot1, annot2,
             ggplot(
                 data = facet_data,
                 aes_string(x=x, y='..density..')) +
-            geom_histogram(binwidth=bin_width, aes(fill = legend_facet)) +
+            geom_histogram(binwidth=bin_width, aes(fill = legend_facet_label)) +
             facet_wrap( V1 ~ V2 ) + # Over the facets
             # All hist is plotted with distinct (seqnames, start, end) combinations
             geom_histogram(
                 data = all_data,
-                binwidth=bin_width, aes(fill = legend_cum, color = 'red')) + # All the data
+                binwidth=bin_width, aes(fill = legend_cum_label, color = 'red')) + # All the data
             theme_bw() +
             scale_fill_manual(values = fill_man) +
             guides(color = FALSE) +
