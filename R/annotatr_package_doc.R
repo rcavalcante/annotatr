@@ -13,7 +13,8 @@
 #' @import GenomicRanges
 #' @importClassesFrom GenomeInfoDb Seqinfo
 #' @importFrom GenomeInfoDb seqnames seqlengths
-#' @importFrom IRanges IRanges endoapply
+#' @importFrom IRanges IRanges
+#' @importFrom S4Vectors endoapply
 #' @import methods
 #' @import org.Dm.eg.db
 #' @import org.Hs.eg.db
