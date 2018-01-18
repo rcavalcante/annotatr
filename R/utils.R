@@ -67,11 +67,11 @@ builtin_annotations = function() {
         shortcut_ends = c('basicgenes','cpgs')
 
         # Gene codes
-        gene_genomes = builtin_genomes()
+        gene_genomes = annotatr::builtin_genomes()
         gene_ends = c('1to5kb', 'promoters', 'cds', '5UTRs', 'exons', 'firstexons', 'introns', 'intronexonboundaries', 'exonintronboundaries', '3UTRs', 'intergenic')
 
         # CpG codes
-        cpg_genomes = base::setdiff(builtin_genomes(),c('dm3','dm6'))
+        cpg_genomes = base::setdiff(annotatr::builtin_genomes(),c('dm3','dm6'))
         cpg_ends = c('islands', 'shores', 'shelves', 'inter')
 
         # Chromatin state codes
@@ -132,7 +132,7 @@ builtin_genomes = function() {
 #' @param genome A string giving the genome assembly.
 #'
 #' @return A string giving the name of the correct TxDb.* package name based on \code{genome}.
-get_txdb_name = function(genome = builtin_genomes()) {
+get_txdb_name = function(genome = annotatr::builtin_genomes()) {
     # Ensure valid arguments
     genome = match.arg(genome)
 
@@ -146,7 +146,7 @@ get_txdb_name = function(genome = builtin_genomes()) {
 #' @param genome A string giving the genome assembly.
 #'
 #' @return A string giving the correct org for org.db packages. e.g. hg19 -> Hs.
-get_orgdb_name = function(genome = builtin_genomes()) {
+get_orgdb_name = function(genome = annotatr::builtin_genomes()) {
     # Ensure valid arguments
     genome = match.arg(genome)
 
@@ -210,8 +210,8 @@ check_annotations = function(annotations) {
     annotations = base::setdiff(annotations, custom_annotations)
 
     # Check that the annotations are supported, tell the user which are unsupported
-    if( !all(annotations %in% builtin_annotations()) ) {
-        unsupported = base::setdiff(annotations, builtin_annotations())
+    if( !all(annotations %in% annotatr::builtin_annotations()) ) {
+        unsupported = base::setdiff(annotations, annotatr::builtin_annotations())
 
         stop(sprintf('Error: "%s" is(are) not supported. See builtin_annotations().',
             paste(unsupported, collapse=', ')))

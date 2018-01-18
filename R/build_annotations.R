@@ -165,7 +165,7 @@ build_ah_annots = function(genome, ah_codes, annotation_class) {
 #' @param annotations A character vector of valid chromatin state annotatin codes.
 #'
 #' @return A \code{GRanges} object.
-build_hmm_annots = function(genome = c('hg19'), annotations = builtin_annotations()) {
+build_hmm_annots = function(genome = c('hg19'), annotations = annotatr::builtin_annotations()) {
     # Ensure valid arguments
     genome = match.arg(genome)
     annotations = match.arg(annotations, several.ok = TRUE)
@@ -280,7 +280,7 @@ build_enhancer_annots = function(genome = c('hg19','hg38','mm9','mm10')) {
 #' @param annotations A character vector with entries of the form \code{[genome]_cpg_{islands,shores,shelves,inter}}.
 #'
 #' @return A list of \code{GRanges} objects.
-build_cpg_annots = function(genome = builtin_genomes(), annotations = builtin_annotations()) {
+build_cpg_annots = function(genome = annotatr::builtin_genomes(), annotations = annotatr::builtin_annotations()) {
     # Ensure valid arguments
     genome = match.arg(genome)
     annotations = match.arg(annotations, several.ok = TRUE)
@@ -467,7 +467,7 @@ build_cpg_annots = function(genome = builtin_genomes(), annotations = builtin_an
 #' @param annotations A character vector with entries of the form \code{[genome]_genes_{1to5kb,promoters,5UTRs,cds,exons,firstexons,introns,intronexonboundaries,exonintronboundaries,3UTRs,intergenic}}.
 #'
 #' @return A list of \code{GRanges} objects with unique \code{id} of the form \code{[type]:i}, \code{tx_id} being the UCSC knownGene transcript name, \code{gene_id} being the Entrez Gene ID, \code{symbol} being the gene symbol from the Entrez ID to symbol mapping in \code{org.db} for that species, and \code{type} being the annotation type.
-build_gene_annots = function(genome = builtin_genomes(), annotations = builtin_annotations()) {
+build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations = annotatr::builtin_annotations()) {
     # Ensure valid arguments
     genome = match.arg(genome)
     annotations = match.arg(annotations, several.ok = TRUE)
