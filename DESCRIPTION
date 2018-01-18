@@ -1,6 +1,6 @@
 Package: annotatr
 Title: Annotation of Genomic Regions to Genomic Annotations
-Version: 1.5.2
+Version: 1.5.3
 Date: 2018-01-18
 Authors@R: c(
     person("Raymond G.", "Cavalcante", email = "rcavalca@umich.edu", role = c("aut", "cre")),
@@ -18,16 +18,24 @@ Imports:
     ggplot2,
     IRanges,
     methods,
-    org.Dm.eg.db,
-    org.Hs.eg.db,
-    org.Mm.eg.db,
-    org.Rn.eg.db,
     readr,
     regioneR,
     reshape2,
     rtracklayer,
     S4Vectors (>= 0.17.5),
     stats,
+    utils
+Suggests:
+    BiocStyle,
+    devtools,
+    knitr,
+    org.Dm.eg.db,
+    org.Hs.eg.db,
+    org.Mm.eg.db,
+    org.Rn.eg.db,
+    rmarkdown,
+    roxygen2,
+    testthat,
     TxDb.Dmelanogaster.UCSC.dm3.ensGene,
     TxDb.Dmelanogaster.UCSC.dm6.ensGene,
     TxDb.Hsapiens.UCSC.hg19.knownGene,
@@ -36,15 +44,7 @@ Imports:
     TxDb.Mmusculus.UCSC.mm10.knownGene,
     TxDb.Rnorvegicus.UCSC.rn4.ensGene,
     TxDb.Rnorvegicus.UCSC.rn5.refGene,
-    TxDb.Rnorvegicus.UCSC.rn6.refGene,
-    utils
-Suggests:
-    BiocStyle,
-    devtools,
-    knitr,
-    rmarkdown,
-    roxygen2,
-    testthat
+    TxDb.Rnorvegicus.UCSC.rn6.refGene
 VignetteBuilder: knitr
 BugReports: https://www.github.com/rcavalcante/annotatr/issues
 License: GPL-3
