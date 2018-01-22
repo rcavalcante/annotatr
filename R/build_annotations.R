@@ -189,12 +189,20 @@ build_hmm_annots = function(genome = c('hg19'), annotations = annotatr::builtin_
         types = sprintf('%s_chromatin_%s', genome, paste(line, reformat_hmm_codes(tbl$type), sep='-'))
 
         # Convert to GRanges
-        gr = GenomicRanges::GRanges(
+        gr = tryCatch({
+            GenomicRanges::GRanges(
             seqnames = tbl$chr,
             ranges = IRanges::IRanges(start = tbl$start, end = tbl$end),
             strand = '*',
             type = types,
             seqinfo = GenomeInfoDb::Seqinfo(genome=genome))
+        }, error = function(e) {
+            GenomicRanges::GRanges(
+            seqnames = tbl$chr,
+            ranges = IRanges::IRanges(start = tbl$start, end = tbl$end),
+            strand = '*',
+            type = types)
+        })
 
         return(gr)
     }))
@@ -306,6 +314,9 @@ build_cpg_annots = function(genome = annotatr::builtin_genomes(), annotations = 
     } else if (genome == 'rn6') {
         use_ah = FALSE
         con = 'http://hgdownload.cse.ucsc.edu/goldenpath/rn6/database/cpgIslandExt.txt.gz'
+    } else if (genome == 'galGal5') {
+        use_ah = FALSE
+        con = 'http://hgdownload.cse.ucsc.edu/goldenpath/galGal5/database/cpgIslandExt.txt.gz'
     } else {
         stop(sprintf('CpG features are not supported for genome %s', genome))
     }
@@ -334,12 +345,18 @@ build_cpg_annots = function(genome = annotatr::builtin_genomes(), annotations = 
                     col_names = c('chr','start','end'),
                     col_types = '-cii-------')
                 # Convert to GRanges
-                islands = GenomicRanges::GRanges(
-                    seqnames = islands_tbl$chr,
-                    ranges = IRanges::IRanges(start = islands_tbl$start, end = islands_tbl$end),
-                    strand = '*',
-                    seqinfo = GenomeInfoDb::Seqinfo(genome=genome)
-                    )
+                islands = tryCatch({
+                    GenomicRanges::GRanges(
+                        seqnames = islands_tbl$chr,
+                        ranges = IRanges::IRanges(start = islands_tbl$start, end = islands_tbl$end),
+                        strand = '*',
+                        seqinfo = GenomeInfoDb::Seqinfo(genome=genome))
+                }, error = function(e){
+                    GenomicRanges::GRanges(
+                        seqnames = islands_tbl$chr,
+                        ranges = IRanges::IRanges(start = islands_tbl$start, end = islands_tbl$end),
+                        strand = '*')
+                })
             }
             islands = GenomicRanges::sort(islands)
 
@@ -501,7 +518,7 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
     # Get the org.XX.eg.db mapping from Entrez ID to gene symbol
     # First element returned is package name, second is eg2SYMBOL name
     orgdb_name = get_orgdb_name(genome)
-    if(requireNamespace(sprintf('org.%s.eg.db', orgdb_name), quietly = TRUE)) { 
+    if(requireNamespace(sprintf('org.%s.eg.db', orgdb_name), quietly = TRUE)) {
         library(sprintf('org.%s.eg.db', orgdb_name), character.only = TRUE)
     } else {
         stop(sprintf('The package %s is not installed, please install it via Bioconductor.', orgdb_name))

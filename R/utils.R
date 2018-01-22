@@ -3,6 +3,7 @@
 TXDBS = c(
     'TxDb.Dmelanogaster.UCSC.dm3.ensGene',
     'TxDb.Dmelanogaster.UCSC.dm6.ensGene',
+    'TxDb.Ggallus.UCSC.galGal5.refGene',
     'TxDb.Hsapiens.UCSC.hg19.knownGene',
     'TxDb.Hsapiens.UCSC.hg38.knownGene',
     'TxDb.Mmusculus.UCSC.mm9.knownGene',
@@ -13,8 +14,8 @@ TXDBS = c(
 
 # org.* family of packages
 ORGDBS = data.frame(
-    genome = c('dm3','dm6','hg19','hg38','mm9','mm10','rn4','rn5','rn6'),
-    org = c('Dm','Dm','Hs','Hs','Mm','Mm','Rn','Rn','Rn'),
+    genome = c('dm3','dm6','galGal5','hg19','hg38','mm9','mm10','rn4','rn5','rn6'),
+    org = c('Dm','Dm','Gg','Hs','Hs','Mm','Mm','Rn','Rn','Rn'),
     stringsAsFactors = FALSE)
 
 HMMCELLLINES = c('Gm12878','H1hesc','Hepg2','Hmec','Hsmm','Huvec','K562','Nhek','Nhlf')
@@ -124,7 +125,7 @@ builtin_annotations = function() {
 #'
 #' @export
 builtin_genomes = function() {
-    return(c('dm3','dm6','hg19','hg38','mm9','mm10','rn4','rn5','rn6'))
+    return(ORGDBS$genome)
 }
 
 #' Function to get correct TxDb.* package name based on genome
