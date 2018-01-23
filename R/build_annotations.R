@@ -491,13 +491,21 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
 
     # Load the appropriate TxDb.* library and get the txdb
     txdb_name = get_txdb_name(genome)
-    library(txdb_name, character.only = TRUE)
+    if(requireNamespace(txdb_name, quietly = TRUE)) {
+        library(txdb_name, character.only = TRUE)
+    } else {
+        stop(sprintf('The package %s is not installed, please install it via Bioconductor.', txdb_name))
+    }
     txdb = get(txdb_name)
 
     # Get the org.XX.eg.db mapping from Entrez ID to gene symbol
     # First element returned is package name, second is eg2SYMBOL name
     orgdb_name = get_orgdb_name(genome)
-    library(sprintf('org.%s.eg.db', orgdb_name), character.only = TRUE)
+    if(requireNamespace(sprintf('org.%s.eg.db', orgdb_name), quietly = TRUE)) { 
+        library(sprintf('org.%s.eg.db', orgdb_name), character.only = TRUE)
+    } else {
+        stop(sprintf('The package %s is not installed, please install it via Bioconductor.', orgdb_name))
+    }
     x = get(sprintf('org.%s.egSYMBOL', orgdb_name))
     mapped_genes = mappedkeys(x)
     eg2symbol = as.data.frame(x[mapped_genes])
