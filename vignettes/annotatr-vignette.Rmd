@@ -315,7 +315,7 @@ print(dm_vs_coannotations)
 
 ### Plotting Numerical Data Over Regions
 
-With numerical data, the `plot_numerical()` function plots a single variable (histogram) or two variables (scatterplot) at the region level, faceting over the annotations. Note, when the plot is a histogram, the distribution over all regions is plotted within each facet.
+With numerical data, the `plot_numerical()` function plots a single variable (histogram) or two variables (scatterplot) at the region level, faceting over the categorical variable of choice. It is possible to include two categorical variables to facet over (see below). Note, when the plot is a histogram, the distribution over all regions is plotted within each facet.
 
 ```{r, fig.align='center', fig.cap='Methylation Rates in Group 0 for Regions Over DM Status.', fig.height=6, fig.width=6, fig.show='hold', warning = FALSE, message = FALSE}
 dm_vs_regions_annot = plot_numerical(
@@ -329,6 +329,18 @@ dm_vs_regions_annot = plot_numerical(
     plot_title = 'Group 0 Region Methylation In Genes',
     x_label = 'Group 0')
 print(dm_vs_regions_annot)
+```
+
+```{r, fig.align='center', fig.cap='Methylation Differences for Regions Over DM Status and Annotation Type.', fig.height=6, fig.width=6, fig.show='hold', warning = FALSE, message = FALSE}
+dm_vs_regions_annot2 = plot_numerical(
+    annotated_regions = dm_annotated,
+    x = 'diff_meth',
+    facet = c('annot.type','DM_status'),
+    facet_order = list(c('hg19_genes_promoters','hg19_genes_5UTRs','hg19_cpg_islands'), c('hyper','hypo','none')),
+    bin_width = 5,
+    plot_title = 'Group 0 Region Methylation In Genes',
+    x_label = 'Methylation Difference')
+print(dm_vs_regions_annot2)
 ```
 
 ```{r, fig.align='center', fig.cap='Methylation Rates in Regions Over DM Status in Group 0 vs Group 1.', fig.height=6, fig.width=6, fig.show='hold', warning = FALSE, message = FALSE}

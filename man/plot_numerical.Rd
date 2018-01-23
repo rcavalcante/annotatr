@@ -4,9 +4,9 @@
 \alias{plot_numerical}
 \title{Plot numerical data over regions or regions summarized over annotations}
 \usage{
-plot_numerical(annotated_regions, x, y, facet = "annot.type",
-  facet_order = NULL, bin_width = 10, plot_title, x_label, y_label,
-  legend_facet_label, legend_cum_label, quiet = FALSE)
+plot_numerical(annotated_regions, x, y, facet, facet_order, bin_width = 10,
+  plot_title, x_label, y_label, legend_facet_label, legend_cum_label,
+  quiet = FALSE)
 }
 \arguments{
 \item{annotated_regions}{A \code{GRanges} returned from \code{annotate_regions()}. If the data is not summarized, the data is at the region level. If it is summarized, it represents the average or standard deviation of the regions by the character vector used for \code{by} in \code{summarize_numerical()}.}
@@ -15,9 +15,9 @@ plot_numerical(annotated_regions, x, y, facet = "annot.type",
 
 \item{y}{A string indicating the column of the \code{GRanges} to use for the y-axis. If missing, a a histogram over \code{x} will be plotted. If not missing, a scatterplot is plotted.}
 
-\item{facet}{A string indicating which categorical variable in the \code{GRanges} to make \code{ggplot2} facets over. Default is \code{annot.type}.}
+\item{facet}{A string, or character vector of two strings, indicating indicating which categorical variable(s) in the \code{GRanges} to make \code{ggplot2} facets over. When two facets are given, the first entry is the vertical facet and the second entry is the horizontal facet. Default is \code{annot.type}.}
 
-\item{facet_order}{A character vector which give the order of the facets, and can be used to subset the column in the \code{GRanges} used for the \code{facet}. For example, if \code{facet = 'annot.type'}, then the annotations maybe subsetted to just CpG annotations. Default is \code{NULL}, meaning all annotations in their default order are used.}
+\item{facet_order}{A character vector, or list of character vectors if \code{facet} has length 2, which gives the order of the facets, and can be used to subset the column in the \code{GRanges} used for the \code{facet}. For example, if \code{facet = 'annot.type'}, then the annotations maybe subsetted to just CpG annotations. Default is \code{NULL}, meaning all annotations in their default order are used.}
 
 \item{bin_width}{An integer indicating the bin width of the histogram used for score. Default 10. Select something appropriate for the data. NOTE: This is only used if \code{y} is \code{NULL}.}
 
@@ -69,6 +69,17 @@ This function produces either histograms over \code{facet}, or x-y scatterplots 
        bin_width = 5,
        plot_title = 'Group 1 Methylation over CpG Annotations',
        x_label = 'Group 1 Methylation')
+
+   # Plot histogram of group 1 methylation rates across the CpG annotations
+   # crossed with DM_status
+   dm_vs_regions_diffmeth = plot_numerical(
+       annotated_regions = dm_annots,
+       x = 'diff_meth',
+       facet = c('annot.type','DM_status'),
+       facet_order = list(c('hg19_genes_promoters','hg19_genes_5UTRs','hg19_cpg_islands'), c('hyper','hypo','none')),
+       bin_width = 5,
+       plot_title = 'Group 0 Region Methylation In Genes',
+       x_label = 'Methylation Difference')
 
    # Can also use the result of annotate_regions() to plot two numerical
    # data columns against each other for each region, and facet by annotations.

@@ -121,6 +121,25 @@ test_that('Test plot_numerical() success', {
         x_label = 'Group 0',
         y_label = 'Group 1')
 
+    dm_vs_regions_mu12 = plot_numerical(
+        annotated_regions = dm_annots,
+        x = 'mu1',
+        facet = c('annot.type', 'DM_status'),
+        facet_order = list(c('hg19_cpg_islands','hg19_cpg_shores'), c('hyper','hypo','none')),
+        plot_title = 'Region Methylation: Group 0 vs Group 1',
+        x_label = 'Group 0',
+        y_label = 'Group 1')
+
+    dm_vs_regions_name2 = plot_numerical(
+        annotated_regions = dm_annots,
+        x = 'mu0',
+        y = 'mu1',
+        facet = c('annot.type', 'DM_status'),
+        facet_order = list(NULL, c('hyper','hypo','none')),
+        plot_title = 'Region Methylation: Group 0 vs Group 1',
+        x_label = 'Group 0',
+        y_label = 'Group 1')
+
     expect_equal( dplyr::setequal(class(dm_vs_regions_mu1), c('gg','ggplot')), expected = TRUE)
     expect_equal( dplyr::setequal(class(dm_vs_regions_annot), c('gg','ggplot')), expected = TRUE)
     expect_equal( dplyr::setequal(class(dm_vs_regions_name), c('gg','ggplot')), expected = TRUE)

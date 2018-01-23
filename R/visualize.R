@@ -215,8 +215,8 @@ plot_coannotations = function(annotated_regions, annotation_order = NULL,
 #' @param annotated_regions A \code{GRanges} returned from \code{annotate_regions()}. If the data is not summarized, the data is at the region level. If it is summarized, it represents the average or standard deviation of the regions by the character vector used for \code{by} in \code{summarize_numerical()}.
 #' @param x A string indicating the column of the \code{GRanges} to use for the x-axis.
 #' @param y A string indicating the column of the \code{GRanges} to use for the y-axis. If missing, a a histogram over \code{x} will be plotted. If not missing, a scatterplot is plotted.
-#' @param facet A string indicating which categorical variable in the \code{GRanges} to make \code{ggplot2} facets over. Default is \code{annot.type}.
-#' @param facet_order A character vector which give the order of the facets, and can be used to subset the column in the \code{GRanges} used for the \code{facet}. For example, if \code{facet = 'annot.type'}, then the annotations maybe subsetted to just CpG annotations. Default is \code{NULL}, meaning all annotations in their default order are used.
+#' @param facet A string, or character vector of two strings, indicating indicating which categorical variable(s) in the \code{GRanges} to make \code{ggplot2} facets over. When two facets are given, the first entry is the vertical facet and the second entry is the horizontal facet. Default is \code{annot.type}.
+#' @param facet_order A character vector, or list of character vectors if \code{facet} has length 2, which gives the order of the facets, and can be used to subset the column in the \code{GRanges} used for the \code{facet}. For example, if \code{facet = 'annot.type'}, then the annotations maybe subsetted to just CpG annotations. Default is \code{NULL}, meaning all annotations in their default order are used.
 #' @param bin_width An integer indicating the bin width of the histogram used for score. Default 10. Select something appropriate for the data. NOTE: This is only used if \code{y} is \code{NULL}.
 #' @param plot_title A string used for the title of the plot. If missing, no title is displayed.
 #' @param x_label A string used for the x-axis label. If missing, no x-axis label is displayed.
@@ -258,6 +258,17 @@ plot_coannotations = function(annotated_regions, annotation_order = NULL,
 #'        plot_title = 'Group 1 Methylation over CpG Annotations',
 #'        x_label = 'Group 1 Methylation')
 #'
+#'    # Plot histogram of group 1 methylation rates across the CpG annotations
+#'    # crossed with DM_status
+#'    dm_vs_regions_diffmeth = plot_numerical(
+#'        annotated_regions = dm_annots,
+#'        x = 'diff_meth',
+#'        facet = c('annot.type','DM_status'),
+#'        facet_order = list(c('hg19_genes_promoters','hg19_genes_5UTRs','hg19_cpg_islands'), c('hyper','hypo','none')),
+#'        bin_width = 5,
+#'        plot_title = 'Group 0 Region Methylation In Genes',
+#'        x_label = 'Methylation Difference')
+#'
 #'    # Can also use the result of annotate_regions() to plot two numerical
 #'    # data columns against each other for each region, and facet by annotations.
 #'    dm_vs_regions_annot = plot_numerical(
@@ -283,20 +294,48 @@ plot_coannotations = function(annotated_regions, annotation_order = NULL,
 #'        y_label = 'Group 1')
 #'
 #' @export
-plot_numerical = function(annotated_regions, x, y, facet = 'annot.type', facet_order = NULL, bin_width=10,
+plot_numerical = function(annotated_regions, x, y, facet, facet_order, bin_width=10,
     plot_title, x_label, y_label, legend_facet_label, legend_cum_label, quiet = FALSE) {
+
+    # Check for facet facet_order mismatches
+    if(length(facet) == 2) {
+        if(!is(facet_order, 'list')) {
+            stop('When facet is of length two, facet_order must be a list giving the order for each facet variable.')
+        }
+        two_facets = TRUE
+    } else {
+        two_facets = FALSE
+    }
+
+    # Deal with facet formula
+    if(two_facets) {
+        facet_formula = paste(facet[1], "~", facet[2])
+    } else {
+        facet_formula = paste("~", facet)
+    }
 
     # Tidy the GRanges into a tbl_df for use with dplyr functions
     tbl = as.data.frame(annotated_regions, row.names = NULL)
 
     ########################################################################
     # Order and subset the annotations
-    sub_tbl = subset_order_tbl(tbl = tbl, col = facet, col_order = facet_order)
+    if(two_facets) {
+        sub_tbl = subset_order_tbl(tbl = tbl, col = facet[1], col_order = facet_order[[1]])
+        sub_tbl = subset_order_tbl(tbl = sub_tbl, col = facet[2], col_order = facet_order[[2]])
+    } else {
+        sub_tbl = subset_order_tbl(tbl = tbl, col = facet, col_order = facet_order)
+    }
 
     ########################################################################
     # Create data objects for plots
     facet_data = dplyr::distinct_(dplyr::ungroup(sub_tbl), .dots=c('seqnames', 'start', 'end', 'annot.type'), .keep_all=TRUE)
-    all_data = dplyr::distinct_(dplyr::select(dplyr::ungroup(tbl), -matches(facet)), .dots=c('seqnames', 'start', 'end'), .keep_all=TRUE)
+    if(two_facets) {
+        all_data = dplyr::distinct_(dplyr::select(dplyr::ungroup(tbl), -matches(facet[1])), .dots=c('seqnames', 'start', 'end'), .keep_all=TRUE)
+        all_data = dplyr::distinct_(dplyr::select(all_data, -matches(facet[2])), .dots=c('seqnames', 'start', 'end'), .keep_all=TRUE)
+    } else {
+        all_data = dplyr::distinct_(dplyr::select(dplyr::ungroup(tbl), -matches(facet)), .dots=c('seqnames', 'start', 'end'), .keep_all=TRUE)
+    }
+
 
     ########################################################################
     # Construct the plot
@@ -305,7 +344,11 @@ plot_numerical = function(annotated_regions, x, y, facet = 'annot.type', facet_o
 
     if(missing(y)) {
         if(missing(legend_facet_label)) {
-            legend_facet_label = sprintf('%s in %s', x, facet)
+            if(two_facets) {
+                legend_facet_label = sprintf('%s in %s x %s', x, facet[1], facet[2])
+            } else {
+                legend_facet_label = sprintf('%s in %s', x, facet)
+            }
         }
         if(missing(legend_cum_label)) {
             legend_cum_label = sprintf('All %s', x)
@@ -320,7 +363,7 @@ plot_numerical = function(annotated_regions, x, y, facet = 'annot.type', facet_o
                 data = facet_data,
                 aes_string(x=x, y='..density..')) +
             geom_histogram(binwidth=bin_width, aes(fill = legend_facet_label)) +
-            facet_wrap( stats::as.formula(paste("~", facet)) ) + # Over the facets
+            facet_wrap( stats::as.formula(facet_formula) ) + # Over the facets
             # All hist is plotted with distinct (seqnames, start, end) combinations
             geom_histogram(
                 data = all_data,
@@ -333,7 +376,7 @@ plot_numerical = function(annotated_regions, x, y, facet = 'annot.type', facet_o
         # Make the base scatter ggplot
         plot = ggplot(facet_data, aes_string(x=x, y=y)) +
             geom_point(alpha = 1/8, size = 1) +
-            facet_wrap( stats::as.formula(paste("~", facet)) ) +
+            facet_wrap( stats::as.formula(facet_formula) ) +
             theme_bw()
     }
 
