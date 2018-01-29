@@ -142,10 +142,10 @@ summarize_numerical = function(annotated_regions, by = c('annot.type', 'annot.id
         message(sprintf('Grouping regions by %s, and summarizing numerical data over %s',
             paste(by, collapse=' & '), paste(over, collapse=' & ')))
     }
-    agg = dplyr::summarize_each_(
+    agg = dplyr::summarize_at(
         dplyr::group_by_(annotated_regions, .dots = by),
-        dplyr::funs(n(), 'mean', 'sd'),
-        over)
+        over,
+        dplyr::funs(n(), 'mean', 'sd'))
 
     return(agg)
 }
