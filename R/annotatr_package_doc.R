@@ -16,24 +16,11 @@
 #' @importFrom IRanges IRanges
 #' @importFrom S4Vectors endoapply
 #' @import methods
-#' @import org.Dm.eg.db
-#' @import org.Hs.eg.db
-#' @import org.Mm.eg.db
-#' @import org.Rn.eg.db
 #' @importFrom readr read_tsv
 #' @importFrom reshape2 melt
 #' @importFrom regioneR randomizeRegions
 #' @import rtracklayer
 #' @importClassesFrom S4Vectors Hits Rle
 #' @importFrom stats as.formula
-#' @import TxDb.Dmelanogaster.UCSC.dm3.ensGene
-#' @import TxDb.Dmelanogaster.UCSC.dm6.ensGene
-#' @import TxDb.Hsapiens.UCSC.hg19.knownGene
-#' @import TxDb.Hsapiens.UCSC.hg38.knownGene
-#' @import TxDb.Mmusculus.UCSC.mm9.knownGene
-#' @import TxDb.Mmusculus.UCSC.mm10.knownGene
-#' @import TxDb.Rnorvegicus.UCSC.rn4.ensGene
-#' @import TxDb.Rnorvegicus.UCSC.rn5.refGene
-#' @import TxDb.Rnorvegicus.UCSC.rn6.refGene
 #' @importFrom utils combn data
 NULL

@@ -4,7 +4,7 @@
 \name{annotatr_cache}
 \alias{annotatr_cache}
 \title{A global-variable to hold custom annotations loaded in an R session}
-\format{An object of class \code{list} of length 2.}
+\format{An object of class \code{list} of length 3.}
 \usage{
 annotatr_cache
 }
@@ -27,6 +27,7 @@ annotations that a user reads in during a session in which annotatr is loaded.
  # The result of read_annotations() is not visible in .GlobalEnv, instead
  # need to use the get method
  print(annotatr_cache$get('hg19_custom_test'))
-
+ # See what is in the annotatr_cache
+ annotatr_cache$list_env()
 }
 \keyword{datasets}
