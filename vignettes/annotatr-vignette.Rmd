@@ -113,6 +113,12 @@ read_annotations(con = ezh2_file, genome = 'hg19', name = 'ezh2', format = 'bed'
 print(annotatr_cache$get('hg19_custom_ezh2'))
 ```
 
+To see what is in the `annotatr_cache` environment, do the following:
+
+```{r, warning = FALSE, message = FALSE}
+print(annotatr_cache$list_env())
+```
+
 # Usage
 
 The following example is based on the results of testing for differential methylation of genomic regions between two conditions using [methylSig](https://github.com/sartorlab/methylSig). The file (`inst/extdata/IDH2mut_v_NBM_multi_data_chr9.txt.gz`) contains chromosome locations, as well as categorical and numerical data columns, and provides a good example of the flexibility of `annotatr`.

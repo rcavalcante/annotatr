@@ -17,7 +17,8 @@
 #'  # The result of read_annotations() is not visible in .GlobalEnv, instead
 #'  # need to use the get method
 #'  print(annotatr_cache$get('hg19_custom_test'))
-#'
+#'  # See what is in the annotatr_cache
+#'  annotatr_cache$list_env()
 #' @export
 annotatr_cache <- local({
     env = new.env(parent = emptyenv())
@@ -28,6 +29,8 @@ annotatr_cache <- local({
         if (!exists(key, env))
             stop(sQuote(key), " not in annotatr_cache", call.=FALSE)
         env[[key]]
+    }, list_env=function() {
+        ls(env)
     })
 })
 
