@@ -11,11 +11,22 @@ dm_file = system.file('extdata', 'IDH2mut_v_NBM_multi_data_chr9.txt.gz', package
 extraCols = c(diff_meth = 'numeric', mu1 = 'numeric', mu0 = 'numeric')
 dm_regions = suppressMessages(read_regions(con = dm_file, genome = 'hg19', extraCols = extraCols, rename_score = 'pval', rename_name = 'DM_status', format = 'bed'))
 dm_regions = dm_regions[1:1000]
+dm_regions$cancer_status = 'Cancer'
+dm_regions2 = dm_regions
+dm_regions2$cancer_status = 'NoCancer'
+
+duplicate_regions = c(dm_regions, dm_regions2)
 
 dm_random_regions = suppressMessages(randomize_regions(regions = dm_regions))
 
 dm_annots = suppressMessages(annotate_regions(
     regions = dm_regions,
+    annotations = annotations,
+    ignore.strand = TRUE,
+    quiet = TRUE))
+
+dm_dup_annots = suppressMessages(annotate_regions(
+    regions = duplicate_regions,
     annotations = annotations,
     ignore.strand = TRUE,
     quiet = TRUE))

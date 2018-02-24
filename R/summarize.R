@@ -191,7 +191,7 @@ summarize_categorical = function(annotated_regions, by = c('annot.type', 'annot.
     # from each type of annotation
     annotated_regions = dplyr::distinct_(
         dplyr::ungroup(annotated_regions),
-        .dots=c('seqnames', 'start', 'end', 'annot.type'), .keep_all=TRUE)
+        .dots=c('seqnames', 'start', 'end', by), .keep_all=TRUE)
 
     if(!quiet) {
         message(sprintf('Grouping regions by %s, and tallying',

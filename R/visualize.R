@@ -660,7 +660,7 @@ plot_categorical = function(annotated_regions, annotated_random, x, fill=NULL, x
     annotated_regions = subset_order_tbl(tbl = annotated_regions, col = fill, col_order = fill_order)
 
     # Take the distinct annotation types per unique data region
-    annotated_regions = dplyr::distinct_(dplyr::ungroup(annotated_regions), .dots=c('seqnames', 'start', 'end', 'annot.type'), .keep_all=TRUE)
+    annotated_regions = dplyr::distinct_(dplyr::ungroup(annotated_regions), .dots=c('seqnames', 'start', 'end', x, fill), .keep_all=TRUE)
 
     ########################################################################
     # Order and subset based on x_order
