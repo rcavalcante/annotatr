@@ -96,7 +96,10 @@ build_annotations = function(genome, annotations) {
         annots_grl = c(annots_grl, GenomicRanges::GRangesList(lncrna_gencode = suppressWarnings(build_lncrna_annots(genome = genome))))
     }
 
-    return(unlist(annots_grl, use.names=FALSE))
+    gr = unlist(annots_grl, use.names=FALSE)
+    names(gr) = NULL
+
+    return(gr)
 }
 
 #' A helper function to build arbitrary annotatinos from AnnotationHub
