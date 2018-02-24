@@ -6,9 +6,20 @@ bed = system.file('extdata', 'IDH2mut_v_NBM_multi_data_chr9.txt.gz', package = '
 extraCols = c(diff_meth = 'numeric', mu1 = 'numeric', mu0 = 'numeric')
 r = suppressMessages(read_regions(con = bed, genome = 'hg19', extraCols = extraCols, rename_score = 'pval', rename_name = 'DM_status', format = 'bed'))
 r = r[1:1000]
+r$cancer_status = 'Cancer'
+r2 = r
+r2$cancer_status = 'NoCancer'
+
+r_dup = c(r,r2)
 
 a = suppressMessages(annotate_regions(
     regions = r,
+    annotations = annotations,
+    ignore.strand = TRUE,
+    quiet = TRUE))
+
+a_dup = suppressMessages(annotate_regions(
+    regions = r_dup,
     annotations = annotations,
     ignore.strand = TRUE,
     quiet = TRUE))
@@ -77,8 +88,16 @@ test_that('Test summarize_numerical() and summarize_categorical() over small dat
         by = c('annot.type', 'DM_status'),
         quiet = FALSE)
 
+    # Testing maintanence of duplicate regions with different categories
+    sc2 = summarize_categorical(
+        annotated_regions = a_dup,
+        by = c('annot.type', 'cancer_status'),
+        quiet = FALSE)
+
     expect_equal( sn1[['diff_meth_mean']][which(sn1[['annot.id']] == 'inter:8599')], expected = -1.0066888, tolerance = 0.01)
     expect_equal( sn2[['mu0_mean']][which(sn2[['DM_status']] == 'hyper')], expected = 16.34614, tolerance = 0.01)
 
     expect_equal( sc1[['n']][which(sc1[['annot.type']] == 'hg19_cpg_inter' & sc1[,'DM_status'] == 'hyper')], expected = 19)
+
+    expect_true( sc2[['n']][which(sc2[['annot.type']] == 'hg19_cpg_inter' & sc2[,'cancer_status'] == 'Cancer')] == sc2[['n']][which(sc2[['annot.type']] == 'hg19_cpg_inter' & sc2[,'cancer_status'] == 'NoCancer')] )
 })
