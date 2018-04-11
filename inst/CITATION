@@ -2,15 +2,15 @@ citHeader("To cite the R package 'annotatr' in publications use:")
 
 citEntry(
   entry  = "article",
-  title  = "annotatr: Associating genomic regions with genomic annotations",
+  title  = "annotatr: genomic regions in context.",
   author = personList(
 	  as.person("Raymond G Cavalcante"),
 	  as.person("Maureen A Sartor")
   ),
-  year = 2016,
-  journal = "bioRxiv",
+  year = 2017,
+  journal = "Bioinformatics",
   note = paste("R package version", meta$Version),
-  textVersion = "Cavalcante RG, Sartor MA. annotatr: Associating genomic regions with genomic annotations. bioRxiv. doi:10.1101/039685"
+  textVersion = "Cavalcante RG, Sartor MA. annotatr: genomic regions in context. Bioinformatics. (2017) 33(15):2381-2383. doi:10.1093/bioinformatics/btx183"
 )
 
 citFooter("This free open-source software implements academic research by the authors and co-workers. If you use it, please support the project by citing the appropriate journal articles.")

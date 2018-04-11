@@ -1,3 +1,29 @@
+CHANGES IN VERSION 1.6.0
+------------------------
+
+NEW FEATURES
+
+  o Add support for chicken (galGal5).
+
+USER-FACING CHANGES
+
+  o Add the ability to facet over two variables in plot_numerical().
+  o Add the ability to keep duplicate regions in summarize_categorical() and
+    plot_categorical(). This is accomplished with the 'by' parameter in the
+    former and by the 'x' and 'fill' parameters in the latter, and passing
+    their contents into the '.dots' parameter of dplyr::distinct_().
+  o Make TxDb and OrgDb packages Suggests instead of Imports. NOTE: This saves
+    space, but also requires downloading the appropriate packages as needed.
+  o Add list_env() function to the annotatr_cache environment to see what
+    custom annotations have been read in and added to the cache.
+
+BUGFIXES
+
+  o Replace dplyr::summarize_each_() with dplyr::summarize_at() in line with
+    deprecation in the dplyr package.
+  o Prefix builtin_ functions with annotatr:: so that packages that Import
+    annotatr don't encounter errors.
+
 CHANGES IN VERSION 1.2.0
 ------------------------
 
