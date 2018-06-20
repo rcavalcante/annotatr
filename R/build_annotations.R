@@ -527,7 +527,7 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
     if(requireNamespace(sprintf('org.%s.eg.db', orgdb_name), quietly = TRUE)) {
         library(sprintf('org.%s.eg.db', orgdb_name), character.only = TRUE)
     } else {
-        stop(sprintf('The package %s is not installed, please install it via Bioconductor.', orgdb_name))
+        stop(sprintf('The package org.%s.eg.db is not installed, please install it via Bioconductor.', orgdb_name))
     }
     x = get(sprintf('org.%s.egSYMBOL', orgdb_name))
     mapped_genes = mappedkeys(x)
