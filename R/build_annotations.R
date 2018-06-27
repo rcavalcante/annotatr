@@ -528,12 +528,14 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
     if(requireNamespace(sprintf('org.%s.eg.db', orgdb_name), quietly = TRUE)) {
         library(sprintf('org.%s.eg.db', orgdb_name), character.only = TRUE)
     } else {
-        err_mess <- paste(err_mess, 
-                          sprintf('The package org.%s.eg.db is not installed, please install it via Bioconductor.', orgdb_name),
-                          sep='\n')
+        err_mess = paste(
+            err_mess,
+            sprintf('The package org.%s.eg.db is not installed, please install it via Bioconductor.', orgdb_name),
+            sep='\n')
     }
-    if(!is.null(err_mess))
+    if(!is.null(err_mess)) {
         stop(err_mess)
+    }
     x = get(sprintf('org.%s.egSYMBOL', orgdb_name))
     mapped_genes = mappedkeys(x)
     eg2symbol = as.data.frame(x[mapped_genes])
