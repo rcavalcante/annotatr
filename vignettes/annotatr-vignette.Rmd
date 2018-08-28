@@ -21,8 +21,9 @@ Genomic regions resulting from next-generation sequencing experiments and bioinf
 The release version of `annotatr` is available via [Bioconductor](http://bioconductor.org/packages/annotatr/), and can be installed as follows:
 
 ```{r, eval=FALSE}
-source("http://bioconductor.org/biocLite.R")
-biocLite("annotatr")
+if (!requireNamespace("BiocManager", quietly=TRUE))
+    install.packages("BiocManager")
+BiocManager::install("annotatr")
 ```
 
 The development version of `annotatr` can be obtained via the [GitHub repository](https://github.com/rcavalcante/annotatr) or [Bioconductor](https://bioconductor.org/packages/devel/bioc/html/annotatr.html). It is easiest to install development versions with the [`devtools`](https://cran.r-project.org/web/packages/devtools/index.html) package as follows:
