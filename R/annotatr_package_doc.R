@@ -15,6 +15,7 @@
 #' @importFrom GenomeInfoDb seqnames seqlengths
 #' @importFrom IRanges IRanges
 #' @importFrom S4Vectors endoapply
+#' @importFrom S4Vectors splitAsList
 #' @import methods
 #' @importFrom readr read_tsv
 #' @importFrom reshape2 melt

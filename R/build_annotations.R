@@ -215,7 +215,7 @@ build_hmm_annots = function(genome = c('hg19'), annotations = annotatr::builtin_
     hmms_gr = unlist(hmms_list, use.names = FALSE)
 
     # Split the GRanges into a GRangesList for subsetting and id population
-    hmms_grl = IRanges::splitAsList(hmms_gr, GenomicRanges::mcols(hmms_gr)$type)
+    hmms_grl = S4Vectors::splitAsList(hmms_gr, GenomicRanges::mcols(hmms_gr)$type)
 
     hmms_grl = hmms_grl[names(hmms_grl) %in% annotations]
 

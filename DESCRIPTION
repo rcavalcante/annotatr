@@ -1,7 +1,7 @@
 Package: annotatr
 Title: Annotation of Genomic Regions to Genomic Annotations
-Version: 1.11.0
-Date: 2018-06-27
+Version: 1.11.1
+Date: 2019-06-08
 Authors@R: c(
     person("Raymond G.", "Cavalcante", email = "rcavalca@umich.edu", role = c("aut", "cre")),
     person(c("Maureen A."), "Sartor", email = "sartorma@med.umich.edu", role = c("ths")))
@@ -22,7 +22,7 @@ Imports:
     regioneR,
     reshape2,
     rtracklayer,
-    S4Vectors (>= 0.17.5),
+    S4Vectors (>= 0.23.10),
     stats,
     utils
 Suggests:
