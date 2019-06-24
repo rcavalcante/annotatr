@@ -51,3 +51,6 @@ test_that('Test error for non-existent custom annotations', {
 #     annotations = build_annotations(genome = 'dm6', annotations = annots)
 #     expect_true( dplyr::setequal(unique(annotations$type), expand_annotations(annots)) )
 # })
+#
+#     annots = c('danRer11_basicgenes')
+#     annotations = build_annotations(genome = 'danRer11', annotations = annots)

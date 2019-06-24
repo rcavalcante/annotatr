@@ -1,6 +1,7 @@
 ### Constants
 # TxDb.* family of packages
 TXDBS = c(
+    'TxDb.Drerio.UCSC.danRer11.refGene',
     'TxDb.Dmelanogaster.UCSC.dm3.ensGene',
     'TxDb.Dmelanogaster.UCSC.dm6.ensGene',
     'TxDb.Ggallus.UCSC.galGal5.refGene',
@@ -14,8 +15,8 @@ TXDBS = c(
 
 # org.* family of packages
 ORGDBS = data.frame(
-    genome = c('dm3','dm6','galGal5','hg19','hg38','mm9','mm10','rn4','rn5','rn6'),
-    org = c('Dm','Dm','Gg','Hs','Hs','Mm','Mm','Rn','Rn','Rn'),
+    genome = c('danRer11','dm3','dm6','galGal5','hg19','hg38','mm9','mm10','rn4','rn5','rn6'),
+    org = c('Dr','Dm','Dm','Gg','Hs','Hs','Mm','Mm','Rn','Rn','Rn'),
     stringsAsFactors = FALSE)
 
 HMMCELLLINES = c('Gm12878','H1hesc','Hepg2','Hmec','Hsmm','Huvec','K562','Nhek','Nhlf')
