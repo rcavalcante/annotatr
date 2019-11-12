@@ -823,7 +823,7 @@ build_lncrna_annots = function(genome = c('hg19','hg38','mm10')) {
 
     if(genome == 'hg19') {
         use_ah = FALSE
-        con = 'ftp://ftp.sanger.ac.uk/pub/gencode/Gencode_human/release_19/gencode.v19.long_noncoding_RNAs.gtf.gz'
+        con = 'ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_19/gencode.v19.long_noncoding_RNAs.gtf.gz'
     } else if (genome == 'hg38') {
         use_ah = TRUE
         hub_genome = 'GRCh38'
