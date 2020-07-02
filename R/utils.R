@@ -242,7 +242,7 @@ check_annotations = function(annotations) {
 expand_annotations = function(annotations) {
     are_basicgenes = any(grepl('basicgenes', annotations))
     are_cpgs = any(grepl('cpgs', annotations))
-    are_hmms = any(grepl('chromatin', annotations))
+    are_hmms = any(grepl('-chromatin', annotations))
 
     which_are_shortcuts = c(which(grepl('basicgenes', annotations)), which(grepl('cpgs', annotations)), which(grepl('-chromatin', annotations)))
 
