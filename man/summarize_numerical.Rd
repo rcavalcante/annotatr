@@ -4,8 +4,12 @@
 \alias{summarize_numerical}
 \title{Summarize numerical data over groupings of annotated regions}
 \usage{
-summarize_numerical(annotated_regions, by = c("annot.type", "annot.id"), over,
-  quiet = FALSE)
+summarize_numerical(
+  annotated_regions,
+  by = c("annot.type", "annot.id"),
+  over,
+  quiet = FALSE
+)
 }
 \arguments{
 \item{annotated_regions}{The \code{GRanges} result of \code{annotate_regions()}.}

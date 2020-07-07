@@ -4,8 +4,12 @@
 \alias{randomize_regions}
 \title{Randomize Regions}
 \usage{
-randomize_regions(regions, allow.overlaps = TRUE, per.chromosome = TRUE,
-  quiet = FALSE)
+randomize_regions(
+  regions,
+  allow.overlaps = TRUE,
+  per.chromosome = TRUE,
+  quiet = FALSE
+)
 }
 \arguments{
 \item{regions}{A \code{GRanges} object from \code{read_regions}.}

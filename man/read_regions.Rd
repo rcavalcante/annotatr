@@ -4,8 +4,15 @@
 \alias{read_regions}
 \title{Read genomic regions in BEDX+Y format}
 \usage{
-read_regions(con, genome = NA, format, extraCols = character(), rename_name,
-  rename_score, ...)
+read_regions(
+  con,
+  genome = NA,
+  format,
+  extraCols = character(),
+  rename_name,
+  rename_score,
+  ...
+)
 }
 \arguments{
 \item{con}{A path, URL, connection or BEDFile object. See \code{rtracklayer::import()} documentation.}

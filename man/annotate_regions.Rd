@@ -4,8 +4,13 @@
 \alias{annotate_regions}
 \title{A function to intersect user region data with annotation data}
 \usage{
-annotate_regions(regions, annotations, minoverlap = 1L,
-  ignore.strand = TRUE, quiet = FALSE)
+annotate_regions(
+  regions,
+  annotations,
+  minoverlap = 1L,
+  ignore.strand = TRUE,
+  quiet = FALSE
+)
 }
 \arguments{
 \item{regions}{The GRanges object returned by \code{read_regions()}.}

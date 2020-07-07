@@ -4,8 +4,10 @@
 \alias{build_hmm_annots}
 \title{A helper function to build chromHMM annotations for hg19 from UCSC Genome Browser.}
 \usage{
-build_hmm_annots(genome = c("hg19"),
-  annotations = annotatr::builtin_annotations())
+build_hmm_annots(
+  genome = c("hg19"),
+  annotations = annotatr::builtin_annotations()
+)
 }
 \arguments{
 \item{genome}{The genome assembly.}

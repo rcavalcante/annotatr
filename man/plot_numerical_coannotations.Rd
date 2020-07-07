@@ -4,9 +4,20 @@
 \alias{plot_numerical_coannotations}
 \title{Plot numerical data occurring in pairs of annotations}
 \usage{
-plot_numerical_coannotations(annotated_regions, x, y, annot1, annot2,
-  bin_width = 10, plot_title, x_label, y_label, legend_facet_label,
-  legend_cum_label, quiet = FALSE)
+plot_numerical_coannotations(
+  annotated_regions,
+  x,
+  y,
+  annot1,
+  annot2,
+  bin_width = 10,
+  plot_title,
+  x_label,
+  y_label,
+  legend_facet_label,
+  legend_cum_label,
+  quiet = FALSE
+)
 }
 \arguments{
 \item{annotated_regions}{A \code{GRanges} returned from \code{annotate_regions()}.}

@@ -1,6 +1,10 @@
 CHANGES IN VERSION 1.16.0
 -------------------------
 
+USER-FACING CHANGES
+
+  o Export expand_annotations(), tidy_annotations(), and subset_order_tbl().
+
 BUGFIXES
 
   o Fix incorrect shortcut search for HMMs.

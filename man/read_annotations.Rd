@@ -4,8 +4,7 @@
 \alias{read_annotations}
 \title{Read custom annotations}
 \usage{
-read_annotations(con, name, genome = NA, format, extraCols = character(),
-  ...)
+read_annotations(con, name, genome = NA, format, extraCols = character(), ...)
 }
 \arguments{
 \item{con}{A path, URL, connection or BEDFile object. See \code{rtracklayer::import.bed()} documentation.}

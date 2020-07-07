@@ -4,9 +4,20 @@
 \alias{plot_categorical}
 \title{Plot a categorical data variable over another}
 \usage{
-plot_categorical(annotated_regions, annotated_random, x, fill = NULL,
-  x_order = NULL, fill_order = NULL, position = "stack", plot_title,
-  legend_title, x_label, y_label, quiet = FALSE)
+plot_categorical(
+  annotated_regions,
+  annotated_random,
+  x,
+  fill = NULL,
+  x_order = NULL,
+  fill_order = NULL,
+  position = "stack",
+  plot_title,
+  legend_title,
+  x_label,
+  y_label,
+  quiet = FALSE
+)
 }
 \arguments{
 \item{annotated_regions}{The \code{GRanges} result of \code{annotate_regions()}.}

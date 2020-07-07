@@ -4,8 +4,13 @@
 \alias{plot_coannotations}
 \title{Plot pair-wise annotations across regions}
 \usage{
-plot_coannotations(annotated_regions, annotation_order = NULL, plot_title,
-  axes_label, quiet = FALSE)
+plot_coannotations(
+  annotated_regions,
+  annotation_order = NULL,
+  plot_title,
+  axes_label,
+  quiet = FALSE
+)
 }
 \arguments{
 \item{annotated_regions}{The \code{GRanges} result of \code{annotate_regions()}.}

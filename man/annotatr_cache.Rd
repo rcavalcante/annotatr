@@ -4,7 +4,9 @@
 \name{annotatr_cache}
 \alias{annotatr_cache}
 \title{A global-variable to hold custom annotations loaded in an R session}
-\format{An object of class \code{list} of length 3.}
+\format{
+An object of class \code{list} of length 3.
+}
 \usage{
 annotatr_cache
 }

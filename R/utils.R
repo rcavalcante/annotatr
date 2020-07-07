@@ -161,6 +161,7 @@ get_orgdb_name = function(genome = annotatr::builtin_genomes()) {
 #' @param annotations A character vector of annotations, in the order they are to appear in the visualization.
 #'
 #' @return A list of mappings from original annotation names to names ready for visualization.
+#' @export
 tidy_annotations = function(annotations) {
     tidy = sapply(annotations, function(a){
         tokens = unlist(strsplit(a,'_'))
@@ -239,6 +240,7 @@ check_annotations = function(annotations) {
 #' @param annotations A character vector of annotations, possibly using the shortcut accessors
 #'
 #' @return A vector of data accession-ized names that are ordered from upstream to downstream in the case of knownGenes and islands to interCGI in the case of cpgs.
+#' @export
 expand_annotations = function(annotations) {
     are_basicgenes = any(grepl('basicgenes', annotations))
     are_cpgs = any(grepl('cpgs', annotations))
@@ -287,6 +289,7 @@ expand_annotations = function(annotations) {
 #' @param col_order A character vector indicating the order of \code{col}.
 #'
 #' @return A modified version of \code{summary} with \code{col} subsetted by \code{col_order}.
+#' @export
 subset_order_tbl = function(tbl, col, col_order) {
     if(!is.null(col)) {
         # Collect all types in the column

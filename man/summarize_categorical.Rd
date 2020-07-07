@@ -4,8 +4,11 @@
 \alias{summarize_categorical}
 \title{Summarize categorical data over groupings of annotated regions}
 \usage{
-summarize_categorical(annotated_regions, by = c("annot.type", "annot.id"),
-  quiet = FALSE)
+summarize_categorical(
+  annotated_regions,
+  by = c("annot.type", "annot.id"),
+  quiet = FALSE
+)
 }
 \arguments{
 \item{annotated_regions}{The \code{GRanges} result of \code{annotate_regions()}.}

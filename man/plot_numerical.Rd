@@ -4,9 +4,20 @@
 \alias{plot_numerical}
 \title{Plot numerical data over regions or regions summarized over annotations}
 \usage{
-plot_numerical(annotated_regions, x, y, facet, facet_order, bin_width = 10,
-  plot_title, x_label, y_label, legend_facet_label, legend_cum_label,
-  quiet = FALSE)
+plot_numerical(
+  annotated_regions,
+  x,
+  y,
+  facet,
+  facet_order,
+  bin_width = 10,
+  plot_title,
+  x_label,
+  y_label,
+  legend_facet_label,
+  legend_cum_label,
+  quiet = FALSE
+)
 }
 \arguments{
 \item{annotated_regions}{A \code{GRanges} returned from \code{annotate_regions()}. If the data is not summarized, the data is at the region level. If it is summarized, it represents the average or standard deviation of the regions by the character vector used for \code{by} in \code{summarize_numerical()}.}
@@ -58,7 +69,7 @@ This function produces either histograms over \code{facet}, or x-y scatterplots 
        ignore.strand = TRUE)
 
    # Plot histogram of group 1 methylation rates across the CpG annotations.
-   # NOTE: Overall distribution (everything in \\code{facet_order})
+   # NOTE: Overall distribution (everything in \code{facet_order})
    # is plotted in each facet for comparison.
    dm_vs_regions_mu1 = plot_numerical(
        annotated_regions = dm_annots,

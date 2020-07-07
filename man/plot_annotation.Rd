@@ -4,8 +4,15 @@
 \alias{plot_annotation}
 \title{Plot the number of regions per annotation}
 \usage{
-plot_annotation(annotated_regions, annotated_random, annotation_order = NULL,
-  plot_title, x_label, y_label, quiet = FALSE)
+plot_annotation(
+  annotated_regions,
+  annotated_random,
+  annotation_order = NULL,
+  plot_title,
+  x_label,
+  y_label,
+  quiet = FALSE
+)
 }
 \arguments{
 \item{annotated_regions}{The \code{GRanges} result of \code{annotate_regions()}.}
