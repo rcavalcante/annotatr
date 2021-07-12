@@ -827,20 +827,16 @@ build_lncrna_annots = function(genome = c('hg19','hg38','mm10')) {
     } else if (genome == 'hg38') {
         use_ah = TRUE
         hub_genome = 'GRCh38'
+        ID = 'AH75123'
     } else if (genome == 'mm10') {
         use_ah = TRUE
         hub_genome = 'GRCm38'
+        ID = 'AH49550'
     }
 
     if(use_ah) {
         # Create AnnotationHub connection
         ah = AnnotationHub::AnnotationHub()
-
-        # And do the query for available CpG Islands
-        query = AnnotationHub::query(ah, c('long_noncoding_RNAs'))
-
-        # Determine the correct ID to extract data from AnnotationHub
-        ID = row.names(GenomicRanges::mcols(query)[GenomicRanges::mcols(query)$genome == hub_genome, ])
     }
 
     # Each annotation should be a GRanges object with the following mcols:
