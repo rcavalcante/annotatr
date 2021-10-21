@@ -57,9 +57,9 @@ plot_annotation = function(annotated_regions, annotated_random, annotation_order
     ########################################################################
     # If a region has multiple annotation types that are the same, count only one
     # from each type of annotation
-    annotated_regions = dplyr::distinct_(
+    annotated_regions = dplyr::distinct(
         dplyr::ungroup(annotated_regions),
-        .dots=c('seqnames', 'start', 'end', 'annot.type'), .keep_all=TRUE)
+        across(c('seqnames', 'start', 'end', 'annot.type')), .keep_all=TRUE)
 
     # Do particular things if annotated_random isn't NULL
     if(!missing(annotated_random)) {
@@ -71,9 +71,9 @@ plot_annotation = function(annotated_regions, annotated_random, annotation_order
 
         # If a region has multiple annotation types that are the same, count only one
         # from each type of annotation
-        annotated_random = dplyr::distinct_(
+        annotated_random = dplyr::distinct(
             dplyr::ungroup(annotated_random),
-            .dots=c('seqnames', 'start', 'end', 'annot.type'), .keep_all=TRUE)
+            across(c('seqnames', 'start', 'end', 'annot.type')), .keep_all=TRUE)
 
         # Combine the tbl_dfs in preparation for visualization
         annotated_regions = dplyr::bind_rows("Data" = annotated_regions, "Random Regions" = annotated_random, .id = 'data_type')
@@ -174,11 +174,11 @@ plot_coannotations = function(annotated_regions, annotation_order = NULL,
     # Find the co-annotations
 
     annotation_pairs_by_region = dplyr::do(
-        dplyr::group_by_(annotated_regions, .dots=c('seqnames', 'start', 'end')),
+        dplyr::group_by(annotated_regions, across(c('seqnames', 'start', 'end'))),
         expand.grid(.$annot.type, .$annot.type, stringsAsFactors = FALSE))
 
-    annotation_pairs_by_region = dplyr::distinct_(dplyr::ungroup(annotation_pairs_by_region),
-        .dots=c('seqnames', 'start', 'end', 'Var1', 'Var2'), .keep_all=TRUE)
+    annotation_pairs_by_region = dplyr::distinct(dplyr::ungroup(annotation_pairs_by_region),
+        across(c('seqnames', 'start', 'end', 'Var1', 'Var2')), .keep_all=TRUE)
 
     pairwise_annotation_counts = table(annotation_pairs_by_region[['Var1']], annotation_pairs_by_region[['Var2']])
 
@@ -264,7 +264,9 @@ plot_coannotations = function(annotated_regions, annotation_order = NULL,
 #'        annotated_regions = dm_annots,
 #'        x = 'diff_meth',
 #'        facet = c('annot.type','DM_status'),
-#'        facet_order = list(c('hg19_genes_promoters','hg19_genes_5UTRs','hg19_cpg_islands'), c('hyper','hypo','none')),
+#'        facet_order = list(
+#'            c('hg19_genes_promoters','hg19_genes_5UTRs','hg19_cpg_islands'),
+#'            c('hyper','hypo','none')),
 #'        bin_width = 5,
 #'        plot_title = 'Group 0 Region Methylation In Genes',
 #'        x_label = 'Methylation Difference')
@@ -328,12 +330,12 @@ plot_numerical = function(annotated_regions, x, y, facet, facet_order, bin_width
 
     ########################################################################
     # Create data objects for plots
-    facet_data = dplyr::distinct_(dplyr::ungroup(sub_tbl), .dots=c('seqnames', 'start', 'end', 'annot.type'), .keep_all=TRUE)
+    facet_data = dplyr::distinct(dplyr::ungroup(sub_tbl), across(c('seqnames', 'start', 'end', 'annot.type')), .keep_all=TRUE)
     if(two_facets) {
-        all_data = dplyr::distinct_(dplyr::select(dplyr::ungroup(tbl), -matches(facet[1])), .dots=c('seqnames', 'start', 'end'), .keep_all=TRUE)
-        all_data = dplyr::distinct_(dplyr::select(all_data, -matches(facet[2])), .dots=c('seqnames', 'start', 'end'), .keep_all=TRUE)
+        all_data = dplyr::distinct(dplyr::select(dplyr::ungroup(tbl), -matches(facet[1])), across(c('seqnames', 'start', 'end')), .keep_all=TRUE)
+        all_data = dplyr::distinct(dplyr::select(all_data, -matches(facet[2])), across(c('seqnames', 'start', 'end')), .keep_all=TRUE)
     } else {
-        all_data = dplyr::distinct_(dplyr::select(dplyr::ungroup(tbl), -matches(facet)), .dots=c('seqnames', 'start', 'end'), .keep_all=TRUE)
+        all_data = dplyr::distinct(dplyr::select(dplyr::ungroup(tbl), -matches(facet)), across(c('seqnames', 'start', 'end')), .keep_all=TRUE)
     }
 
 
@@ -370,7 +372,7 @@ plot_numerical = function(annotated_regions, x, y, facet, facet_order, bin_width
                 binwidth=bin_width, aes(fill = legend_cum_label, color = 'red')) + # All the data
             theme_bw() +
             scale_fill_manual(values = fill_man) +
-            guides(color = FALSE) +
+            guides(color = 'none') +
             theme(legend.title=element_blank(), legend.position="bottom", legend.key = element_rect(color = c('red','white')))
     } else {
         # Make the base scatter ggplot
@@ -461,7 +463,7 @@ plot_numerical_coannotations = function(annotated_regions, x, y, annot1, annot2,
     # island / promoter facet. Note, sorting ensures island / promoter and promoter / island
     # are aggregated
     pairs_by_region = dplyr::do(
-        dplyr::group_by_(sub_tbl, .dots=c('seqnames', 'start', 'end')),
+        dplyr::group_by(sub_tbl, across(c('seqnames', 'start', 'end'))),
         if(nrow(.) == 1) {
             as.data.frame(
                 t(
@@ -484,9 +486,9 @@ plot_numerical_coannotations = function(annotated_regions, x, y, annot1, annot2,
 
     ########################################################################
     # Create data objects for plots
-    facet_data = dplyr::distinct_(dplyr::ungroup(pairs_by_region),
-        .dots=c('seqnames', 'start', 'end', 'V1', 'V2'), .keep_all=TRUE)
-    all_data = dplyr::distinct_(dplyr::ungroup(tbl), .dots=c('seqnames', 'start', 'end'), .keep_all=TRUE)
+    facet_data = dplyr::distinct(dplyr::ungroup(pairs_by_region),
+        across(c('seqnames', 'start', 'end', 'V1', 'V2')), .keep_all=TRUE)
+    all_data = dplyr::distinct(dplyr::ungroup(tbl), across(c('seqnames', 'start', 'end')), .keep_all=TRUE)
 
     ########################################################################
     # Construct the plot
@@ -517,7 +519,7 @@ plot_numerical_coannotations = function(annotated_regions, x, y, annot1, annot2,
                 binwidth=bin_width, aes(fill = legend_cum_label, color = 'red')) + # All the data
             theme_bw() +
             scale_fill_manual(values = fill_man) +
-            guides(color = FALSE) +
+            guides(color = 'none') +
             theme(legend.title=element_blank(), legend.position="bottom", legend.key = element_rect(color = c('red','white')))
     } else {
         # Make the base scatter ggplot
@@ -660,7 +662,7 @@ plot_categorical = function(annotated_regions, annotated_random, x, fill=NULL, x
     annotated_regions = subset_order_tbl(tbl = annotated_regions, col = fill, col_order = fill_order)
 
     # Take the distinct annotation types per unique data region
-    annotated_regions = dplyr::distinct_(dplyr::ungroup(annotated_regions), .dots=c('seqnames', 'start', 'end', x, fill), .keep_all=TRUE)
+    annotated_regions = dplyr::distinct(dplyr::ungroup(annotated_regions), across(c('seqnames', 'start', 'end', x, fill)), .keep_all=TRUE)
 
     ########################################################################
     # Order and subset based on x_order
@@ -678,7 +680,7 @@ plot_categorical = function(annotated_regions, annotated_random, x, fill=NULL, x
         annotated_random = subset_order_tbl(tbl = annotated_random, col=fill, col_order=fill_order)
 
         # Take the distinct annotation types per unique random data region
-        annotated_random = dplyr::distinct_(dplyr::ungroup(annotated_random), .dots=c('seqnames', 'start', 'end', 'annot.type'), .keep_all=TRUE)
+        annotated_random = dplyr::distinct(dplyr::ungroup(annotated_random), across(c('seqnames', 'start', 'end', 'annot.type')), .keep_all=TRUE)
 
         # Combine the tbl_dfs in preparation for visualization
         annotated_regions = dplyr::bind_rows("All" = annotated_regions, "Random Regions" = annotated_random, .id = 'data_type')

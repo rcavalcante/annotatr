@@ -5,12 +5,12 @@
 #' @docType package
 #' @name annotatr
 #'
-#' @import AnnotationDbi
-#' @import AnnotationHub
+#' @rawNamespace import(AnnotationDbi, except='select')
+#' @rawNamespace import(AnnotationHub, except='query')
 #' @import dplyr
 #' @import ggplot2
 #' @import GenomicFeatures
-#' @import GenomicRanges
+#' @rawNamespace import(GenomicRanges, except=c('union','setdiff','intersect','union'))
 #' @importClassesFrom GenomeInfoDb Seqinfo
 #' @importFrom GenomeInfoDb seqnames seqlengths
 #' @importFrom IRanges IRanges
@@ -20,7 +20,7 @@
 #' @importFrom readr read_tsv
 #' @importFrom reshape2 melt
 #' @importFrom regioneR randomizeRegions
-#' @import rtracklayer
+#' @importFrom rtracklayer import import.bed
 #' @importClassesFrom S4Vectors Hits Rle
 #' @importFrom stats as.formula
 #' @importFrom utils combn data

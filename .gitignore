@@ -4,3 +4,5 @@
 .RData
 meta/
 inst/doc
+/doc/
+/Meta/

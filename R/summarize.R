@@ -49,9 +49,9 @@ summarize_annotations = function(annotated_regions, annotated_random, quiet = FA
     ########################################################################
     # If a region has multiple annotation types that are the same, count only one
     # from each type of annotation
-    annotated_regions = dplyr::distinct_(
+    annotated_regions = dplyr::distinct(
         dplyr::ungroup(annotated_regions),
-        .dots=c('seqnames', 'start', 'end', 'annot.type'), .keep_all=TRUE)
+        across(c('seqnames', 'start', 'end', 'annot.type')), .keep_all=TRUE)
 
     # Tally over data and random regions if annotated_random isn't null,
     # otherwise tally over data only
@@ -61,9 +61,9 @@ summarize_annotations = function(annotated_regions, annotated_random, quiet = FA
 
         # If a region has multiple annotation types that are the same, count only one
         # from each type of annotation
-        annotated_random = dplyr::distinct_(
+        annotated_random = dplyr::distinct(
             dplyr::ungroup(annotated_random),
-            .dots=c('seqnames', 'start', 'end', 'annot.type'), .keep_all=TRUE)
+            across(c('seqnames', 'start', 'end', 'annot.type')), .keep_all=TRUE)
 
         if(!quiet) {
             message('Counting annotation types in data and random regions')
@@ -72,7 +72,7 @@ summarize_annotations = function(annotated_regions, annotated_random, quiet = FA
         combined_annots = dplyr::bind_rows('Data' = annotated_regions, 'Random Regions' = annotated_random, .id = 'data_type')
 
         agg = dplyr::tally(
-            dplyr::group_by_(combined_annots, .dots=c('data_type', 'annot.type'))
+            dplyr::group_by(combined_annots, across(c('data_type', 'annot.type')))
         )
     } else {
         if(!quiet) {
@@ -81,7 +81,7 @@ summarize_annotations = function(annotated_regions, annotated_random, quiet = FA
 
         # Tally over the normal data
         agg = dplyr::tally(
-            dplyr::group_by_(annotated_regions, .dots=c('annot.type'))
+            dplyr::group_by(annotated_regions, across(c('annot.type')))
         )
     }
 
@@ -92,7 +92,7 @@ summarize_annotations = function(annotated_regions, annotated_random, quiet = FA
 #'
 #' Given a \code{GRanges} of annotated regions, summarize numerical data columns based on a grouping.
 #'
-#' NOTE: We do not take the distinct values of \code{seqnames}, \code{start}, \code{end}, \code{annot.type} as in the other \code{summarize_*()} functions because in the case of a region that intersected two distinct exons, using \code{distinct_()} would destroy the information of the mean of the numerical column over one of the exons, which is not desirable.
+#' NOTE: We do not take the distinct values of \code{seqnames}, \code{start}, \code{end}, \code{annot.type} as in the other \code{summarize_*()} functions because in the case of a region that intersected two distinct exons, using \code{distinct()} would destroy the information of the mean of the numerical column over one of the exons, which is not desirable.
 #'
 #' @param annotated_regions The \code{GRanges} result of \code{annotate_regions()}.
 #' @param by A character vector of the columns of \code{as.data.frame(annotated_regions)} to group over. Default is \code{c(annot.type, annot.id)}.
@@ -143,7 +143,7 @@ summarize_numerical = function(annotated_regions, by = c('annot.type', 'annot.id
             paste(by, collapse=' & '), paste(over, collapse=' & ')))
     }
     agg = dplyr::summarize_at(
-        dplyr::group_by_(annotated_regions, .dots = by),
+        dplyr::group_by(annotated_regions, across(by)),
         over,
         dplyr::funs(n(), 'mean', 'sd'))
 
@@ -189,9 +189,9 @@ summarize_categorical = function(annotated_regions, by = c('annot.type', 'annot.
     ########################################################################
     # If a region has multiple annotation types that are the same, count only one
     # from each type of annotation
-    annotated_regions = dplyr::distinct_(
+    annotated_regions = dplyr::distinct(
         dplyr::ungroup(annotated_regions),
-        .dots=c('seqnames', 'start', 'end', by), .keep_all=TRUE)
+        across(c('seqnames', 'start', 'end', by)), .keep_all=TRUE)
 
     if(!quiet) {
         message(sprintf('Grouping regions by %s, and tallying',
@@ -199,7 +199,7 @@ summarize_categorical = function(annotated_regions, by = c('annot.type', 'annot.
     }
 
     agg = dplyr::tally(
-        dplyr::group_by_(annotated_regions, .dots = by))
+        dplyr::group_by(annotated_regions, across(by)))
 
     return(agg)
 }

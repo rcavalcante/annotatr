@@ -69,7 +69,7 @@ test_that('Test a la carte and shortcut annotations in annotate_regions()',{
         ignore.strand = TRUE,
         quiet = TRUE)
 
-    expect_true( dplyr::setequal(unique(i$annot$type), c('hg19_cpg_islands', 'hg19_cpg_shores', 'hg19_cpg_shelves', 'hg19_cpg_inter')) )
+    expect_true( all(unique(i$annot$type) %in% c('hg19_cpg_islands', 'hg19_cpg_shores', 'hg19_cpg_shelves', 'hg19_cpg_inter')) )
 })
 
 test_that('Custom annotations work in annotate_regions()', {

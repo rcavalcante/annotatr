@@ -87,7 +87,9 @@ This function produces either histograms over \code{facet}, or x-y scatterplots 
        annotated_regions = dm_annots,
        x = 'diff_meth',
        facet = c('annot.type','DM_status'),
-       facet_order = list(c('hg19_genes_promoters','hg19_genes_5UTRs','hg19_cpg_islands'), c('hyper','hypo','none')),
+       facet_order = list(
+           c('hg19_genes_promoters','hg19_genes_5UTRs','hg19_cpg_islands'),
+           c('hyper','hypo','none')),
        bin_width = 5,
        plot_title = 'Group 0 Region Methylation In Genes',
        x_label = 'Methylation Difference')

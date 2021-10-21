@@ -27,7 +27,7 @@ A grouped \code{dplyr::tbl_df}, and the \code{count}, \code{mean}, and \code{sd}
 Given a \code{GRanges} of annotated regions, summarize numerical data columns based on a grouping.
 }
 \details{
-NOTE: We do not take the distinct values of \code{seqnames}, \code{start}, \code{end}, \code{annot.type} as in the other \code{summarize_*()} functions because in the case of a region that intersected two distinct exons, using \code{distinct_()} would destroy the information of the mean of the numerical column over one of the exons, which is not desirable.
+NOTE: We do not take the distinct values of \code{seqnames}, \code{start}, \code{end}, \code{annot.type} as in the other \code{summarize_*()} functions because in the case of a region that intersected two distinct exons, using \code{distinct()} would destroy the information of the mean of the numerical column over one of the exons, which is not desirable.
 }
 \examples{
 ### Test on a very simple bed file to demonstrate different options

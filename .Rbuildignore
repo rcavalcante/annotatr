@@ -4,3 +4,5 @@
 ^\.travis\.yml$
 README\.md
 ^\.Rprofile$
+^doc$
+^Meta$

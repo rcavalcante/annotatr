@@ -79,7 +79,9 @@ read_annotations = function(con, name, genome = NA, format, extraCols = characte
         name = 'annotations'
     }
     if(is.na(genome)) {
-        genome = 'genome'
+        genome_name = 'genome'
+    } else {
+        genome_name = genome
     }
 
     protected_extraCols = c('gene_id','symbol','tx_id')
@@ -104,12 +106,12 @@ read_annotations = function(con, name, genome = NA, format, extraCols = characte
     }
 
     GenomicRanges::mcols(gr)$id = paste0(name,':',seq_along(gr))
-    GenomicRanges::mcols(gr)$type = sprintf('%s_custom_%s', genome, name)
+    GenomicRanges::mcols(gr)$type = sprintf('%s_custom_%s', genome_name, name)
 
     # Make sure only the desired mcols make it out
     GenomicRanges::mcols(gr) = GenomicRanges::mcols(gr)[,c('id','tx_id','gene_id','symbol','type')]
 
     ########################################################
     # Write the object named [genome]_custom_[name] to the annotatr_cache
-    annotatr_cache$set(sprintf('%s_custom_%s', genome, name), gr)
+    annotatr_cache$set(sprintf('%s_custom_%s', genome_name, name), gr)
 }
