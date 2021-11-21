@@ -1,7 +1,7 @@
 Package: annotatr
 Title: Annotation of Genomic Regions to Genomic Annotations
-Version: 1.21.0
-Date: 2021-10-21
+Version: 1.21.1
+Date: 2021-11-20
 Authors@R: c(
     person("Raymond G.", "Cavalcante", email = "rcavalca@umich.edu", role = c("aut", "cre")),
     person(c("Maureen A."), "Sartor", email = "sartorma@med.umich.edu", role = c("ths")))
