@@ -196,18 +196,16 @@ build_hmm_annots = function(genome = c('hg19'), annotations = annotatr::builtin_
 
         # Convert to GRanges
         gr = tryCatch({
-            GenomicRanges::GRanges(
-            seqnames = tbl$chr,
-            ranges = IRanges::IRanges(start = tbl$start, end = tbl$end),
-            strand = '*',
-            type = types,
-            seqinfo = GenomeInfoDb::Seqinfo(genome=genome))
-        }, error = function(e) {
-            GenomicRanges::GRanges(
-            seqnames = tbl$chr,
-            ranges = IRanges::IRanges(start = tbl$start, end = tbl$end),
-            strand = '*',
-            type = types)
+            GenomicRanges::makeGRangesFromDataFrame(
+                df = tbl,
+                keep.extra.columns = TRUE,
+                starts.in.df.are.0based = TRUE,
+                seqinfo = GenomeInfoDb::Seqinfo(genome=genome))
+        }, error = function(e){
+            GenomicRanges::makeGRangesFromDataFrame(
+                df = tbl,
+                keep.extra.columns = TRUE,
+                starts.in.df.are.0based = TRUE)
         })
 
         return(gr)
@@ -352,16 +350,14 @@ build_cpg_annots = function(genome = annotatr::builtin_genomes(), annotations = 
                     col_types = '-cii-------')
                 # Convert to GRanges
                 islands = tryCatch({
-                    GenomicRanges::GRanges(
-                        seqnames = islands_tbl$chr,
-                        ranges = IRanges::IRanges(start = islands_tbl$start, end = islands_tbl$end),
-                        strand = '*',
+                    GenomicRanges::makeGRangesFromDataFrame(
+                        df = islands_tbl,
+                        starts.in.df.are.0based = TRUE,
                         seqinfo = GenomeInfoDb::Seqinfo(genome=genome))
                 }, error = function(e){
-                    GenomicRanges::GRanges(
-                        seqnames = islands_tbl$chr,
-                        ranges = IRanges::IRanges(start = islands_tbl$start, end = islands_tbl$end),
-                        strand = '*')
+                        GenomicRanges::makeGRangesFromDataFrame(
+                            df = islands_tbl,
+                            starts.in.df.are.0based = TRUE)
                 })
             }
             islands = GenomicRanges::sort(islands)
