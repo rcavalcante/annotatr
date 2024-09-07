@@ -196,18 +196,16 @@ build_hmm_annots = function(genome = c('hg19'), annotations = annotatr::builtin_
 
         # Convert to GRanges
         gr = tryCatch({
-            GenomicRanges::GRanges(
-            seqnames = tbl$chr,
-            ranges = IRanges::IRanges(start = tbl$start, end = tbl$end),
-            strand = '*',
-            type = types,
-            seqinfo = GenomeInfoDb::Seqinfo(genome=genome))
-        }, error = function(e) {
-            GenomicRanges::GRanges(
-            seqnames = tbl$chr,
-            ranges = IRanges::IRanges(start = tbl$start, end = tbl$end),
-            strand = '*',
-            type = types)
+            GenomicRanges::makeGRangesFromDataFrame(
+                df = tbl,
+                keep.extra.columns = TRUE,
+                starts.in.df.are.0based = TRUE,
+                seqinfo = GenomeInfoDb::Seqinfo(genome=genome))
+        }, error = function(e){
+            GenomicRanges::makeGRangesFromDataFrame(
+                df = tbl,
+                keep.extra.columns = TRUE,
+                starts.in.df.are.0based = TRUE)
         })
 
         return(gr)
@@ -308,9 +306,12 @@ build_cpg_annots = function(genome = annotatr::builtin_genomes(), annotations = 
         stringsAsFactors = FALSE)
 
     # Decide whether to use URL or AnnotationHub
-    ah_genomes = c('hg19','mm9','rn5','rn4')
-    if(genome == 'hg19' || genome == 'mm9' || genome == 'rn5' || genome == 'rn4') {
+    ah_genomes = c('mm9','rn5','rn4')
+    if(genome == 'mm9' || genome == 'rn5' || genome == 'rn4') {
         use_ah = TRUE
+    } else if (genome == 'hg19') {
+        use_ah = FALSE
+        con = 'http://hgdownload.cse.ucsc.edu/goldenpath/hg19/database/cpgIslandExt.txt.gz'
     } else if (genome == 'hg38') {
         use_ah = FALSE
         con = 'http://hgdownload.cse.ucsc.edu/goldenpath/hg38/database/cpgIslandExt.txt.gz'
@@ -352,16 +353,14 @@ build_cpg_annots = function(genome = annotatr::builtin_genomes(), annotations = 
                     col_types = '-cii-------')
                 # Convert to GRanges
                 islands = tryCatch({
-                    GenomicRanges::GRanges(
-                        seqnames = islands_tbl$chr,
-                        ranges = IRanges::IRanges(start = islands_tbl$start, end = islands_tbl$end),
-                        strand = '*',
+                    GenomicRanges::makeGRangesFromDataFrame(
+                        df = islands_tbl,
+                        starts.in.df.are.0based = TRUE,
                         seqinfo = GenomeInfoDb::Seqinfo(genome=genome))
                 }, error = function(e){
-                    GenomicRanges::GRanges(
-                        seqnames = islands_tbl$chr,
-                        ranges = IRanges::IRanges(start = islands_tbl$start, end = islands_tbl$end),
-                        strand = '*')
+                        GenomicRanges::makeGRangesFromDataFrame(
+                            df = islands_tbl,
+                            starts.in.df.are.0based = TRUE)
                 })
             }
             islands = GenomicRanges::sort(islands)
