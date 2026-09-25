@@ -34,7 +34,7 @@ randomize_regions = function(regions, allow.overlaps = TRUE, per.chromosome = TR
 
     ########################################################################
     # Argument parsing and error handling
-    if(class(regions)[1] != "GRanges") {
+    if(!methods::is(regions, "GRanges")) {
         stop('Error: regions must have class GRanges. The best way to ensure this is to pass the result of read_regions() into this function.')
     }
 

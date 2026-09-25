@@ -1,15 +1,18 @@
 citHeader("To cite the R package 'annotatr' in publications use:")
 
-citEntry(
-  entry  = "article",
-  title  = "annotatr: genomic regions in context.",
-  author = personList(
-	  as.person("Raymond G Cavalcante"),
-	  as.person("Maureen A Sartor")
+bibentry(
+  bibtype = "Article",
+  title = "annotatr: genomic regions in context",
+  author = c(
+    person("Raymond G", "Cavalcante"),
+    person("Maureen A", "Sartor")
   ),
-  year = 2017,
   journal = "Bioinformatics",
-  note = paste("R package version", meta$Version),
+  year = 2017,
+  volume = 33,
+  number = 15,
+  pages = "2381--2383",
+  doi = "10.1093/bioinformatics/btx183",
   textVersion = "Cavalcante RG, Sartor MA. annotatr: genomic regions in context. Bioinformatics. (2017) 33(15):2381-2383. doi:10.1093/bioinformatics/btx183"
 )
 
