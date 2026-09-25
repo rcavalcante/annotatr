@@ -49,6 +49,8 @@ test_that('tidy_annotations() gives readable names', {
     expect_named(tidy_annotations(rn4_custom_annots), c('cpgislands', 'TFBS'))
     expect_named(tidy_annotations(c('hg38_genes_promoters', 'hg38_mane_promoters', 'hg38_mane_firstexons')),
         c('promoters', 'MANE promoters', 'MANE first exons'))
+    expect_named(tidy_annotations(c('mm39_gencode_promoters', 'mm39_gencode_exonintronboundaries', 'mm39_custom_TFBS')),
+        c('gencode promoters', 'gencode exon/intron boundaries', 'TFBS'))
 
     # The values map back to the original annotation codes
     expect_equal(unname(unlist(tidy_annotations(mm9_annots))), mm9_annots)

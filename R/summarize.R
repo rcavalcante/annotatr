@@ -219,7 +219,7 @@ summarize_categorical = function(annotated_regions, by = c('annot.type', 'annot.
 #'
 #' A region counts once toward a gene, however many of the gene's annotations it overlaps, and once toward each annotation type of the gene. A region annotated to more than one gene counts toward each of them.
 #'
-#' MANE annotations (\code{hg38_mane_*}) are summarized the same way. If both \code{hg38_genes_*} and \code{hg38_mane_*} annotations are present, the MANE annotation types are prefixed with \code{mane_}, e.g. \code{n_promoters} and \code{n_mane_promoters}. Both use Entrez gene IDs, so a gene has one row.
+#' MANE annotations (\code{hg38_mane_*}) and annotations from \code{build_txdb_annotations()} (e.g. \code{mm39_gencode_*}) are summarized the same way. With annotations from more than one group, the annotation types of groups other than \code{genes} are prefixed with the group, e.g. \code{n_promoters} and \code{n_mane_promoters}. \code{hg38_genes_*} and \code{hg38_mane_*} both use Entrez gene IDs, so a gene has one row. Groups with different kinds of gene IDs (e.g. Entrez and Ensembl) give separate rows for the same gene.
 #'
 #' @param annotated_regions The \code{GRanges} result of \code{annotate_regions()}, with gene annotations such as \code{[genome]_basicgenes} or \code{hg38_basicmane}.
 #' @param over A character vector of numerical data columns to summarize with the mean, median, and standard deviation over each gene's regions. Default \code{NULL}, no numerical summaries.
@@ -269,8 +269,16 @@ summarize_genes = function(annotated_regions, over = NULL, by = NULL, format = c
         stop(sprintf('Error: %s not column(s) in annotated_regions.', paste(missing_cols, collapse = ', ')))
     }
 
-    # Keep the gene annotations with a gene ID
-    tbl = tbl[!is.na(tbl$annot.gene_id) & grepl('_(genes|mane)_', tbl$annot.type), , drop = FALSE]
+    # Keep the gene annotations with a gene ID: the genes and mane groups, and
+    # the groups from build_txdb_annotations(), [genome]_[group]_[type]
+    tokens = strsplit(as.character(tbl$annot.type), '_')
+    group = vapply(tokens, function(t) if(length(t) == 3) t[2] else NA_character_, character(1))
+    gene_type = vapply(tokens, function(t) if(length(t) == 3) t[3] else NA_character_, character(1))
+    is_gene = !is.na(group) & (group %in% c('genes', 'mane') | !(group %in% BUILTIN_GROUPS)) & gene_type %in% GENE_TYPES
+    keep = !is.na(tbl$annot.gene_id) & is_gene
+    tbl = tbl[keep, , drop = FALSE]
+    group = group[keep]
+    gene_type = gene_type[keep]
     if(nrow(tbl) == 0) {
         stop('Error: No regions are annotated to genes. Include gene annotations, e.g. [genome]_basicgenes or hg38_basicmane, in build_annotations().')
     }
@@ -281,12 +289,19 @@ summarize_genes = function(annotated_regions, over = NULL, by = NULL, format = c
 
     tbl$gene_id = as.character(tbl$annot.gene_id)
     tbl$region = paste(tbl$seqnames, tbl$start, tbl$end, sep = ':')
-    # Drop the genome and group prefix, e.g. hg19_genes_promoters to promoters,
-    # but keep mane_ when there are both genes and mane annotations
-    both_groups = any(grepl('_genes_', tbl$annot.type)) && any(grepl('_mane_', tbl$annot.type))
-    tbl$annot.type = sub('^[^_]*_genes_', '', tbl$annot.type)
-    tbl$annot.type = sub('^[^_]*_mane_', if(both_groups) 'mane_' else '', tbl$annot.type)
-    type_levels = c(GENE_TYPES, paste0('mane_', GENE_TYPES))
+    # Drop the genome and group prefix, e.g. hg19_genes_promoters to promoters.
+    # With more than one group, keep the prefix of groups other than genes,
+    # e.g. promoters and mane_promoters.
+    groups = unique(group)
+    groups = c(intersect('genes', groups), setdiff(groups, 'genes'))
+    if(length(groups) == 1) {
+        tbl$annot.type = gene_type
+    } else {
+        tbl$annot.type = ifelse(group == 'genes', gene_type, paste(group, gene_type, sep = '_'))
+    }
+    type_levels = unlist(lapply(groups, function(g) {
+        if(g == 'genes' || length(groups) == 1) GENE_TYPES else paste(g, GENE_TYPES, sep = '_')
+    }))
 
     # A gene's symbol, from any of its annotations
     symbols = dplyr::summarize(
