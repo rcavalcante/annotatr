@@ -1,45 +1,44 @@
 #' Summarize annotation counts
 #'
-#' Given a \code{GRanges} of annotated regions, count the number of regions in each annotation type. If \code{annotated_random} is not \code{NULL}, then the same is computed for the random regions.
+#' Given a \code{GRanges} of annotated regions, count the number of regions in each annotation type. If \code{annotated_random} is not missing, then the same is computed for the background regions, labeled "Background" in the \code{data_type} column.
 #'
 #' If a region is annotated to multiple annotations of the same \code{annot.type}, the region will only be counted once. For example, if a region were annotated to multiple exons, it would only count once toward the exons, but if it were annotated to an exon and an intron, it would count towards both.
 #'
 #' @param annotated_regions The \code{GRanges} result of \code{annotate_regions()}.
-#' @param annotated_random The \code{GRanges} result of \code{annotate_regions()} on the randomized regions created from \code{randomize_regions()}.
+#' @param annotated_random The \code{GRanges} result of \code{annotate_regions()} on a background of regions, i.e. the regions your data could have come from (e.g. all tested CpGs when \code{annotated_regions} are differentially methylated CpGs). Despite the name, this should not be randomized regions; \code{randomize_regions()} is deprecated.
 #' @param quiet Print progress messages (FALSE) or not (TRUE).
 #'
 #' @return A \code{tbl_df} of the number of regions per annotation type.
 #'
 #' @examples
-#'    ### An example of ChIP-seq peaks with signalValue
+#'    ### An example of differentially methylated (DM) regions compared to
+#'    ### all regions tested for differential methylation
 #'
 #'    # Get premade CpG annotations
 #'    data('annotations', package = 'annotatr')
 #'
-#'    file = system.file('extdata', 'Gm12878_Stat3_chr2.bed.gz', package = 'annotatr')
-#'    r = read_regions(con = file, genome = 'hg19')
+#'    file = system.file('extdata', 'IDH2mut_v_NBM_multi_data_chr9.txt.gz', package = 'annotatr')
+#'    extraCols = c(diff_meth = 'numeric', mu1 = 'numeric', mu0 = 'numeric')
+#'    r = read_regions(con = file, genome = 'hg19', extraCols = extraCols,
+#'        rename_score = 'pval', rename_name = 'DM_status', format = 'bed')
 #'
-#'    a = annotate_regions(
+#'    # Annotate all tested regions, which are the background
+#'    tested_annots = annotate_regions(
 #'        regions = r,
 #'        annotations = annotations,
 #'        ignore.strand = TRUE,
 #'        quiet = FALSE)
 #'
-#'    rnd = randomize_regions(regions = r)
+#'    # The data are the DM regions
+#'    dm_annots = tested_annots[tested_annots$DM_status != 'none']
 #'
-#'    rnd_annots = annotate_regions(
-#'        regions = rnd,
-#'        annotations = annotations,
-#'        ignore.strand = TRUE,
-#'        quiet = FALSE)
+#'    # Summarize the annotated DM regions
+#'    s = summarize_annotations(annotated_regions = dm_annots)
 #'
-#'    # Summarize the annotated regions without randomized regions
-#'    s = summarize_annotations(annotated_regions = a)
-#'
-#'    # Summarize the annotated regions with randomized regions
-#'    s_rnd = summarize_annotations(
-#'        annotated_regions = a,
-#'        annotated_random = rnd_annots)
+#'    # Summarize the annotated DM regions and the background
+#'    s_bg = summarize_annotations(
+#'        annotated_regions = dm_annots,
+#'        annotated_random = tested_annots)
 #'
 #' @export
 summarize_annotations = function(annotated_regions, annotated_random, quiet = FALSE) {
@@ -53,7 +52,7 @@ summarize_annotations = function(annotated_regions, annotated_random, quiet = FA
         dplyr::ungroup(annotated_regions),
         across(c('seqnames', 'start', 'end', 'annot.type')), .keep_all=TRUE)
 
-    # Tally over data and random regions if annotated_random isn't null,
+    # Tally over data and background regions if annotated_random isn't missing,
     # otherwise tally over data only
     if(!missing(annotated_random)) {
         # Tidy the GRanges into a tbl_df for use with dplyr functions
@@ -66,10 +65,10 @@ summarize_annotations = function(annotated_regions, annotated_random, quiet = FA
             across(c('seqnames', 'start', 'end', 'annot.type')), .keep_all=TRUE)
 
         if(!quiet) {
-            message('Counting annotation types in data and random regions')
+            message('Counting annotation types in data and background regions')
         }
 
-        combined_annots = dplyr::bind_rows('Data' = annotated_regions, 'Random Regions' = annotated_random, .id = 'data_type')
+        combined_annots = dplyr::bind_rows('Data' = annotated_regions, 'Background' = annotated_random, .id = 'data_type')
 
         agg = dplyr::tally(
             dplyr::group_by(combined_annots, across(c('data_type', 'annot.type')))

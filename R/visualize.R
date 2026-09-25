@@ -3,7 +3,7 @@
 #' Given a \code{GRanges} of annotated regions, plot the number of regions with the corresponding genomic annotations used in \code{annotation_order}. If a region is annotated to multiple annotations of the same \code{annot.type}, the region will only be counted once in the corresponding bar plot. For example, if a region were annotated to multiple exons, it would only count once toward the exon bar in the plot, but if it were annotated to an exon and an intron, it would count towards both.
 #'
 #' @param annotated_regions The \code{GRanges} result of \code{annotate_regions()}.
-#' @param annotated_random The \code{GRanges} result of \code{annotate_regions()} on the randomized regions created from \code{randomize_regions()}.
+#' @param annotated_random The \code{GRanges} result of \code{annotate_regions()} on a background of regions, i.e. the regions your data could have come from (e.g. all tested CpGs when \code{annotated_regions} are differentially methylated CpGs). Despite the name, this should not be randomized regions; \code{randomize_regions()} is deprecated.
 #' @param annotation_order A character vector which doubles as the subset of annotations desired for the plot as well as the ordering. If \code{NULL}, all annotations are displayed.
 #' @param plot_title A string used for the title of the plot. If missing, no title is displayed.
 #' @param x_label A string used for the x-axis label. If missing, no x-axis label is displayed.
@@ -14,34 +14,34 @@
 #'
 #' @examples
 #'    ########################################################################
-#'    # An example of ChIP-seq peaks with signalValue used for score
+#'    # An example of differentially methylated (DM) regions compared to
+#'    # all regions tested for differential methylation
 #'
 #'    # Get premade CpG annotations
 #'    data('annotations', package = 'annotatr')
 #'
-#'    chip_bed = system.file('extdata', 'Gm12878_Stat3_chr2.bed.gz', package = 'annotatr')
-#'    chip_regions = read_regions(con = chip_bed, genome = 'hg19')
+#'    dm_file = system.file('extdata', 'IDH2mut_v_NBM_multi_data_chr9.txt.gz', package = 'annotatr')
+#'    extraCols = c(diff_meth = 'numeric', mu1 = 'numeric', mu0 = 'numeric')
+#'    tested_regions = read_regions(con = dm_file, genome = 'hg19', extraCols = extraCols,
+#'        rename_score = 'pval', rename_name = 'DM_status', format = 'bed')
 #'
-#'    chip_rnd = randomize_regions(regions = chip_regions)
-#'
-#'    chip_annots = annotate_regions(
-#'        regions = chip_regions,
+#'    # Annotate all tested regions, which are the background
+#'    tested_annots = annotate_regions(
+#'        regions = tested_regions,
 #'        annotations = annotations,
 #'        ignore.strand = TRUE)
 #'
-#'    chip_rnd_annots = annotate_regions(
-#'        regions = chip_rnd,
-#'        annotations = annotations,
-#'        ignore.strand = TRUE)
+#'    # The data are the DM regions
+#'    dm_annots = tested_annots[tested_annots$DM_status != 'none']
 #'
 #'    annots_order = c(
 #'        'hg19_cpg_islands',
 #'        'hg19_cpg_shores')
 #'
-#'    p_annots = plot_annotation(annotated_regions = chip_annots,
+#'    p_annots = plot_annotation(annotated_regions = dm_annots,
 #'        annotation_order = annots_order)
-#'    p_annots_rnd = plot_annotation(annotated_regions = chip_annots,
-#'        annotated_random = chip_rnd_annots, annotation_order = annots_order)
+#'    p_annots_bg = plot_annotation(annotated_regions = dm_annots,
+#'        annotated_random = tested_annots, annotation_order = annots_order)
 #'
 #' @export
 plot_annotation = function(annotated_regions, annotated_random, annotation_order = NULL,
@@ -66,7 +66,7 @@ plot_annotation = function(annotated_regions, annotated_random, annotation_order
         # Tidy the GRanges into a tbl_df for use with dplyr functions
         annotated_random = as.data.frame(annotated_random, row.names = NULL)
 
-        # Order and subset the randomized annotations
+        # Order and subset the background annotations
         annotated_random = subset_order_tbl(tbl = annotated_random, col='annot.type', col_order=annotation_order)
 
         # If a region has multiple annotation types that are the same, count only one
@@ -76,7 +76,7 @@ plot_annotation = function(annotated_regions, annotated_random, annotation_order
             across(c('seqnames', 'start', 'end', 'annot.type')), .keep_all=TRUE)
 
         # Combine the tbl_dfs in preparation for visualization
-        annotated_regions = dplyr::bind_rows("Data" = annotated_regions, "Random Regions" = annotated_random, .id = 'data_type')
+        annotated_regions = dplyr::bind_rows("Data" = annotated_regions, "Background" = annotated_random, .id = 'data_type')
     }
 
     ########################################################################
@@ -546,12 +546,12 @@ plot_numerical_coannotations = function(annotated_regions, x, y, annot1, annot2,
 
 #' Plot a categorical data variable over another
 #'
-#' Given a \code{GRanges} of annotated regions from \code{annotate_regions()}, visualize the the distribution of categorical data \code{fill} in categorical data \code{x}. A bar representing the distribution of all \code{fill} in \code{x} will be added according to the contents of \code{fill}. This is the distribution over all values of \code{x}. Additionally, when \code{annotated_random} is not missing, a "Random Regions" bar shows the distribution of random regions over \code{fill}.
+#' Given a \code{GRanges} of annotated regions from \code{annotate_regions()}, visualize the the distribution of categorical data \code{fill} in categorical data \code{x}. A bar representing the distribution of all \code{fill} in \code{x} will be added according to the contents of \code{fill}. This is the distribution over all values of \code{x}. Additionally, when \code{annotated_random} is not missing, a "Background" bar shows the distribution of the background regions over \code{fill}.
 #'
 #' For example, if a differentially methylated region has the categorical label hyper, and is annotated to a promoter, a 5UTR, two exons, and an intron. Each annotation will appear in the All bar once. Likewise for the hyper bar if the differential methylation status is chosen as \code{x} with \code{annot.type} chosen as \code{fill}.
 #'
 #' @param annotated_regions The \code{GRanges} result of \code{annotate_regions()}.
-#' @param annotated_random The \code{GRanges} result of \code{annotate_regions()} on the randomized regions created from \code{randomize_regions()}. Random regions can only be used with \code{fill == 'annot.type'}.
+#' @param annotated_random The \code{GRanges} result of \code{annotate_regions()} on a background of regions, i.e. the regions your data could have come from (e.g. all tested CpGs when \code{annotated_regions} are differentially methylated CpGs). Despite the name, this should not be randomized regions; \code{randomize_regions()} is deprecated. A background can only be used with \code{fill == 'annot.type'}.
 #' @param x One of 'annot.type' or a categorical data column, indicating whether annotation classes or data classes will appear on the x-axis.
 #' @param fill One of 'annot.type', a categorical data column, or \code{NULL}, indicating whether annotation classes or data classes will fill the bars. If \code{NULL} then the bars will be the total counts of the x classes.
 #' @param x_order A character vector that subsets and orders the x classes. Default \code{NULL}, uses existing values.
@@ -600,16 +600,12 @@ plot_numerical_coannotations = function(annotated_regions, x, y, annot1, annot2,
 #'        x_label = 'DM status',
 #'        y_label = 'Proportion')
 #'
-#'    # Create randomized regions
-#'    dm_rnd_regions = randomize_regions(regions = dm_regions)
-#'    dm_rnd_annots = annotate_regions(
-#'        regions = dm_rnd_regions,
-#'        annotations = annotations,
-#'        ignore.strand = TRUE)
+#'    # Compare the DM regions to all tested regions, which are the background
+#'    dm_sig_annots = dm_annots[dm_annots$DM_status != 'none']
 #'
-#'    dm_vn_rnd = plot_categorical(
-#'        annotated_regions = dm_annots,
-#'        annotated_random = dm_rnd_annots,
+#'    dm_vn_bg = plot_categorical(
+#'        annotated_regions = dm_sig_annots,
+#'        annotated_random = dm_annots,
 #'        x = 'DM_status',
 #'        fill = 'annot.type',
 #'        x_order = dm_order,
@@ -645,11 +641,11 @@ plot_categorical = function(annotated_regions, annotated_random, x, fill=NULL, x
         }
     }
 
-    # If !is.null(annotated_random), check that fill = 'annot.type'. This is the
-    # only situation where random regions can be used, because the data from the
-    # original regions is not transferred to the random ones.
+    # If annotated_random isn't missing, check that fill = 'annot.type'. This is the
+    # only situation where a background can be used, because the background need
+    # not have the data columns of the original regions.
     if(!missing(annotated_random) && fill != 'annot.type') {
-        stop('Error: Random regions can only be used in plot_categorical() when fill == "annot.type" since data from the original regions are not transferred to the random regions.')
+        stop('Error: A background can only be used in plot_categorical() when fill == "annot.type" since the background need not have the data columns of annotated_regions.')
     }
 
     # Check valid position argument
@@ -676,14 +672,14 @@ plot_categorical = function(annotated_regions, annotated_random, x, fill=NULL, x
         # Tidy the GRanges into a tbl_df for use with dplyr functions
         annotated_random = as.data.frame(annotated_random, row.names = NULL)
 
-        # Order and subset the randomized annotations
+        # Order and subset the background annotations
         annotated_random = subset_order_tbl(tbl = annotated_random, col=fill, col_order=fill_order)
 
-        # Take the distinct annotation types per unique random data region
+        # Take the distinct annotation types per unique background region
         annotated_random = dplyr::distinct(dplyr::ungroup(annotated_random), across(c('seqnames', 'start', 'end', 'annot.type')), .keep_all=TRUE)
 
         # Combine the tbl_dfs in preparation for visualization
-        annotated_regions = dplyr::bind_rows("All" = annotated_regions, "Random Regions" = annotated_random, .id = 'data_type')
+        annotated_regions = dplyr::bind_rows("All" = annotated_regions, "Background" = annotated_random, .id = 'data_type')
     }
 
     ########################################################################
@@ -713,7 +709,7 @@ plot_categorical = function(annotated_regions, annotated_random, x, fill=NULL, x
 
     # Deal with the x-axis labels to make sure the order is correct
     if(!missing(annotated_random)) {
-        plot = plot + scale_x_discrete(limits = c('All', x_order, 'Random Regions'))
+        plot = plot + scale_x_discrete(limits = c('All', x_order, 'Background'))
     } else {
         if(x == 'annot.type') {
             plot = plot + scale_x_discrete(limits = c('All', names(tidy_annotations(x_order))))

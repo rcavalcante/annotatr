@@ -17,8 +17,6 @@ dm_regions2$cancer_status = 'NoCancer'
 
 duplicate_regions = c(dm_regions, dm_regions2)
 
-dm_random_regions = suppressMessages(randomize_regions(regions = dm_regions))
-
 dm_annots = suppressMessages(annotate_regions(
     regions = dm_regions,
     annotations = annotations,
@@ -31,11 +29,8 @@ dm_dup_annots = suppressMessages(annotate_regions(
     ignore.strand = TRUE,
     quiet = TRUE))
 
-dm_random_annots = suppressMessages(annotate_regions(
-    regions = dm_random_regions,
-    annotations = annotations,
-    ignore.strand = TRUE,
-    quiet = TRUE))
+# The DM regions, with all tested regions as the background
+dm_sig_annots = dm_annots[dm_annots$DM_status != 'none']
 
 ################################################################################
 # Setup order vectors and plots that will work
@@ -69,9 +64,9 @@ test_that('Test plot_annotation() success', {
         x_label = 'Test x-label',
         y_label = 'Test y-label')
 
-    dm_va_rnd = plot_annotation(
-        annotated_regions = dm_annots,
-        annotated_random = dm_random_annots,
+    dm_va_bg = plot_annotation(
+        annotated_regions = dm_sig_annots,
+        annotated_random = dm_annots,
         annotation_order = NULL,
         plot_title = 'Testing dodged bars',
         x_label = 'Annotation Type',
@@ -79,7 +74,7 @@ test_that('Test plot_annotation() success', {
 
     expect_s3_class(dm_va_min, "ggplot")
     expect_s3_class(dm_va, "ggplot")
-    expect_s3_class(dm_va_rnd, "ggplot")
+    expect_s3_class(dm_va_bg, "ggplot")
 })
 
 ################################################################################
@@ -240,11 +235,11 @@ test_that('Test plot_numerical_coannotations()', {
         'elements in col_order that are not present')
   })
 
-test_that('Test plot_categorical() error for random regions and non annot fill', {
+test_that('Test plot_categorical() error for background and non annot fill', {
     expect_error(
         plot_categorical(
-            annotated_regions = dm_annots,
-            annotated_random = dm_random_annots,
+            annotated_regions = dm_sig_annots,
+            annotated_random = dm_annots,
             x = 'annot.type',
             fill = 'DM_status',
             x_order = cpgs_order,
@@ -254,7 +249,7 @@ test_that('Test plot_categorical() error for random regions and non annot fill',
             plot_title = 'DM status by CpG Annotation Proportions',
             x_label = 'DM status',
             y_label = 'Proportion'),
-        'since data from the original regions are not transferred to the random regions')
+        'since the background need not have the data columns')
     })
 
 test_that('Test plot_categorical() success', {
@@ -274,12 +269,12 @@ test_that('Test plot_categorical() success', {
         x_label = 'DM status',
         y_label = 'Proportion')
 
-    dm_vn_rnd = plot_categorical(
-        annotated_regions = dm_annots,
-        annotated_random = dm_random_annots,
+    dm_vn_bg = plot_categorical(
+        annotated_regions = dm_sig_annots,
+        annotated_random = dm_annots,
         x = 'DM_status',
         fill = 'annot.type',
-        x_order = dm_order,
+        x_order = c('hyper', 'hypo'),
         fill_order = cpgs_order,
         position = 'fill',
         legend_title = 'Annotations',
@@ -289,5 +284,5 @@ test_that('Test plot_categorical() success', {
 
     expect_s3_class(dm_vn_min, "ggplot")
     expect_s3_class(dm_vn, "ggplot")
-    expect_s3_class(dm_vn_rnd, "ggplot")
+    expect_s3_class(dm_vn_bg, "ggplot")
 })

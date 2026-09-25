@@ -24,13 +24,8 @@ a_dup = suppressMessages(annotate_regions(
     ignore.strand = TRUE,
     quiet = TRUE))
 
-rnd = suppressMessages(randomize_regions(regions = r))
-
-rnd_annot = suppressMessages(annotate_regions(
-    regions = rnd,
-    annotations = annotations,
-    ignore.strand = TRUE,
-    quiet = TRUE))
+# The DM regions, with all tested regions as the background
+a_dm = a[a$DM_status != 'none']
 
 ################################################################################
 # Test errors
@@ -46,17 +41,16 @@ test_that('Test for error with over=NULL in summarize_numerical()',{
 test_that('Test summarize_annotations()', {
     s = summarize_annotations(annotated_regions = a, quiet = FALSE)
 
-    srand = summarize_annotations(
-        annotated_regions = a,
-        annotated_random = rnd_annot,
+    sbg = summarize_annotations(
+        annotated_regions = a_dm,
+        annotated_random = a,
         quiet = FALSE)
 
-    # NOTE: For small data it is possible that the random regions won't
-    # intersect all CpG types so the second test may fail. Moreover,
-    # if you are going to compute fold changes, corresponding random
-    # rows may be missing if the data is too small...
     expect_equal( sum(s[['n']]), expected = 1064)
-    expect_equal( nrow(srand), expected = 8)
+    expect_setequal( unique(sbg[['data_type']]), c('Data', 'Background'))
+    # The background counts are the counts of all tested regions
+    bg = sbg[sbg$data_type == 'Background', ]
+    expect_equal( bg[['n']][match(s[['annot.type']], bg[['annot.type']])], s[['n']])
 })
 
 test_that('Test summarize_numerical()', {
