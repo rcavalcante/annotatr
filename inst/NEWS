@@ -3,6 +3,10 @@ CHANGES IN VERSION 1.40.0
 
 NEW FEATURES
 
+  o Add ENCODE candidate cis-regulatory element (cCRE) annotations from the
+    SCREEN registry (version 4) for hg38 and mm10: '[genome]_ccre_[class]' for
+    the 8 classes (PLS, pELS, dELS, CA-H3K4me3, CA-CTCF, CA-TF, CA, TF), and the
+    '[genome]_ccres' shortcut. The id is the cCRE accession.
   o Add Ensembl canonical transcript annotations, '[genome]_canonical_*' and
     the '[genome]_basiccanonical' shortcut, for hg38, mm39, rn7, danRer11, dm6,
     and oviariramb2: one transcript per gene, of every biotype, including

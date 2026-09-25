@@ -46,12 +46,14 @@ annotatr_cache <- local({
 #'
 #' Create a \code{GRanges} object consisting of all the desired \code{annotations}. Supported annotation codes are listed by \code{builtin_annotations()}. The basis for enhancer annotations are FANTOM5 data, the basis for CpG related annotations are CpG island tracks from \code{AnnotationHub}, and the basis for genic annotations are from the \code{TxDb.*} and \code{org.db} group of packages.
 #'
+#' The \code{[genome]_ccre_*} annotations (hg38 and mm10) are ENCODE candidate cis-regulatory elements (cCREs) from the SCREEN registry (version 4), in 8 classes: \code{PLS} (promoter-like), \code{pELS} and \code{dELS} (proximal and distal enhancer-like), \code{CA-H3K4me3}, \code{CA-CTCF}, and \code{CA-TF} (chromatin accessible with H3K4me3, CTCF, or TF binding), \code{CA} (chromatin accessible only), and \code{TF} (TF binding only). The \code{[genome]_ccres} shortcut builds all 8. Their \code{id} is ENCODE's ID for the cCRE, its accession (e.g. \code{EH38E2776516}), which can be looked up at \url{https://screen.wenglab.org}. There are 2.3 million cCREs for hg38 (about 300 MB in memory) and 0.9 million for mm10, most of them \code{dELS}.
+#'
 #' The \code{[genome]_canonical_*} annotations (hg38, mm39, rn7, danRer11, dm6, and oviariramb2) are the same gene annotations, built only from the Ensembl canonical transcript of each gene (all biotypes, e.g. protein-coding and lncRNA), from the Ensembl 113 \code{EnsDb} in \code{AnnotationHub}. For human, the canonical transcript is the MANE Select transcript when there is one, and otherwise is chosen by Ensembl from conservation, expression, APPRIS, UniProt, CDS length, and clinical variants. For other species, Ensembl chooses by biotype (protein-coding first) and then the longest combined exon length, so the canonical transcript is roughly the longest protein-coding transcript. Genes on alternate haplotypes and fix patches (\code{_alt} and \code{_fix} sequences), which Ensembl gives separate gene IDs, are left out. \code{gene_id} and \code{ensembl_id} are the Ensembl gene ID. The \code{[genome]_basiccanonical} shortcut builds the same types as \code{basicgenes}.
 #'
 #' The \code{hg38_mane_*} annotations are the same gene annotations (except intergenic), built only from the MANE Select transcripts: one transcript per protein-coding gene, agreed on by NCBI and Ensembl (\url{https://www.ncbi.nlm.nih.gov/refseq/MANE/}). Use them to annotate regions to the main isoform of each gene, instead of every isoform in \code{hg38_genes_*}. MANE Plus Clinical transcripts are not included.
 #'
 #' @param genome The genome assembly.
-#' @param annotations A character vector of annotations to build. Valid annotation codes are listed with \code{builtin_annotations()}. The "basicgenes" shortcut builds the following regions: 1-5Kb upstream of TSSs, promoters, 5UTRs, exons, introns, and 3UTRs. The "basicmane" shortcut (hg38 only) builds the same regions from MANE Select transcripts, and the "basiccanonical" shortcut from Ensembl canonical transcripts. The "cpgs" shortcut builds the following regions: CpG islands, shores, shelves, and interCGI regions. NOTE: Shortcuts need to be appended by the genome, e.g. \code{hg19_basicgenes}.
+#' @param annotations A character vector of annotations to build. Valid annotation codes are listed with \code{builtin_annotations()}. The "basicgenes" shortcut builds the following regions: 1-5Kb upstream of TSSs, promoters, 5UTRs, exons, introns, and 3UTRs. The "basicmane" shortcut (hg38 only) builds the same regions from MANE Select transcripts, and the "basiccanonical" shortcut from Ensembl canonical transcripts. The "cpgs" shortcut builds the following regions: CpG islands, shores, shelves, and interCGI regions. The "ccres" shortcut (hg38 and mm10) builds all 8 classes of ENCODE cCREs. NOTE: Shortcuts need to be appended by the genome, e.g. \code{hg19_basicgenes}.
 #' @param cache A logical stating whether to load annotations from, and save them to, the cache on disk (TRUE), or to build them from scratch without the cache (FALSE). See \code{\link{cached-annotations}}.
 #' Custom annotations whose names are of the form \code{[genome]_custom_[name]} should also be included. Custom annotations should be read in and converted to \code{GRanges} with \code{read_annotations()}. They can be for a \code{supported_genome()}, or for an unsupported genome.
 #'
@@ -82,9 +84,10 @@ build_annotations = function(genome, annotations, cache = TRUE) {
     gene_annotations = grep('_genes_', annotations, value=TRUE)
     mane_annotations = grep('_mane_', annotations, value=TRUE)
     canonical_annotations = grep('_canonical_', annotations, value=TRUE)
+    ccre_annotations = grep('_ccre_', annotations, value=TRUE)
     cpg_annotations = grep('_cpg_', annotations, value=TRUE)
     lncrna_annotations = grep('_lncrna_', annotations, value=TRUE)
-    builtin_annotations = c(enh_annotations, hmm_annotations, gene_annotations, mane_annotations, canonical_annotations, cpg_annotations, lncrna_annotations)
+    builtin_annotations = c(enh_annotations, hmm_annotations, gene_annotations, mane_annotations, canonical_annotations, cpg_annotations, lncrna_annotations, ccre_annotations)
 
     # Check builtin_annotations
     if(length(builtin_annotations) > 0) {
@@ -131,6 +134,9 @@ build_annotations = function(genome, annotations, cache = TRUE) {
     }
     if(any(canonical_annotations %in% to_build)) {
         built_grl = c(built_grl, suppressWarnings(build_gene_annots(genome = genome, annotations = intersect(canonical_annotations, to_build), cache = cache)))
+    }
+    if(any(ccre_annotations %in% to_build)) {
+        built_grl = c(built_grl, GenomicRanges::GRangesList(ccre = build_ccre_annots(genome = genome, annotations = intersect(ccre_annotations, to_build), cache = cache)))
     }
     if(any(cpg_annotations %in% to_build)) {
         built_grl = c(built_grl, suppressWarnings(build_cpg_annots(genome = genome, annotations = intersect(cpg_annotations, to_build), cache = cache)))
@@ -352,6 +358,54 @@ build_enhancer_annots = function(genome = c('hg19','hg38','mm9','mm10'), cache =
     GenomicRanges::mcols(enhancers)$type = sprintf('%s_enhancers_fantom', genome)
 
     return(enhancers)
+}
+
+#' Function to read an ENCODE cCRE registry BED file
+#'
+#' The file has the columns chromosome, start, end, DHS accession, cCRE accession, and class, with 0-based starts as in all BED files.
+#'
+#' @param path A string giving the path of the file.
+#' @param genome A string giving the genome assembly.
+#'
+#' @return A \code{GRanges} object with 1-based coordinates, the genome's \code{seqinfo}, and \code{mcols} \code{accession} and \code{class}.
+read_ccre_bed = function(path, genome) {
+    tbl = readr::read_tsv(path,
+        col_names = c('chr', 'start', 'end', 'dhs', 'accession', 'class'),
+        col_types = 'cii-cc')
+
+    # BED starts are 0-based, GRanges are 1-based
+    gr = GenomicRanges::GRanges(
+        seqnames = tbl$chr,
+        ranges = IRanges::IRanges(start = tbl$start + 1L, end = tbl$end),
+        strand = '*',
+        accession = tbl$accession,
+        class = tbl$class)
+
+    return(set_genome_seqinfo(gr, genome))
+}
+
+#' A helper function to build ENCODE cCRE annotations.
+#'
+#' Candidate cis-regulatory elements (cCREs) from the ENCODE registry (SCREEN), version \code{CCRE$version}, in 8 classes: promoter-like (PLS), proximal and distal enhancer-like (pELS, dELS), chromatin accessible with H3K4me3, CTCF, or TF binding (CA-H3K4me3, CA-CTCF, CA-TF), chromatin accessible only (CA), and TF binding only (TF).
+#'
+#' @param genome The genome assembly, hg38 or mm10.
+#' @param annotations A character vector of annotations of the form \code{[genome]_ccre_[class]}.
+#' @param cache A logical stating whether to use the cache on disk for downloads.
+#'
+#' @return A \code{GRanges} object whose \code{id} is the cCRE accession, e.g. \code{EH38E2776516}.
+build_ccre_annots = function(genome = names(CCRE$files), annotations = annotatr::builtin_annotations(), cache = TRUE) {
+    genome = match.arg(genome)
+
+    message('Building cCREs...')
+    path = download_annotation_file(sprintf('%s/%s', CCRE$url, CCRE$files[[genome]]), genome = genome, cache = cache)
+    ccres = read_ccre_bed(path, genome)
+
+    ccres$type = sprintf('%s_ccre_%s', genome, ccres$class)
+    ccres = ccres[ccres$type %in% annotations]
+    ccres$id = ccres$accession
+    GenomicRanges::mcols(ccres) = GenomicRanges::mcols(ccres)[, c('id', 'type')]
+
+    return(standardize_mcols(ccres))
 }
 
 #' A helper function to build CpG related annotations.

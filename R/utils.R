@@ -46,7 +46,26 @@ BASIC_GENE_TYPES = c('1to5kb', 'promoters', '5UTRs', 'exons', 'introns', '3UTRs'
 
 # The groups of builtin annotation codes, [genome]_[group]_[type]. Gene
 # annotations from build_txdb_annotations() use other group names.
-BUILTIN_GROUPS = c('genes', 'mane', 'canonical', 'cpg', 'enhancers', 'chromatin', 'lncrna', 'custom')
+BUILTIN_GROUPS = c('genes', 'mane', 'canonical', 'cpg', 'enhancers', 'chromatin', 'lncrna', 'ccre', 'custom')
+
+# ENCODE candidate cis-regulatory elements (cCREs), from the SCREEN registry,
+# for the [genome]_ccre_* annotations. The registry directory is versioned, so
+# a new version needs a change here.
+CCRE = list(
+    version = 'V4',
+    url = 'https://downloads.wenglab.org/Registry-V4',
+    files = c(hg38 = 'GRCh38-cCREs.bed', mm10 = 'mm10-cCREs.bed'))
+
+# cCRE classes, and their readable names for tidy_annotations()
+CCRE_CLASSES = c(
+    'PLS' = 'promoter-like',
+    'pELS' = 'proximal enhancer-like',
+    'dELS' = 'distal enhancer-like',
+    'CA-H3K4me3' = 'accessible + H3K4me3',
+    'CA-CTCF' = 'accessible + CTCF',
+    'CA-TF' = 'accessible + TF',
+    'CA' = 'accessible only',
+    'TF' = 'TF only')
 
 # The builtin groups of gene annotations
 GENE_GROUPS = c('genes', 'mane', 'canonical')
@@ -108,7 +127,7 @@ get_cellline_from_code = function(code) {
 #' @export
 builtin_annotations = function() {
     # Create annotation code endings
-        shortcut_ends = c('basicgenes','basicmane','basiccanonical','cpgs')
+        shortcut_ends = c('basicgenes','basicmane','basiccanonical','cpgs','ccres')
 
         # Gene codes
         gene_genomes = annotatr::builtin_genomes()
@@ -141,6 +160,9 @@ builtin_annotations = function() {
         canonical_codes = apply(
             expand.grid(CANONICAL$genome, 'canonical', gene_ends, stringsAsFactors = FALSE),
             1, paste, collapse='_')
+        ccre_codes = apply(
+            expand.grid(names(CCRE$files), 'ccre', names(CCRE_CLASSES), stringsAsFactors = FALSE),
+            1, paste, collapse='_')
         cpg_codes = apply(
             expand.grid(cpg_genomes, 'cpg', cpg_ends, stringsAsFactors= FALSE),
             1, paste, collapse='_')
@@ -156,14 +178,15 @@ builtin_annotations = function() {
             1, paste, collapse='_')
         mane_shortcut_codes = 'hg38_basicmane'
         canonical_shortcut_codes = paste(CANONICAL$genome, 'basiccanonical', sep='_')
+        ccre_shortcut_codes = paste(names(CCRE$files), 'ccres', sep='_')
         cpg_shortcut_codes = apply(
             expand.grid(cpg_genomes, 'cpgs', stringsAsFactors = FALSE),
             1, paste, collapse='_')
         chromatin_shortcut_codes = paste('hg19', chromatin_shortcut_ends, sep='_')
 
     # Create the big vector of supported annotations
-    annots = c(gene_codes, mane_codes, canonical_codes, cpg_codes, chromatin_codes, enhancer_codes, lncrna_codes,
-        gene_shortcut_codes, mane_shortcut_codes, canonical_shortcut_codes, cpg_shortcut_codes, chromatin_shortcut_codes)
+    annots = c(gene_codes, mane_codes, canonical_codes, cpg_codes, chromatin_codes, enhancer_codes, lncrna_codes, ccre_codes,
+        gene_shortcut_codes, mane_shortcut_codes, canonical_shortcut_codes, cpg_shortcut_codes, chromatin_shortcut_codes, ccre_shortcut_codes)
 
     return(annots)
 }
@@ -365,6 +388,8 @@ tidy_annotations = function(annotations) {
                 type = paste(tokens[2], type)
             }
             return(type)
+        } else if (tokens[2] == 'ccre') {
+            return(paste('cCRE', CCRE_CLASSES[[tokens[3]]]))
         } else if (tokens[2] == 'enhancers') {
             return('enhancers')
         } else if (tokens[2] == 'chromatin') {
@@ -429,16 +454,17 @@ expand_annotations = function(annotations) {
     are_basicgenes = any(grepl('basicgenes', annotations))
     are_basicmane = any(grepl('basicmane', annotations))
     are_basiccanonical = any(grepl('basiccanonical', annotations))
+    are_ccres = any(grepl('_ccres$', annotations))
     are_cpgs = any(grepl('cpgs', annotations))
     are_hmms = any(grepl('-chromatin', annotations))
 
-    which_are_shortcuts = c(which(grepl('basicgenes', annotations)), which(grepl('basicmane', annotations)), which(grepl('basiccanonical', annotations)), which(grepl('cpgs', annotations)), which(grepl('-chromatin', annotations)))
+    which_are_shortcuts = c(which(grepl('basicgenes', annotations)), which(grepl('basicmane', annotations)), which(grepl('basiccanonical', annotations)), which(grepl('_ccres$', annotations)), which(grepl('cpgs', annotations)), which(grepl('-chromatin', annotations)))
 
     # expand_shortcuts() will always be run after check_annotations() so we can be
     # sure that the genome prefixes are the same for all annotaitons.
     genome = unique( sapply(annotations, function(a){ unlist(strsplit(a, '_'))[1] }, USE.NAMES = FALSE) )
 
-    if(are_basicgenes || are_basicmane || are_basiccanonical || are_cpgs || are_hmms) {
+    if(are_basicgenes || are_basicmane || are_basiccanonical || are_ccres || are_cpgs || are_hmms) {
 
         # Check for shortcut annotation accessors 'cpgs', 'basicgenes', 'basicmane', 'basiccanonical'
         # and create the right annotations based on the genome
@@ -455,6 +481,9 @@ expand_annotations = function(annotations) {
         }
         if(are_basiccanonical) {
             new_annotations = c(new_annotations, paste(genome, 'canonical', BASIC_GENE_TYPES, sep='_'))
+        }
+        if(are_ccres) {
+            new_annotations = c(new_annotations, paste(genome, 'ccre', names(CCRE_CLASSES), sep='_'))
         }
         if(are_hmms) {
             # Could conceivably use shortcuts for multiple cell lines

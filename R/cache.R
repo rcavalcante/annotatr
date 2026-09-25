@@ -134,6 +134,8 @@ get_annotation_rname = function(code, genome) {
         }
     } else if(grepl('_mane_', code)) {
         sources = c(sources, sprintf('MANE %s', MANE$version))
+    } else if(grepl('_ccre_', code)) {
+        sources = c(sources, sprintf('cCRE %s', CCRE$version))
     } else if(grepl('_canonical_', code)) {
         sources = c(sources, CANONICAL[CANONICAL$genome == genome, 'ensdb'])
     }

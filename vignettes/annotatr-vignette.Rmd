@@ -117,6 +117,27 @@ These annotations are not cached on disk, since they are built from a `TxDb` alr
 
 FANTOM5 permissive enhancers were determined from bi-directional CAGE transcription as in [Andersson et al. (2014)](http://www.nature.com/nature/journal/v507/n7493/full/nature12787.html), and are downloaded and processed for hg19 and mm9 from the [FANTOM5](http://fantom.gsc.riken.jp/5/datafiles/phase2.0/extra/Enhancers/) resource. Using the `rtracklayer::liftOver()` function, enhancers from hg19 are lifted to hg38, and mm9 to mm10.
 
+## ENCODE Candidate Cis-Regulatory Elements (cCREs)
+
+The ENCODE registry of candidate cis-regulatory elements (cCREs), from SCREEN ([ENCODE Project Consortium et al., 2020](https://doi.org/10.1038/s41586-020-2493-4)), is available for hg38 and mm10, version 4. cCREs are 150–350 bp regions of accessible chromatin, classified by their histone marks, CTCF, and transcription factor binding:
+
+| Code | Class |
+|---|---|
+| `[genome]_ccre_PLS` | promoter-like |
+| `[genome]_ccre_pELS` | proximal enhancer-like (within 2 kb of a TSS) |
+| `[genome]_ccre_dELS` | distal enhancer-like |
+| `[genome]_ccre_CA-H3K4me3` | chromatin accessible, with H3K4me3 |
+| `[genome]_ccre_CA-CTCF` | chromatin accessible, with CTCF |
+| `[genome]_ccre_CA-TF` | chromatin accessible, with TF binding |
+| `[genome]_ccre_CA` | chromatin accessible only |
+| `[genome]_ccre_TF` | TF binding only |
+
+The `[genome]_ccres` shortcut builds all 8 classes. The `id` column is ENCODE's ID for each cCRE, its accession (e.g. `EH38E2776516`), which can be looked up in [SCREEN](https://screen.wenglab.org). There are about 2.3 million cCREs for hg38 and 0.9 million for mm10, most of them distal enhancer-like, so annotations with all classes are large, and plots of all 8 classes can be busy.
+
+```{r, eval = FALSE}
+ccre_annotations = build_annotations(genome = 'hg38', annotations = 'hg38_ccres')
+```
+
 ## GENCODE lncRNA transcripts
 
 The long non-coding RNA (lncRNA) annotations are from [GENCODE](https://www.gencodegenes.org) for hg19, hg38, and mm10. The lncRNA transcripts are used, and we eventually plan to include the lncRNA introns/exons at a later date. The lncRNA annotations have populated `tx_id`, `gene_id`, and `symbol` columns. Respectively they are, the Ensembl transcript name, Entrez Gene ID, and gene symbol. As per the `transcript_type` field in the GENCODE anntotations, the [biotypes](https://www.gencodegenes.org/gencode_biotypes.html) are given in the `id` column.

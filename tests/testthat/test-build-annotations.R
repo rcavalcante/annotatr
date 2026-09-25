@@ -134,6 +134,25 @@ for(genome in builtin_genomes()) {
     })
 }
 
+# ENCODE cCREs are large downloads (129 MB for hg38)
+for(genome in names(CCRE$files)) {
+    test_that(sprintf('ENCODE cCRE annotations build for %s', genome), {
+        skip_if_not_full_tests()
+        skip_network()
+
+        annots = sprintf('%s_ccres', genome)
+        a = suppressMessages(build_annotations(genome = genome, annotations = annots, cache = FALSE))
+        expect_built(a, annots)
+        expect_equal(unique(Seqinfo::genome(a)), genome)
+
+        # The id is the cCRE accession, e.g. EH38E2776516 or EM10E0932225
+        expect_false(anyDuplicated(a$id) > 0)
+        expect_true(all(grepl('^E[HM][0-9]{2}E[0-9]+$', a$id)))
+        # cCREs are 150 to 350 bp, so 1-based widths are too
+        expect_true(all(GenomicRanges::width(a) >= 150 & GenomicRanges::width(a) <= 350))
+    })
+}
+
 # Ensembl canonical transcripts come from a different EnsDb for each genome
 for(genome in CANONICAL$genome) {
     test_that(sprintf('Canonical annotations build for %s, with one transcript per gene', genome), {
