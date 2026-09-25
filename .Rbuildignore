@@ -1,5 +1,6 @@
 ^.*\.git$
 ^data-raw$
+^docker$
 ^meta$
 ^\.travis\.yml$
 README\.md
