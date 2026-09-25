@@ -251,6 +251,9 @@ build_hmm_annots = function(genome = c('hg19'), annotations = annotatr::builtin_
         # Reformat types
         types = sprintf('%s_chromatin_%s', genome, paste(line, reformat_hmm_codes(tbl$type), sep='-'))
 
+        # UCSC database tables have 0-based starts, GRanges are 1-based
+        tbl$start = tbl$start + 1L
+
         # Convert to GRanges
         gr = tryCatch({
             GenomicRanges::GRanges(
@@ -431,6 +434,8 @@ build_cpg_annots = function(genome = annotatr::builtin_genomes(), annotations = 
                 islands_tbl = readr::read_tsv(download_annotation_file(con, genome = genome, cache = cache),
                     col_names = c('chr','start','end'),
                     col_types = '-cii-------')
+                # UCSC database tables have 0-based starts, GRanges are 1-based
+                islands_tbl$start = islands_tbl$start + 1L
                 # Convert to GRanges
                 islands = tryCatch({
                     GenomicRanges::GRanges(

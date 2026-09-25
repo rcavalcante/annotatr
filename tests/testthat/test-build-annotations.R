@@ -40,8 +40,17 @@ test_that('CpG annotations build from UCSC', {
     expect_built(a, 'hg38_cpgs')
     expect_equal(unique(Seqinfo::genome(a)), 'hg38')
 
-    # interCGI is only on chromosomes with CpG islands
+    # UCSC tables are 0-based, so islands have the widths in UCSC's length
+    # column, e.g. the first is chr1:28736-29737 (issue #54)
     islands = a[a$type == 'hg38_cpg_islands']
+    ucsc = readr::read_tsv(download_annotation_file('https://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/cpgIslandExt.txt.gz', genome = 'hg38'),
+        col_names = c('chr', 'start', 'end', 'length'), col_types = '-cii-i-----')
+    ucsc_gr = GenomicRanges::GRanges(ucsc$chr, IRanges::IRanges(ucsc$start + 1L, ucsc$end), length = ucsc$length)
+    m = S4Vectors::match(ucsc_gr, islands, ignore.strand = TRUE)
+    expect_false(anyNA(m))
+    expect_equal(GenomicRanges::width(ucsc_gr), ucsc_gr$length)
+
+    # interCGI is only on chromosomes with CpG islands
     inter = a[a$type == 'hg38_cpg_inter']
     expect_true(all(as.character(GenomicRanges::seqnames(inter)) %in% as.character(GenomicRanges::seqnames(islands))))
 })
@@ -172,4 +181,8 @@ test_that('chromHMM chromatin state annotations build', {
 
     a = suppressMessages(build_annotations(genome = 'hg19', annotations = 'hg19_Gm12878-chromatin', cache = FALSE))
     expect_built(a, 'hg19_Gm12878-chromatin')
+
+    # The states tile the genome, so with 1-based coordinates they don't
+    # overlap. Reading UCSC's 0-based starts as 1-based overlapped them by 1 bp.
+    expect_equal(sum(as.numeric(GenomicRanges::width(GenomicRanges::reduce(a)))), sum(as.numeric(GenomicRanges::width(a))))
 })

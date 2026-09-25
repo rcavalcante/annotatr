@@ -38,6 +38,11 @@ NEW FEATURES
 
 BUGFIXES
 
+  o Fix CpG islands read from UCSC database tables (hg38, mm10, mm39, rn6,
+    rn7, danRer10, danRer11, galGal5), and hg19 chromHMM states, which started
+    1 bp early because UCSC's 0-based starts were used as 1-based. CpG shores,
+    shelves, and inter-CGI regions, built from the islands, are fixed too.
+    Reported, with a fix, by Ryan Yancey (issue #54, PR #55).
   o Gene annotations for dm3, dm6, and rn4 had no gene symbols, because their
     gene IDs are FlyBase or Ensembl IDs, but symbols were looked up by Entrez
     ID. They now have symbols, Entrez IDs, and Ensembl IDs.
