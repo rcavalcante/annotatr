@@ -24,6 +24,40 @@ test_that('annotate_regions() errors when nothing overlaps', {
         'No annotations intersect the regions')
 })
 
+test_that('annotate_regions() errors for regions and annotations from different genomes', {
+    r = read_regions(con = extdata('test_intersect.bed'), format = 'bed')
+    Seqinfo::genome(r) = 'hg38'
+
+    expect_error(
+        annotate_regions(regions = r, annotations = annotatr::annotations, quiet = TRUE),
+        'regions are from genome hg38 but the annotations are from genome hg19')
+})
+
+test_that('annotate_regions() errors for chromosome names with no match', {
+    r = read_regions(con = extdata('test_intersect.bed'), format = 'bed')
+    Seqinfo::seqlevels(r) = sub('^chr', '', Seqinfo::seqlevels(r))
+
+    expect_error(
+        annotate_regions(regions = r, annotations = annotatr::annotations, quiet = TRUE),
+        'no chromosome names in common, e.g. 1 in the regions')
+})
+
+test_that('annotate_regions() suggests setting the genome of regions without one', {
+    withr::local_options(rlib_message_verbosity = 'verbose')
+    r = read_regions(con = extdata('test_intersect.bed'), format = 'bed')
+
+    expect_message(
+        annotate_regions(regions = r, annotations = annotatr::annotations, quiet = FALSE),
+        'regions have no genome')
+    expect_no_message(
+        annotate_regions(regions = r, annotations = annotatr::annotations, quiet = TRUE))
+
+    Seqinfo::genome(r) = 'hg19'
+    expect_no_message(
+        annotate_regions(regions = r, annotations = annotatr::annotations, quiet = FALSE),
+        message = 'regions have no genome')
+})
+
 ################################################################################
 # annotate_regions()
 

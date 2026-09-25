@@ -35,6 +35,10 @@ annotate_regions = function(regions, annotations, minoverlap = 1L, ignore.strand
         stop('Error in annotate_regions(...): annotations object is not GRanges. Use build_annotations(...) to construct the annotations before calling annotate_regions(...).')
     }
 
+    # Check the genomes and chromosome names match, with clearer errors than
+    # findOverlaps() gives
+    check_regions_genome(regions, annotations, quiet = quiet)
+
     # Perform the intersections
     if(!quiet) {
         message('Annotating...')
@@ -49,4 +53,47 @@ annotate_regions = function(regions, annotations, minoverlap = 1L, ignore.strand
     } else {
         stop('No annotations intersect the regions.')
     }
+}
+
+#' Function to check regions and annotations are from the same genome
+#'
+#' Gives an error if the regions and annotations have different genomes, or no chromosome names in common (e.g. \code{2} and \code{chr2}). If the regions have no genome, it can't check the genomes match, so it gives a message once per session suggesting \code{read_regions(genome = ...)}.
+#'
+#' @param regions A \code{GRanges} object of regions.
+#' @param annotations A \code{GRanges} object of annotations.
+#' @param quiet Print the message about regions without a genome (FALSE) or not (TRUE).
+#'
+#' @return \code{NULL}, invisibly, if the checks pass.
+check_regions_genome = function(regions, annotations, quiet = FALSE) {
+    regions_seqlevels = Seqinfo::seqlevelsInUse(regions)
+    common = intersect(regions_seqlevels, Seqinfo::seqlevels(annotations))
+
+    if(length(regions_seqlevels) > 0 && length(common) == 0) {
+        stop(sprintf(paste(
+            'Error: The regions and annotations have no chromosome names in common, e.g. %s in the regions and %s in the annotations.',
+            'If only the naming style differs, change the regions to match, e.g. with GenomeInfoDb::seqlevelsStyle(regions) = \'UCSC\' for chr1, chr2, etc.'),
+            paste(utils::head(regions_seqlevels, 3), collapse = ', '),
+            paste(utils::head(Seqinfo::seqlevels(annotations), 3), collapse = ', ')))
+    }
+
+    regions_genome = Seqinfo::genome(regions)[common]
+    annotations_genome = Seqinfo::genome(annotations)[common]
+    conflicts = !is.na(regions_genome) & !is.na(annotations_genome) & regions_genome != annotations_genome
+    if(any(conflicts)) {
+        stop(sprintf('Error: The regions are from genome %s but the annotations are from genome %s. Use regions and annotations from the same genome.',
+            paste(unique(regions_genome[conflicts]), collapse = ', '),
+            paste(unique(annotations_genome[conflicts]), collapse = ', ')))
+    }
+
+    annotations_genome = unique(stats::na.omit(annotations_genome))
+    if(!quiet && all(is.na(regions_genome)) && length(annotations_genome) > 0) {
+        rlang::inform(
+            sprintf(paste(
+                'The regions have no genome, so annotate_regions() can\'t check they match the annotations (%s).',
+                'Use read_regions(genome = ...) to set it.'),
+                paste(annotations_genome, collapse = ', ')),
+            .frequency = 'once', .frequency_id = 'annotatr_regions_without_genome')
+    }
+
+    return(invisible(NULL))
 }

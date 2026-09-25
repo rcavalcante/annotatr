@@ -39,6 +39,11 @@ test_that('CpG annotations build from UCSC', {
     a = suppressMessages(build_annotations(genome = 'hg38', annotations = 'hg38_cpgs', cache = FALSE))
     expect_built(a, 'hg38_cpgs')
     expect_equal(unique(Seqinfo::genome(a)), 'hg38')
+
+    # interCGI is only on chromosomes with CpG islands
+    islands = a[a$type == 'hg38_cpg_islands']
+    inter = a[a$type == 'hg38_cpg_inter']
+    expect_true(all(as.character(GenomicRanges::seqnames(inter)) %in% as.character(GenomicRanges::seqnames(islands))))
 })
 
 test_that('FANTOM5 enhancers build', {
@@ -102,6 +107,11 @@ test_that('All gene annotation types build', {
         'intronexonboundaries', 'exonintronboundaries'))
     a = suppressMessages(build_annotations(genome = 'hg19', annotations = annots, cache = FALSE))
     expect_built(a, annots)
+
+    # Intergenic is only on chromosomes with genes, so no contig is entirely intergenic
+    intergenic = a[a$type == 'hg19_genes_intergenic']
+    genic = a[a$type != 'hg19_genes_intergenic']
+    expect_true(all(as.character(GenomicRanges::seqnames(intergenic)) %in% as.character(GenomicRanges::seqnames(genic))))
 })
 
 test_that('hg38 GENCODE lncRNA annotations build', {
@@ -121,6 +131,9 @@ test_that('FANTOM5 enhancers build for hg38, mm9, and mm10', {
         annot = sprintf('%s_enhancers_fantom', genome)
         a = suppressMessages(build_annotations(genome = genome, annotations = annot, cache = FALSE))
         expect_built(a, annot)
+        # Enhancers lifted over from hg19 and mm9 have the seqinfo of their genome
+        expect_equal(unique(Seqinfo::genome(a)), genome)
+        expect_false(anyNA(Seqinfo::seqlengths(a)))
     }
 })
 

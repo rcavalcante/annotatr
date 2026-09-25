@@ -50,6 +50,15 @@ USER-FACING CHANGES
 
 BUGFIXES
 
+  o annotate_regions() gives clear errors when the regions and annotations are
+    from different genomes, or have no chromosome names in common (e.g. 2 and
+    chr2), instead of findOverlaps() errors or no overlaps. It suggests
+    read_regions(genome = ...) once per session for regions without a genome.
+  o hg38_enhancers_fantom and mm10_enhancers_fantom have the seqinfo of their
+    genome. liftOver() had dropped the genome and chromosome lengths.
+  o Intergenic and interCGI annotations are only on chromosomes with genes or
+    CpG islands. Unplaced contigs and alternate haplotypes without any were
+    each an entire intergenic or interCGI region.
   o plot_numerical_coannotations() scatterplots draw each region once per
     facet. Regions were drawn once per combination of their annotations, so
     with the semi-transparent points, regions with many annotations (e.g. in
