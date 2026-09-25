@@ -15,5 +15,5 @@ get_annotation_rname(code, genome)
 A string giving the resource name.
 }
 \description{
-The name includes the annotatr version, and for gene annotations, the versions of the \code{TxDb.*} and \code{org.*.eg.db} packages or the AnnotationHub EnsDb, so updating them causes a rebuild.
+The name includes the annotatr version, and for gene annotations, the versions of the \code{TxDb.*} and \code{org.*.eg.db} packages, the AnnotationHub EnsDb, or MANE, so updating them causes a rebuild.
 }

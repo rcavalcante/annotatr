@@ -1,6 +1,6 @@
 Package: annotatr
 Title: Annotation of Genomic Regions to Genomic Annotations
-Version: 1.39.8
+Version: 1.39.9
 Date: 2025-06-21
 Authors@R: c(
     person("Raymond G.", "Cavalcante", email = "rcavalca@umich.edu", role = c("aut", "cre")),
@@ -43,6 +43,7 @@ Suggests:
     rmarkdown,
     roxygen2,
     testthat (>= 3.2.0),
+    txdbmaker,
     withr,
     TxDb.Dmelanogaster.UCSC.dm3.ensGene,
     TxDb.Dmelanogaster.UCSC.dm6.ensGene,

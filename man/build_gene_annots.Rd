@@ -13,7 +13,7 @@ build_gene_annots(
 \arguments{
 \item{genome}{The genome assembly.}
 
-\item{annotations}{A character vector with entries of the form \code{[genome]_genes_{1to5kb,promoters,5UTRs,cds,exons,firstexons,introns,intronexonboundaries,exonintronboundaries,3UTRs,intergenic}}.}
+\item{annotations}{A character vector with entries of the form \code{[genome]_genes_{1to5kb,promoters,5UTRs,cds,exons,firstexons,introns,intronexonboundaries,exonintronboundaries,3UTRs,intergenic}}, or \code{hg38_mane_*} with the same types except intergenic. All entries must be from the same group, \code{genes} or \code{mane}.}
 
 \item{cache}{A logical stating whether to use the cache on disk for downloads.}
 }
@@ -22,4 +22,7 @@ A list of \code{GRanges} objects with unique \code{id} of the form \code{[type]:
 }
 \description{
 Using the \code{TxDb.*} group of packages, construct genic annotations consisting of any combination of 1-5kb upstream of a TSS, promoters (< 1kb from TSS), 5UTRs, CDS, exons, first exons, introns, intron/exon and exon/intron boundaries, 3UTRs, and intergenic. For genomes without a \code{TxDb.*} package (e.g. sheep, \code{oviariramb2}), an Ensembl \code{EnsDb} from \code{AnnotationHub} is used instead, and \code{tx_id} and \code{gene_id} are Ensembl IDs.
+}
+\details{
+The \code{mane} annotations (hg38 only) are built the same way from the MANE Select transcripts, one per protein-coding gene, with a TxDb made from the MANE GTF. Their \code{tx_id} is the Ensembl transcript ID, and \code{gene_id} is the Entrez ID, as for \code{hg38_genes_*}.
 }

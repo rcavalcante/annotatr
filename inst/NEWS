@@ -3,6 +3,12 @@ CHANGES IN VERSION 1.40.0
 
 NEW FEATURES
 
+  o Add MANE Select annotations for hg38 (issue #29): 'hg38_mane_*', with the
+    same types as 'hg38_genes_*' except intergenic, and the 'hg38_basicmane'
+    shortcut. They use one transcript per protein-coding gene (MANE v1.5),
+    instead of every isoform. gene_id is the Entrez ID and tx_id is the
+    Ensembl transcript ID. Building them needs the txdbmaker package.
+    summarize_genes() accepts them, alone or with 'hg38_genes_*'.
   o Add summarize_genes(), which summarizes annotated regions with one row
     per gene: the number of regions in each gene annotation type, category
     counts for a 'by' column, and the mean, median, and standard deviation of

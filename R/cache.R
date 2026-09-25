@@ -112,7 +112,7 @@ download_annotation_file = function(url, genome, cache = TRUE, retries = 3) {
 
 #' Function to get the cache resource name of a built annotation
 #'
-#' The name includes the annotatr version, and for gene annotations, the versions of the \code{TxDb.*} and \code{org.*.eg.db} packages or the AnnotationHub EnsDb, so updating them causes a rebuild.
+#' The name includes the annotatr version, and for gene annotations, the versions of the \code{TxDb.*} and \code{org.*.eg.db} packages, the AnnotationHub EnsDb, or MANE, so updating them causes a rebuild.
 #'
 #' @param code A string giving the annotation code, e.g. \code{'hg19_genes_promoters'}.
 #' @param genome A string giving the genome assembly.
@@ -132,6 +132,8 @@ get_annotation_rname = function(code, genome) {
                 }
             }
         }
+    } else if(grepl('_mane_', code)) {
+        sources = c(sources, sprintf('MANE %s', MANE$version))
     }
 
     return(sprintf('annotation|%s|%s', code, paste(sources, collapse = ', ')))

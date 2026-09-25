@@ -32,6 +32,12 @@ GENARK = data.frame(
     ensdb = c('AH119381'),
     stringsAsFactors = FALSE)
 
+# MANE transcripts (hg38 only), for the hg38_mane_* annotations. The release
+# directory is versioned, so a new release needs a change here.
+MANE = list(
+    version = '1.5',
+    url = 'https://ftp.ncbi.nlm.nih.gov/refseq/MANE/MANE_human/release_1.5')
+
 # Gene annotation types in genomic order, for summarize_genes()
 GENE_TYPES = c('1to5kb', 'promoters', '5UTRs', 'cds', 'firstexons', 'exons', 'intronexonboundaries', 'introns', 'exonintronboundaries', '3UTRs')
 
@@ -82,11 +88,14 @@ get_cellline_from_code = function(code) {
 #' @export
 builtin_annotations = function() {
     # Create annotation code endings
-        shortcut_ends = c('basicgenes','cpgs')
+        shortcut_ends = c('basicgenes','basicmane','cpgs')
 
         # Gene codes
         gene_genomes = annotatr::builtin_genomes()
         gene_ends = c('1to5kb', 'promoters', 'cds', '5UTRs', 'exons', 'firstexons', 'introns', 'intronexonboundaries', 'exonintronboundaries', '3UTRs', 'intergenic')
+
+        # MANE codes (hg38 only), the gene codes without intergenic
+        mane_ends = setdiff(gene_ends, 'intergenic')
 
         # CpG codes
         cpg_genomes = base::setdiff(annotatr::builtin_genomes(),c('dm3','dm6'))
@@ -108,6 +117,7 @@ builtin_annotations = function() {
         gene_codes = apply(
             expand.grid(gene_genomes, 'genes', gene_ends, stringsAsFactors = FALSE),
             1, paste, collapse='_')
+        mane_codes = paste('hg38', 'mane', mane_ends, sep='_')
         cpg_codes = apply(
             expand.grid(cpg_genomes, 'cpg', cpg_ends, stringsAsFactors= FALSE),
             1, paste, collapse='_')
@@ -121,14 +131,15 @@ builtin_annotations = function() {
         gene_shortcut_codes = apply(
             expand.grid(gene_genomes, 'basicgenes', stringsAsFactors = FALSE),
             1, paste, collapse='_')
+        mane_shortcut_codes = 'hg38_basicmane'
         cpg_shortcut_codes = apply(
             expand.grid(cpg_genomes, 'cpgs', stringsAsFactors = FALSE),
             1, paste, collapse='_')
         chromatin_shortcut_codes = paste('hg19', chromatin_shortcut_ends, sep='_')
 
     # Create the big vector of supported annotations
-    annots = c(gene_codes, cpg_codes, chromatin_codes, enhancer_codes, lncrna_codes,
-        gene_shortcut_codes, cpg_shortcut_codes, chromatin_shortcut_codes)
+    annots = c(gene_codes, mane_codes, cpg_codes, chromatin_codes, enhancer_codes, lncrna_codes,
+        gene_shortcut_codes, mane_shortcut_codes, cpg_shortcut_codes, chromatin_shortcut_codes)
 
     return(annots)
 }
@@ -287,16 +298,21 @@ tidy_annotations = function(annotations) {
             } else {
                 return(paste('CpG', tokens[3]))
             }
-        } else if (tokens[2] == 'genes') {
+        } else if (tokens[2] %in% c('genes', 'mane')) {
             if(tokens[3] == 'firstexons') {
-                return('first exons')
+                type = 'first exons'
             } else if (tokens[3] == 'intronexonboundaries') {
-                return('intron/exon boundaries')
+                type = 'intron/exon boundaries'
             } else if (tokens[3] == 'exonintronboundaries') {
-                return('exon/intron boundaries')
+                type = 'exon/intron boundaries'
             } else {
-                return(tokens[3])
+                type = tokens[3]
             }
+            # Tell MANE apart from all transcripts, e.g. in the same plot
+            if(tokens[2] == 'mane') {
+                type = paste('MANE', type)
+            }
+            return(type)
         } else if (tokens[2] == 'enhancers') {
             return('enhancers')
         } else if (tokens[2] == 'chromatin') {
@@ -359,18 +375,19 @@ check_annotations = function(annotations) {
 #' @export
 expand_annotations = function(annotations) {
     are_basicgenes = any(grepl('basicgenes', annotations))
+    are_basicmane = any(grepl('basicmane', annotations))
     are_cpgs = any(grepl('cpgs', annotations))
     are_hmms = any(grepl('-chromatin', annotations))
 
-    which_are_shortcuts = c(which(grepl('basicgenes', annotations)), which(grepl('cpgs', annotations)), which(grepl('-chromatin', annotations)))
+    which_are_shortcuts = c(which(grepl('basicgenes', annotations)), which(grepl('basicmane', annotations)), which(grepl('cpgs', annotations)), which(grepl('-chromatin', annotations)))
 
     # expand_shortcuts() will always be run after check_annotations() so we can be
     # sure that the genome prefixes are the same for all annotaitons.
     genome = unique( sapply(annotations, function(a){ unlist(strsplit(a, '_'))[1] }, USE.NAMES = FALSE) )
 
-    if(are_basicgenes || are_cpgs || are_hmms) {
+    if(are_basicgenes || are_basicmane || are_cpgs || are_hmms) {
 
-        # Check for shortcut annotation accessors 'cpgs', 'basicgenes'
+        # Check for shortcut annotation accessors 'cpgs', 'basicgenes', 'basicmane'
         # and create the right annotations based on the genome
         new_annotations = c()
         remove_shortcuts = c()
@@ -379,6 +396,9 @@ expand_annotations = function(annotations) {
         }
         if(are_basicgenes) {
             new_annotations = c(new_annotations, paste(genome, 'genes', c('1to5kb','promoters','5UTRs','exons','introns','3UTRs'), sep='_'))
+        }
+        if(are_basicmane) {
+            new_annotations = c(new_annotations, paste(genome, 'mane', c('1to5kb','promoters','5UTRs','exons','introns','3UTRs'), sep='_'))
         }
         if(are_hmms) {
             # Could conceivably use shortcuts for multiple cell lines

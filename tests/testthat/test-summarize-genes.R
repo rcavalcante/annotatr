@@ -68,6 +68,25 @@ test_that('summarize_genes() works without over or by', {
     expect_named(g, c('gene_id', 'symbol', 'n_regions', 'n_promoters', 'n_exons'))
 })
 
+test_that('summarize_genes() summarizes MANE annotations, alone or with genes', {
+    a = gene_example()
+    mane = a
+    mane$annot$type = sub('hg19_genes_', 'hg38_mane_', mane$annot$type)
+
+    g = summarize_genes(mane, quiet = TRUE)
+    expect_named(g, c('gene_id', 'symbol', 'n_regions', 'n_promoters', 'n_exons'))
+    expect_equal(g$n_regions, c(3L, 2L))
+
+    # With both groups, a gene has one row, and the MANE types are prefixed
+    both = c(a, mane[mane$annot$type == 'hg38_mane_promoters'])
+    g = summarize_genes(both, quiet = TRUE)
+    expect_named(g, c('gene_id', 'symbol', 'n_regions', 'n_promoters', 'n_exons', 'n_mane_promoters'))
+    expect_equal(g$n_mane_promoters, c(2L, 2L))
+
+    l = summarize_genes(both, format = 'long', quiet = TRUE)
+    expect_equal(l$annot.type, c('promoters', 'exons', 'mane_promoters', 'promoters', 'mane_promoters'))
+})
+
 test_that('summarize_genes() errors for bad arguments', {
     a = gene_example()
 

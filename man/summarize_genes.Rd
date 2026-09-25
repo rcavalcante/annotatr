@@ -13,7 +13,7 @@ summarize_genes(
 )
 }
 \arguments{
-\item{annotated_regions}{The \code{GRanges} result of \code{annotate_regions()}, with gene annotations such as \code{[genome]_basicgenes}.}
+\item{annotated_regions}{The \code{GRanges} result of \code{annotate_regions()}, with gene annotations such as \code{[genome]_basicgenes} or \code{hg38_basicmane}.}
 
 \item{over}{A character vector of numerical data columns to summarize with the mean, median, and standard deviation over each gene's regions. Default \code{NULL}, no numerical summaries.}
 
@@ -31,6 +31,8 @@ Given a \code{GRanges} of annotated regions, summarize the regions annotated to 
 }
 \details{
 A region counts once toward a gene, however many of the gene's annotations it overlaps, and once toward each annotation type of the gene. A region annotated to more than one gene counts toward each of them.
+
+MANE annotations (\code{hg38_mane_*}) are summarized the same way. If both \code{hg38_genes_*} and \code{hg38_mane_*} annotations are present, the MANE annotation types are prefixed with \code{mane_}, e.g. \code{n_promoters} and \code{n_mane_promoters}. Both use Entrez gene IDs, so a gene has one row.
 }
 \examples{
  if(requireNamespace('TxDb.Hsapiens.UCSC.hg19.knownGene', quietly = TRUE) &&

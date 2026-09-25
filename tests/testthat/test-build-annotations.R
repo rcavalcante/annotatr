@@ -67,6 +67,26 @@ test_that('GENCODE lncRNA annotations build', {
     expect_built(a, 'mm10_lncrna_gencode')
 })
 
+test_that('MANE annotations build, with one transcript per gene', {
+    skip_network()
+    skip_if_not_installed('txdbmaker')
+
+    a = suppressMessages(build_annotations(genome = 'hg38', annotations = c('hg38_mane_promoters', 'hg38_mane_exons'), cache = FALSE))
+    expect_built(a, c('hg38_mane_promoters', 'hg38_mane_exons'))
+
+    # MANE Select only: one promoter per gene, and no MANE Plus Clinical, e.g.
+    # the second BRAF transcript
+    promoters = a[a$type == 'hg38_mane_promoters']
+    expect_false(anyDuplicated(promoters$gene_id) > 0)
+    expect_gt(length(promoters), 19000)
+    expect_equal(unique(a$tx_id[a$symbol %in% 'BRAF']), 'ENST00000646891.2')
+
+    # Entrez gene IDs and symbols, as for hg38_genes_*
+    expect_equal(unique(a$gene_id[a$symbol %in% 'BRAF']), '673')
+    expect_false(anyNA(a$symbol))
+    expect_equal(unique(Seqinfo::genome(a)), 'hg38')
+})
+
 ################################################################################
 # Full network tests: every builtin genome, and the large downloads. These take
 # a while, so they run only with ANNOTATR_FULL_TESTS=true.
