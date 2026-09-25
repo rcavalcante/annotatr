@@ -863,7 +863,7 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
 
 #' A helper function to build lncRNA annotations.
 #'
-#' Using the \code{AnnotationHub} package, retrieve transcript level lncRNA annotations for either human (GRCh38) or mouse (GRCm38). If the genome is 'hg19', use the permalink from GENCODE and \code{rtracklayer::import()} to download and process.
+#' Download transcript level lncRNA annotations from GENCODE for human (hg19: release 19, hg38: release 31) or mouse (mm10: release M6), and process them with \code{rtracklayer::import()}.
 #'
 #' @param genome The genome assembly.
 #'
@@ -882,22 +882,15 @@ build_lncrna_annots = function(genome = c('hg19','hg38','mm10')) {
     mapped_genes = mappedkeys(x)
     eg2symbol = as.data.frame(x[mapped_genes])
 
+    # GENCODE releases matching the lncRNA annotations previously in AnnotationHub,
+    # which removed its GENCODE resources in Bioconductor 3.23
+    gencode_url = 'https://ftp.ebi.ac.uk/pub/databases/gencode'
     if(genome == 'hg19') {
-        use_ah = FALSE
-        con = 'ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_19/gencode.v19.long_noncoding_RNAs.gtf.gz'
+        con = sprintf('%s/Gencode_human/release_19/gencode.v19.long_noncoding_RNAs.gtf.gz', gencode_url)
     } else if (genome == 'hg38') {
-        use_ah = TRUE
-        hub_genome = 'GRCh38'
-        ID = 'AH75123'
+        con = sprintf('%s/Gencode_human/release_31/gencode.v31.long_noncoding_RNAs.gff3.gz', gencode_url)
     } else if (genome == 'mm10') {
-        use_ah = TRUE
-        hub_genome = 'GRCm38'
-        ID = 'AH49550'
-    }
-
-    if(use_ah) {
-        # Create AnnotationHub connection
-        ah = AnnotationHub::AnnotationHub()
+        con = sprintf('%s/Gencode_mouse/release_M6/gencode.vM6.long_noncoding_RNAs.gff3.gz', gencode_url)
     }
 
     # Each annotation should be a GRanges object with the following mcols:
@@ -905,12 +898,7 @@ build_lncrna_annots = function(genome = c('hg19','hg38','mm10')) {
 
     message('Building lncRNA transcripts...')
     ### lncRNA transcripts
-        # Get the lncRNAs either with AnnotationHub or rtracklayer::import()
-        if(use_ah) {
-            lncrna_gr = ah[[ID]]
-        } else {
-            lncrna_gr = rtracklayer::import(con, genome = genome)
-        }
+        lncrna_gr = rtracklayer::import(con, genome = genome)
         lncrna_gr = lncrna_gr[lncrna_gr$type == 'transcript']
 
         # Subset the mcols()
@@ -933,10 +921,6 @@ build_lncrna_annots = function(genome = c('hg19','hg38','mm10')) {
         GenomicRanges::mcols(lncrna_gr)$type = sprintf('%s_lncrna_gencode', genome)
 
         GenomicRanges::mcols(lncrna_gr) = GenomicRanges::mcols(lncrna_gr)[, c('id','tx_id','gene_id','symbol','type')]
-
-        if(use_ah) {
-            Seqinfo::seqinfo(lncrna_gr) = Seqinfo::Seqinfo(genome = genome)
-        }
 
     return(lncrna_gr)
 }
