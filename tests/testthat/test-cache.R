@@ -79,6 +79,7 @@ test_that('Gene annotation cache names include the TxDb and org versions', {
     expect_match(get_annotation_rname('oviariramb2_genes_exons', 'oviariramb2'), 'AH119381', fixed = TRUE)
     expect_match(get_annotation_rname('hg38_mane_exons', 'hg38'), sprintf('MANE %s', MANE$version), fixed = TRUE)
     expect_match(get_annotation_rname('mm39_canonical_exons', 'mm39'), 'AH119358', fixed = TRUE)
+    expect_match(get_annotation_rname('hg38_ccre_dELS', 'hg38'), sprintf('cCRE %s', CCRE$version), fixed = TRUE)
     expect_no_match(get_annotation_rname('hg19_cpg_islands', 'hg19'), 'TxDb')
 })
 

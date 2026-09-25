@@ -38,6 +38,30 @@ test_that('builtin_annotations() has canonical annotations, with intergenic, for
     expect_named(tidy_annotations(c('mm39_canonical_promoters', 'mm39_canonical_firstexons')), c('canonical promoters', 'canonical first exons'))
 })
 
+test_that('builtin_annotations() has cCRE annotations for hg38 and mm10', {
+    annots = builtin_annotations()
+    ccres = grep('_ccre_|_ccres$', annots, value = TRUE)
+
+    expect_setequal(unique(sub('_.*', '', ccres)), c('hg38', 'mm10'))
+    expect_contains(ccres, c('hg38_ccres', 'mm10_ccres', 'hg38_ccre_dELS', 'mm10_ccre_CA-CTCF'))
+    expect_error(check_annotations('hg19_ccre_PLS'), 'not supported')
+
+    expect_setequal(expand_annotations('hg38_ccres'), sprintf('hg38_ccre_%s', c('PLS', 'pELS', 'dELS', 'CA-H3K4me3', 'CA-CTCF', 'CA-TF', 'CA', 'TF')))
+    expect_named(tidy_annotations(c('hg38_ccre_dELS', 'hg38_ccre_CA-CTCF')), c('cCRE distal enhancer-like', 'cCRE accessible + CTCF'))
+})
+
+test_that('read_ccre_bed() converts 0-based BED starts to 1-based', {
+    path = withr::local_tempfile(fileext = '.bed')
+    writeLines(c('chr1\t10033\t10250\tEH38D4327497\tEH38E2776516\tpELS',
+        'chr2\t0\t200\tEH38D0000001\tEH38E0000001\tCA-CTCF'), path)
+
+    gr = read_ccre_bed(path, genome = NA)
+    expect_equal(as.character(gr), c('chr1:10034-10250', 'chr2:1-200'))
+    expect_equal(GenomicRanges::width(gr), c(217L, 200L))
+    expect_equal(gr$accession, c('EH38E2776516', 'EH38E0000001'))
+    expect_equal(gr$class, c('pELS', 'CA-CTCF'))
+})
+
 test_that('builtin_annotations() has MANE annotations for hg38 only, without intergenic', {
     annots = builtin_annotations()
     mane = grep('_mane_|basicmane', annots, value = TRUE)
