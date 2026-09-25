@@ -190,9 +190,11 @@ get_genark_url = function(genome, file) {
 #'
 #' @param genome A string giving the genome assembly, one of \code{GENARK$genome}.
 #'
+#' @param cache A logical stating whether to use the cache on disk for downloads.
+#'
 #' @return A named character vector whose names are aliases (RefSeq, GenBank, NCBI, UCSC) and whose values are UCSC-style names.
-get_genark_aliases = function(genome) {
-    alias_tbl = utils::read.delim(get_genark_url(genome, sprintf('%s.chromAlias.txt', GENARK[GENARK$genome == genome, 'accession'])),
+get_genark_aliases = function(genome, cache = TRUE) {
+    alias_tbl = utils::read.delim(download_annotation_file(get_genark_url(genome, sprintf('%s.chromAlias.txt', GENARK[GENARK$genome == genome, 'accession'])), genome = genome, cache = cache),
         header = FALSE, comment.char = '#', colClasses = 'character')
 
     ucsc = alias_tbl[[ncol(alias_tbl)]]
@@ -208,11 +210,13 @@ get_genark_aliases = function(genome) {
 #'
 #' @param genome A string giving the genome assembly, one of \code{GENARK$genome}.
 #'
+#' @param cache A logical stating whether to use the cache on disk for downloads.
+#'
 #' @return A \code{Seqinfo} object.
-get_genark_seqinfo = function(genome) {
-    sizes = utils::read.delim(get_genark_url(genome, sprintf('%s.chrom.sizes.txt', GENARK[GENARK$genome == genome, 'accession'])),
+get_genark_seqinfo = function(genome, cache = TRUE) {
+    sizes = utils::read.delim(download_annotation_file(get_genark_url(genome, sprintf('%s.chrom.sizes.txt', GENARK[GENARK$genome == genome, 'accession'])), genome = genome, cache = cache),
         header = FALSE, col.names = c('chr', 'length'), colClasses = c('character', 'numeric'))
-    aliases = get_genark_aliases(genome)
+    aliases = get_genark_aliases(genome, cache = cache)
 
     seqinfo = Seqinfo::Seqinfo(
         seqnames = unname(aliases[sizes$chr]),
@@ -229,9 +233,11 @@ get_genark_seqinfo = function(genome) {
 #' @param genome A string giving the genome assembly, one of \code{GENARK$genome}.
 #' @param seqinfo A \code{Seqinfo} object from \code{get_genark_seqinfo()}.
 #'
+#' @param cache A logical stating whether to use the cache on disk for downloads.
+#'
 #' @return \code{gr} with UCSC-style sequence names and the full \code{seqinfo}.
-ucsc_genark_seqlevels = function(gr, genome, seqinfo = get_genark_seqinfo(genome)) {
-    aliases = get_genark_aliases(genome)
+ucsc_genark_seqlevels = function(gr, genome, cache = TRUE, seqinfo = get_genark_seqinfo(genome, cache = cache)) {
+    aliases = get_genark_aliases(genome, cache = cache)
 
     Seqinfo::seqlevels(gr) = unname(aliases[Seqinfo::seqlevels(gr)])
     Seqinfo::seqlevels(gr) = Seqinfo::seqlevels(seqinfo)

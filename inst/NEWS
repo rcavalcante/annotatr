@@ -3,6 +3,12 @@ CHANGES IN VERSION 1.40.0
 
 NEW FEATURES
 
+  o build_annotations() caches the annotations it builds, and the files it
+    downloads, on disk, so later calls load them in seconds instead of
+    rebuilding them. Use cache = FALSE to build without the cache, and
+    list_cached_annotations() and clear_cached_annotations() to manage it. See
+    ?`cached-annotations` for troubleshooting.
+  o Downloads are retried, and use HTTPS.
   o Add support for sheep (ARS-UI_Ramb_v2.0) as 'oviariramb2'. Gene
     annotations come from the Ensembl 113 EnsDb in AnnotationHub (AH119381), so
     tx_id and gene_id are Ensembl IDs. CpG islands come from the UCSC GenArk

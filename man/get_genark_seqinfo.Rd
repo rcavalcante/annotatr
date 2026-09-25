@@ -4,10 +4,12 @@
 \alias{get_genark_seqinfo}
 \title{Function to get the Seqinfo of a GenArk genome with UCSC-style names}
 \usage{
-get_genark_seqinfo(genome)
+get_genark_seqinfo(genome, cache = TRUE)
 }
 \arguments{
 \item{genome}{A string giving the genome assembly, one of \code{GENARK$genome}.}
+
+\item{cache}{A logical stating whether to use the cache on disk for downloads.}
 }
 \value{
 A \code{Seqinfo} object.

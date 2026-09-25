@@ -24,7 +24,8 @@ test_that('build_annotations() returns custom annotations without downloading', 
 
 ################################################################################
 # Light network tests: small downloads from each kind of data source, run
-# everywhere unless offline
+# everywhere unless offline. They use cache = FALSE so they test downloading and
+# building, and catch changes in the sources.
 
 expect_built = function(annotations, annots) {
     expect_s4_class(annotations, 'GRanges')
@@ -35,7 +36,7 @@ expect_built = function(annotations, annots) {
 test_that('CpG annotations build from UCSC', {
     skip_network()
 
-    a = suppressMessages(build_annotations(genome = 'hg38', annotations = 'hg38_cpgs'))
+    a = suppressMessages(build_annotations(genome = 'hg38', annotations = 'hg38_cpgs', cache = FALSE))
     expect_built(a, 'hg38_cpgs')
     expect_equal(unique(Seqinfo::genome(a)), 'hg38')
 })
@@ -43,7 +44,7 @@ test_that('CpG annotations build from UCSC', {
 test_that('FANTOM5 enhancers build', {
     skip_network()
 
-    a = suppressMessages(build_annotations(genome = 'hg19', annotations = 'hg19_enhancers_fantom'))
+    a = suppressMessages(build_annotations(genome = 'hg19', annotations = 'hg19_enhancers_fantom', cache = FALSE))
     expect_built(a, 'hg19_enhancers_fantom')
 })
 
@@ -51,13 +52,13 @@ test_that('GENCODE lncRNA annotations build', {
     skip_network()
     skip_if_not_installed('org.Hs.eg.db')
 
-    a = suppressMessages(build_annotations(genome = 'hg19', annotations = 'hg19_lncrna_gencode'))
+    a = suppressMessages(build_annotations(genome = 'hg19', annotations = 'hg19_lncrna_gencode', cache = FALSE))
     expect_built(a, 'hg19_lncrna_gencode')
     # Every lncRNA comes with a gene symbol from GENCODE
     expect_false(anyNA(a$symbol))
 
     skip_if_not_installed('org.Mm.eg.db')
-    a = suppressMessages(build_annotations(genome = 'mm10', annotations = 'mm10_lncrna_gencode'))
+    a = suppressMessages(build_annotations(genome = 'mm10', annotations = 'mm10_lncrna_gencode', cache = FALSE))
     expect_built(a, 'mm10_lncrna_gencode')
 })
 
@@ -85,7 +86,7 @@ for(genome in builtin_genomes()) {
             annots = c(annots, sprintf('%s_cpgs', genome))
         }
 
-        a = suppressMessages(build_annotations(genome = genome, annotations = annots))
+        a = suppressMessages(build_annotations(genome = genome, annotations = annots, cache = FALSE))
         expect_built(a, annots)
     })
 }
@@ -99,7 +100,7 @@ test_that('All gene annotation types build', {
 
     annots = sprintf('hg19_genes_%s', c('intergenic', 'cds', 'firstexons',
         'intronexonboundaries', 'exonintronboundaries'))
-    a = suppressMessages(build_annotations(genome = 'hg19', annotations = annots))
+    a = suppressMessages(build_annotations(genome = 'hg19', annotations = annots, cache = FALSE))
     expect_built(a, annots)
 })
 
@@ -108,7 +109,7 @@ test_that('hg38 GENCODE lncRNA annotations build', {
     skip_network()
     skip_if_not_installed('org.Hs.eg.db')
 
-    a = suppressMessages(build_annotations(genome = 'hg38', annotations = 'hg38_lncrna_gencode'))
+    a = suppressMessages(build_annotations(genome = 'hg38', annotations = 'hg38_lncrna_gencode', cache = FALSE))
     expect_built(a, 'hg38_lncrna_gencode')
 })
 
@@ -118,7 +119,7 @@ test_that('FANTOM5 enhancers build for hg38, mm9, and mm10', {
 
     for(genome in c('hg38', 'mm9', 'mm10')) {
         annot = sprintf('%s_enhancers_fantom', genome)
-        a = suppressMessages(build_annotations(genome = genome, annotations = annot))
+        a = suppressMessages(build_annotations(genome = genome, annotations = annot, cache = FALSE))
         expect_built(a, annot)
     }
 })
@@ -127,6 +128,6 @@ test_that('chromHMM chromatin state annotations build', {
     skip_if_not_full_tests()
     skip_network()
 
-    a = suppressMessages(build_annotations(genome = 'hg19', annotations = 'hg19_Gm12878-chromatin'))
+    a = suppressMessages(build_annotations(genome = 'hg19', annotations = 'hg19_Gm12878-chromatin', cache = FALSE))
     expect_built(a, 'hg19_Gm12878-chromatin')
 })
