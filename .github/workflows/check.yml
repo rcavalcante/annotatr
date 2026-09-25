@@ -5,6 +5,9 @@
 # - Every Monday, and when run by hand from the Actions tab, the full build
 #   tests run too (ANNOTATR_FULL_TESTS=true), to catch changes in the
 #   annotation sources, e.g. removed AnnotationHub resources.
+#
+# Installed R packages are cached between runs (see the cache steps below). A
+# cache can be deleted by hand from the repository's Actions > Caches page.
 name: check
 
 on:
@@ -45,18 +48,34 @@ jobs:
           mkdir -p "$R_LIBS_USER"
           echo "r=$(Rscript -e 'cat(as.character(getRversion()))')" >> "$GITHUB_OUTPUT"
           echo "bioc=$(Rscript -e 'cat(as.character(BiocManager::version()))')" >> "$GITHUB_OUTPUT"
+          echo "week=$(date -u +%G-W%V)" >> "$GITHUB_OUTPUT"
 
-      # Reuse the installed dependencies until DESCRIPTION, R, or Bioconductor
-      # changes. Older caches are the starting point when DESCRIPTION changes.
+      # Reuse the installed dependencies within a week. Each week starts with a
+      # clean install, so nothing stale lingers, and every run updates any
+      # cached package with a newer release, e.g. a bug fix. Within a week,
+      # the newest cache is the starting point when DESCRIPTION changes.
       - name: Restore the R package cache
-        uses: actions/cache@v4
+        id: cache
+        uses: actions/cache/restore@v4
         with:
           path: ${{ env.R_LIBS_USER }}
-          key: r-${{ steps.versions.outputs.r }}-bioc-${{ steps.versions.outputs.bioc }}-${{ hashFiles('DESCRIPTION') }}
-          restore-keys: r-${{ steps.versions.outputs.r }}-bioc-${{ steps.versions.outputs.bioc }}-
+          key: r-${{ steps.versions.outputs.r }}-bioc-${{ steps.versions.outputs.bioc }}-${{ steps.versions.outputs.week }}-${{ hashFiles('DESCRIPTION') }}-${{ github.run_id }}
+          restore-keys: |
+            r-${{ steps.versions.outputs.r }}-bioc-${{ steps.versions.outputs.bioc }}-${{ steps.versions.outputs.week }}-${{ hashFiles('DESCRIPTION') }}-
+            r-${{ steps.versions.outputs.r }}-bioc-${{ steps.versions.outputs.bioc }}-${{ steps.versions.outputs.week }}-
 
-      - name: Install dependencies
-        run: Rscript docker/install_deps.R DESCRIPTION
+      - name: Install and update dependencies
+        id: install
+        run: Rscript docker/install_deps.R DESCRIPTION --update
+
+      # Save right after installing, so a failure in the checks below doesn't
+      # lose the install, and only when a package was installed or updated
+      - name: Save the R package cache
+        if: steps.install.outputs.changed == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.R_LIBS_USER }}
+          key: ${{ steps.cache.outputs.cache-primary-key }}
 
       - name: R CMD build
         run: R CMD build .
