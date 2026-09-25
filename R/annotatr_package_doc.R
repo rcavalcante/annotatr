@@ -26,3 +26,6 @@
 #' @importFrom stats as.formula
 #' @importFrom utils combn data
 NULL
+
+# density is computed by ggplot2's stat_bin() and used with after_stat()
+utils::globalVariables('density')

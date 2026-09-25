@@ -599,31 +599,27 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
         # Build the base transcripts
         tx_gr = transcripts(txdb)
     } else {
-        # Load the appropriate TxDb.* library and get the txdb
+        # Check the appropriate TxDb.* and org.XX.eg.db packages are installed
         err_mess = NULL
         txdb_name = get_txdb_name(genome)
-        if(requireNamespace(txdb_name, quietly = TRUE)) {
-            library(txdb_name, character.only = TRUE)
-        } else {
+        if(!requireNamespace(txdb_name, quietly = TRUE)) {
             err_mess = sprintf('The package %s is not installed, please install it via Bioconductor.', txdb_name)
         }
-        txdb = get(txdb_name)
-
-        # Get the org.XX.eg.db mapping from Entrez ID to gene symbol
-        # First element returned is package name, second is eg2SYMBOL name
         orgdb_name = get_orgdb_name(genome)
-        if(requireNamespace(sprintf('org.%s.eg.db', orgdb_name), quietly = TRUE)) {
-            library(sprintf('org.%s.eg.db', orgdb_name), character.only = TRUE)
-        } else {
+        orgdb_package = sprintf('org.%s.eg.db', orgdb_name)
+        if(!requireNamespace(orgdb_package, quietly = TRUE)) {
             err_mess = paste(
                 err_mess,
-                sprintf('The package org.%s.eg.db is not installed, please install it via Bioconductor.', orgdb_name),
+                sprintf('The package %s is not installed, please install it via Bioconductor.', orgdb_package),
                 sep='\n')
         }
         if(!is.null(err_mess)) {
             stop(err_mess)
         }
-        x = get(sprintf('org.%s.egSYMBOL', orgdb_name))
+        txdb = getExportedValue(txdb_name, txdb_name)
+
+        # Get the org.XX.eg.db mapping from Entrez ID to gene symbol
+        x = getExportedValue(orgdb_package, sprintf('org.%s.egSYMBOL', orgdb_name))
         mapped_genes = mappedkeys(x)
         eg2symbol = as.data.frame(x[mapped_genes])
 
@@ -902,6 +898,9 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
     genes = do.call('GRangesList', mget(mgets))
     names(genes) = annotations
 
+    # Promoters and boundaries can extend past the ends of chromosomes
+    genes = GenomicRanges::trim(genes)
+
     # EnsDb sequences have Ensembl names, use the UCSC-style names
     if(genome %in% GENARK$genome) {
         genes = ucsc_genark_seqlevels(genes, genome, cache = cache)
@@ -926,10 +925,13 @@ build_lncrna_annots = function(genome = c('hg19','hg38','mm10'), cache = TRUE) {
     # Get the org.XX.eg.db mapping from Entrez ID to gene symbol
     # First element returned is package name, second is eg2SYMBOL name, third is egENSEMBLTRANS2EG name
     orgdb_name = get_orgdb_name(genome)
-    library(sprintf('org.%s.eg.db', orgdb_name), character.only = TRUE)
+    orgdb_package = sprintf('org.%s.eg.db', orgdb_name)
+    if(!requireNamespace(orgdb_package, quietly = TRUE)) {
+        stop(sprintf('The package %s is not installed, please install it via Bioconductor.', orgdb_package))
+    }
 
     # Get Entrez ID to gene symbol mappings
-    x = get(sprintf('org.%s.egSYMBOL', orgdb_name))
+    x = getExportedValue(orgdb_package, sprintf('org.%s.egSYMBOL', orgdb_name))
     mapped_genes = mappedkeys(x)
     eg2symbol = as.data.frame(x[mapped_genes])
 

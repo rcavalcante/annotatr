@@ -27,11 +27,11 @@
 #' @export
 annotate_regions = function(regions, annotations, minoverlap = 1L, ignore.strand = TRUE, quiet = FALSE) {
     # Checks before moving forward
-    if(class(regions)[1] != "GRanges") {
+    if(!methods::is(regions, "GRanges")) {
         stop('Error in annotate_regions(...): regions object is not GRanges.')
     }
 
-    if(class(annotations)[1] != "GRanges") {
+    if(!methods::is(annotations, "GRanges")) {
         stop('Error in annotate_regions(...): annotations object is not GRanges. Use build_annotations(...) to construct the annotations before calling annotate_regions(...).')
     }
 

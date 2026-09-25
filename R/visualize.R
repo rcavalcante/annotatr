@@ -59,7 +59,7 @@ plot_annotation = function(annotated_regions, annotated_random, annotation_order
     # from each type of annotation
     annotated_regions = dplyr::distinct(
         dplyr::ungroup(annotated_regions),
-        across(c('seqnames', 'start', 'end', 'annot.type')), .keep_all=TRUE)
+        across(dplyr::all_of(c('seqnames', 'start', 'end', 'annot.type'))), .keep_all=TRUE)
 
     # Do particular things if annotated_random isn't NULL
     if(!missing(annotated_random)) {
@@ -73,7 +73,7 @@ plot_annotation = function(annotated_regions, annotated_random, annotation_order
         # from each type of annotation
         annotated_random = dplyr::distinct(
             dplyr::ungroup(annotated_random),
-            across(c('seqnames', 'start', 'end', 'annot.type')), .keep_all=TRUE)
+            across(dplyr::all_of(c('seqnames', 'start', 'end', 'annot.type'))), .keep_all=TRUE)
 
         # Combine the tbl_dfs in preparation for visualization
         annotated_regions = dplyr::bind_rows("Data" = annotated_regions, "Background" = annotated_random, .id = 'data_type')
@@ -173,12 +173,11 @@ plot_coannotations = function(annotated_regions, annotation_order = NULL,
     ########################################################################
     # Find the co-annotations
 
-    annotation_pairs_by_region = dplyr::do(
-        dplyr::group_by(annotated_regions, across(c('seqnames', 'start', 'end'))),
-        expand.grid(.$annot.type, .$annot.type, stringsAsFactors = FALSE))
-
-    annotation_pairs_by_region = dplyr::distinct(dplyr::ungroup(annotation_pairs_by_region),
-        across(c('seqnames', 'start', 'end', 'Var1', 'Var2')), .keep_all=TRUE)
+    # Every pair of annotation types on each region, counting each region once per pair
+    region_types = dplyr::distinct(annotated_regions, across(dplyr::all_of(c('seqnames', 'start', 'end', 'annot.type'))))
+    annotation_pairs_by_region = dplyr::inner_join(region_types, region_types,
+        by = c('seqnames', 'start', 'end'), suffix = c('.1', '.2'), relationship = 'many-to-many')
+    annotation_pairs_by_region = dplyr::rename(annotation_pairs_by_region, Var1 = 'annot.type.1', Var2 = 'annot.type.2')
 
     pairwise_annotation_counts = table(annotation_pairs_by_region[['Var1']], annotation_pairs_by_region[['Var2']])
 
@@ -206,6 +205,37 @@ plot_coannotations = function(annotated_regions, annotation_order = NULL,
     }
 
     return(plot)
+}
+
+#' Function to find the pairs of annotation types on each region
+#'
+#' A region with one annotation gives the pair of that type with itself. A region with more than one annotation gives each pair of its annotations, with the types of each pair in sorted order, so a region annotated to a CpG island and a promoter counts only toward the island / promoter pair, and not toward island / island or promoter / promoter.
+#'
+#' @param tbl A \code{data.frame} of annotated regions, from \code{as.data.frame()} on the result of \code{annotate_regions()}.
+#'
+#' @return A \code{data.frame} with columns \code{seqnames}, \code{start}, \code{end}, \code{V1}, and \code{V2}, with one row per distinct pair of annotation types on each region.
+coannotation_pairs = function(tbl) {
+    region_cols = c('seqnames', 'start', 'end')
+    types = dplyr::count(tbl, across(dplyr::all_of(c(region_cols, 'annot.type'))), name = 'n_type')
+    types$annot.type = as.character(types$annot.type)
+    types = dplyr::add_count(dplyr::group_by(types, across(dplyr::all_of(region_cols))), wt = .data$n_type, name = 'n_region')
+    types = dplyr::ungroup(types)
+
+    # A type with itself: the only annotation on a region, or on a region more than once
+    self_pairs = types[types$n_region == 1 | types$n_type > 1, c(region_cols, 'annot.type')]
+    self_pairs$V1 = self_pairs$annot.type
+    self_pairs$V2 = self_pairs$annot.type
+
+    # Different types on the same region, in sorted order
+    cross_pairs = dplyr::inner_join(types[, c(region_cols, 'annot.type')], types[, c(region_cols, 'annot.type')],
+        by = region_cols, suffix = c('.1', '.2'), relationship = 'many-to-many')
+    cross_pairs = cross_pairs[cross_pairs$annot.type.1 < cross_pairs$annot.type.2, ]
+    cross_pairs$V1 = cross_pairs$annot.type.1
+    cross_pairs$V2 = cross_pairs$annot.type.2
+
+    pairs = rbind(self_pairs[, c(region_cols, 'V1', 'V2')], cross_pairs[, c(region_cols, 'V1', 'V2')])
+
+    return(as.data.frame(pairs, stringsAsFactors = FALSE))
 }
 
 #' Plot numerical data over regions or regions summarized over annotations
@@ -330,12 +360,12 @@ plot_numerical = function(annotated_regions, x, y, facet, facet_order, bin_width
 
     ########################################################################
     # Create data objects for plots
-    facet_data = dplyr::distinct(dplyr::ungroup(sub_tbl), across(c('seqnames', 'start', 'end', 'annot.type')), .keep_all=TRUE)
+    facet_data = dplyr::distinct(dplyr::ungroup(sub_tbl), across(dplyr::all_of(c('seqnames', 'start', 'end', 'annot.type'))), .keep_all=TRUE)
     if(two_facets) {
-        all_data = dplyr::distinct(dplyr::select(dplyr::ungroup(tbl), -matches(facet[1])), across(c('seqnames', 'start', 'end')), .keep_all=TRUE)
-        all_data = dplyr::distinct(dplyr::select(all_data, -matches(facet[2])), across(c('seqnames', 'start', 'end')), .keep_all=TRUE)
+        all_data = dplyr::distinct(dplyr::select(dplyr::ungroup(tbl), -matches(facet[1])), across(dplyr::all_of(c('seqnames', 'start', 'end'))), .keep_all=TRUE)
+        all_data = dplyr::distinct(dplyr::select(all_data, -matches(facet[2])), across(dplyr::all_of(c('seqnames', 'start', 'end'))), .keep_all=TRUE)
     } else {
-        all_data = dplyr::distinct(dplyr::select(dplyr::ungroup(tbl), -matches(facet)), across(c('seqnames', 'start', 'end')), .keep_all=TRUE)
+        all_data = dplyr::distinct(dplyr::select(dplyr::ungroup(tbl), -matches(facet)), across(dplyr::all_of(c('seqnames', 'start', 'end'))), .keep_all=TRUE)
     }
 
 
@@ -462,24 +492,7 @@ plot_numerical_coannotations = function(annotated_regions, x, y, annot1, annot2,
     # facet as well as the promoter / promoter facet. We want it *ONLY* in the
     # island / promoter facet. Note, sorting ensures island / promoter and promoter / island
     # are aggregated
-    pairs_by_region = dplyr::do(
-        dplyr::group_by(sub_tbl, across(c('seqnames', 'start', 'end'))),
-        if(nrow(.) == 1) {
-            as.data.frame(
-                t(
-                    utils::combn(
-                        rep.int(as.character(.$annot.type), 2)
-                    , 2))
-                , stringsAsFactors = FALSE)
-        } else {
-            as.data.frame(
-                t(
-                    utils::combn(
-                        sort(as.character(.$annot.type))
-                    , 2))
-            , stringsAsFactors = FALSE)
-        }
-    )
+    pairs_by_region = coannotation_pairs(sub_tbl)
 
     # Join on the data chromosome locations
     pairs_by_region = dplyr::inner_join(x = pairs_by_region, y = sub_tbl, by = c('seqnames','start','end'))
@@ -487,8 +500,8 @@ plot_numerical_coannotations = function(annotated_regions, x, y, annot1, annot2,
     ########################################################################
     # Create data objects for plots
     facet_data = dplyr::distinct(dplyr::ungroup(pairs_by_region),
-        across(c('seqnames', 'start', 'end', 'V1', 'V2')), .keep_all=TRUE)
-    all_data = dplyr::distinct(dplyr::ungroup(tbl), across(c('seqnames', 'start', 'end')), .keep_all=TRUE)
+        across(dplyr::all_of(c('seqnames', 'start', 'end', 'V1', 'V2'))), .keep_all=TRUE)
+    all_data = dplyr::distinct(dplyr::ungroup(tbl), across(dplyr::all_of(c('seqnames', 'start', 'end'))), .keep_all=TRUE)
 
     ########################################################################
     # Construct the plot
@@ -523,7 +536,9 @@ plot_numerical_coannotations = function(annotated_regions, x, y, annot1, annot2,
             theme(legend.title=element_blank(), legend.position="bottom", legend.key = element_rect(color = c('red','white')))
     } else {
         # Make the base scatter ggplot
-        plot = ggplot(pairs_by_region, aes(x = .data[[x]], y = .data[[y]])) +
+        # One point per region in each facet, so regions with many annotations
+        # aren't drawn darker
+        plot = ggplot(facet_data, aes(x = .data[[x]], y = .data[[y]])) +
             geom_point(alpha = 1/8, size = 1) +
             facet_wrap( V1 ~ V2 ) +
             theme_bw()
@@ -658,7 +673,7 @@ plot_categorical = function(annotated_regions, annotated_random, x, fill=NULL, x
     annotated_regions = subset_order_tbl(tbl = annotated_regions, col = fill, col_order = fill_order)
 
     # Take the distinct annotation types per unique data region
-    annotated_regions = dplyr::distinct(dplyr::ungroup(annotated_regions), across(c('seqnames', 'start', 'end', x, fill)), .keep_all=TRUE)
+    annotated_regions = dplyr::distinct(dplyr::ungroup(annotated_regions), across(dplyr::all_of(c('seqnames', 'start', 'end', x, fill))), .keep_all=TRUE)
 
     ########################################################################
     # Order and subset based on x_order
@@ -676,7 +691,7 @@ plot_categorical = function(annotated_regions, annotated_random, x, fill=NULL, x
         annotated_random = subset_order_tbl(tbl = annotated_random, col=fill, col_order=fill_order)
 
         # Take the distinct annotation types per unique background region
-        annotated_random = dplyr::distinct(dplyr::ungroup(annotated_random), across(c('seqnames', 'start', 'end', 'annot.type')), .keep_all=TRUE)
+        annotated_random = dplyr::distinct(dplyr::ungroup(annotated_random), across(dplyr::all_of(c('seqnames', 'start', 'end', 'annot.type'))), .keep_all=TRUE)
 
         # Combine the tbl_dfs in preparation for visualization
         annotated_regions = dplyr::bind_rows("All" = annotated_regions, "Background" = annotated_random, .id = 'data_type')

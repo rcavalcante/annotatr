@@ -28,6 +28,12 @@ DEPRECATED AND DEFUNCT
 
 INTERNAL CHANGES
 
+  o plot_coannotations() and plot_numerical_coannotations() are 10 to 100
+    times faster, without the superseded dplyr::do().
+  o Replace the deprecated dplyr::funs() and tidyselect uses of external
+    vectors, which warned with recent dplyr. summarize_numerical() output is
+    unchanged.
+  o Update the CITATION to bibentry() with the DOI.
   o Move the tests to testthat 3rd edition. Tests no longer depend on each
     other or on file order, and plot tests build the plots. Build tests for
     small downloads run whenever online. Full build tests for every genome run
@@ -44,6 +50,15 @@ USER-FACING CHANGES
 
 BUGFIXES
 
+  o plot_numerical_coannotations() scatterplots draw each region once per
+    facet. Regions were drawn once per combination of their annotations, so
+    with the semi-transparent points, regions with many annotations (e.g. in
+    genes with many transcripts) looked darker.
+  o Gene annotations are trimmed to the ends of chromosomes. Some promoters
+    and intron/exon boundaries extended past them, with warnings, e.g. for
+    danRer10, danRer11, mm10, rn4, and rn6.
+  o build_annotations() no longer attaches the TxDb.* and org.*.eg.db
+    packages, and says which of them to install when they are missing.
   o Fix plot_categorical() with the default fill = NULL, which failed when the
     plot was drawn.
   o Fix hg38_lncrna_gencode and mm10_lncrna_gencode, which failed after
