@@ -3,6 +3,10 @@ CHANGES IN VERSION 1.40.0
 
 NEW FEATURES
 
+  o Add summarize_genes(), which summarizes annotated regions with one row
+    per gene: the number of regions in each gene annotation type, category
+    counts for a 'by' column, and the mean, median, and standard deviation of
+    'over' columns. Use format = 'long' for one row per gene and annotation type.
   o build_annotations() caches the annotations it builds, and the files it
     downloads, on disk, so later calls load them in seconds instead of
     rebuilding them. Use cache = FALSE to build without the cache, and
@@ -31,6 +35,9 @@ INTERNAL CHANGES
 
 USER-FACING CHANGES
 
+  o Document that read_annotations() returns the custom annotations, which can
+    be combined with other annotations using c(), as well as storing them in
+    annotatr_cache.
   o summarize_annotations(), plot_annotation(), and plot_categorical() label the
     regions in annotated_random as "Background" instead of "Random Regions".
     The argument name annotated_random is unchanged.

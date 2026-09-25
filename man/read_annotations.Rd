@@ -20,18 +20,22 @@ read_annotations(con, name, genome = NA, format, extraCols = character(), ...)
 \item{...}{Parameters to pass onto the format-specific method of \code{rtracklayer::import()}.}
 }
 \value{
-A \code{GRanges} object stored in \code{annotatr_cache}. To view a custom annotation, do \code{annotatr_cache$get(name)}. To add a custom annotation to the set of annotations, include \code{'[genome]_custom_[name]'} in the call to \code{build_annotations()}. See example below.
+The \code{GRanges} object of the custom annotations, invisibly. Combine it with other annotations using \code{c()}, e.g. \code{c(read_annotations(...), build_annotations(...))}. It is also stored in \code{annotatr_cache} for the current R session as \code{'[genome]_custom_[name]'}, which can be included in the call to \code{build_annotations()}. See examples below.
 }
 \description{
-\code{read_annotations()} is a wrapper for the \code{rtracklayer::import()} function that creates a \code{GRanges} object matching the structure of annotations built with \code{build_annotations()}. The structure is defined by \code{GRanges}, with the \code{mcols()} with names \code{c('id','gene_id','symbol','type')}.
+\code{read_annotations()} is a wrapper for the \code{rtracklayer::import()} function that creates a \code{GRanges} object matching the structure of annotations built with \code{build_annotations()}. The structure is defined by \code{GRanges}, with the \code{mcols()} with names \code{c('id','tx_id','gene_id','symbol','type')}.
 }
 \examples{
 
  # Read in a BED3 file as a custom annotation
  file = system.file('extdata', 'test_annotations_3.bed', package='annotatr')
- read_annotations(con = file, name = 'test', genome = 'hg19')
- build_annotations(genome = 'hg19', annotations = 'hg19_custom_test')
+ custom = read_annotations(con = file, name = 'test', genome = 'hg19')
 
- print(annotatr_cache$get('hg19_custom_test'))
+ # Combine it with other annotations, e.g. the premade CpG annotations
+ data('annotations', package = 'annotatr')
+ combined = c(custom, annotations)
+
+ # Or refer to it by name in build_annotations()
+ build_annotations(genome = 'hg19', annotations = 'hg19_custom_test')
 
 }
