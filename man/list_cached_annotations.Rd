@@ -13,6 +13,11 @@ A \code{data.frame} with one row per cached item, and columns \code{type} (\code
 List the annotations and downloaded files in the cache used by \code{build_annotations()}. See \code{\link{cached-annotations}} for more about the cache.
 }
 \examples{
+# Use a temporary cache so the example doesn't change your cache
+old_options = options(annotatr.cache = tempfile())
+
 list_cached_annotations()
+
+options(old_options)
 
 }

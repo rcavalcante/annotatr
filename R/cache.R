@@ -19,6 +19,8 @@
 #'   \item{Problems with AnnotationHub}{Some annotations come from AnnotationHub (e.g. hg19 CpG islands, sheep gene models), which has its own cache. See \code{AnnotationHub::hubCache()} for its location, and \code{AnnotationHub::removeResources()} or \code{AnnotationHub::removeCache()} to clear it.}
 #' }
 #'
+#' @return None. This help page describes the cache.
+#'
 #' @seealso \code{\link{list_cached_annotations}}, \code{\link{clear_cached_annotations}}, \code{\link{build_annotations}}
 #'
 #' @name cached-annotations
@@ -189,7 +191,12 @@ save_cached_annotation = function(gr, code, genome) {
 #' @return A \code{data.frame} with one row per cached item, and columns \code{type} (\code{'annotation'} or \code{'download'}), \code{genome}, \code{name} (the annotation code or URL), \code{sources} (the versions an annotation was built with), \code{size_mb}, \code{added}, and \code{path}.
 #'
 #' @examples
+#' # Use a temporary cache so the example doesn't change your cache
+#' old_options = options(annotatr.cache = tempfile())
+#'
 #' list_cached_annotations()
+#'
+#' options(old_options)
 #'
 #' @export
 list_cached_annotations = function() {
@@ -229,13 +236,16 @@ list_cached_annotations = function() {
 #' @return A \code{data.frame} of the removed items, as from \code{list_cached_annotations()}, invisibly.
 #'
 #' @examples
-#' \dontrun{
+#' # Use a temporary cache so the example doesn't change your cache
+#' old_options = options(annotatr.cache = tempfile())
+#'
 #' # Remove the hg19 annotations and downloads
 #' clear_cached_annotations(genome = 'hg19')
 #'
 #' # Remove everything
 #' clear_cached_annotations()
-#' }
+#'
+#' options(old_options)
 #'
 #' @export
 clear_cached_annotations = function(genome = NULL) {

@@ -16,12 +16,15 @@ A \code{data.frame} of the removed items, as from \code{list_cached_annotations(
 Remove annotations and downloaded files from the cache used by \code{build_annotations()}, so they will be built or downloaded again. See \code{\link{cached-annotations}} for more about the cache.
 }
 \examples{
-\dontrun{
+# Use a temporary cache so the example doesn't change your cache
+old_options = options(annotatr.cache = tempfile())
+
 # Remove the hg19 annotations and downloads
 clear_cached_annotations(genome = 'hg19')
 
 # Remove everything
 clear_cached_annotations()
-}
+
+options(old_options)
 
 }

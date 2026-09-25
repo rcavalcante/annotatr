@@ -3,6 +3,9 @@
 \name{cached-annotations}
 \alias{cached-annotations}
 \title{Cached annotations}
+\value{
+None. This help page describes the cache.
+}
 \description{
 \code{build_annotations()} saves each annotation it builds, and each file it downloads, in a cache on disk. Later calls load them from the cache instead of building them again, which is much faster (e.g. seconds instead of about half a minute for the hg19 gene annotations). This cache is separate from \code{annotatr_cache}, which holds custom annotations for the current R session only.
 }
