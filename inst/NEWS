@@ -3,6 +3,12 @@ CHANGES IN VERSION 1.40.0
 
 NEW FEATURES
 
+  o Add Ensembl canonical transcript annotations, '[genome]_canonical_*' and
+    the '[genome]_basiccanonical' shortcut, for hg38, mm39, rn7, danRer11, dm6,
+    and oviariramb2: one transcript per gene, of every biotype, including
+    intergenic. They are built from the Ensembl 113 EnsDbs in AnnotationHub,
+    with sequences renamed to UCSC names. Genes on alternate haplotypes and fix
+    patches are left out.
   o All annotations have entrez_id and ensembl_id columns, next to gene_id
     and symbol. For gene annotations of every genome, symbol, entrez_id, and
     ensembl_id (without version) are filled in from the org.*.eg.db package,

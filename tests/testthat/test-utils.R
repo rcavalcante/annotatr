@@ -26,6 +26,18 @@ test_that('builtin_annotations() has CpG annotations for all genomes but fly', {
     expect_false(any(c('dm3_cpgs', 'dm6_cpgs') %in% annots))
 })
 
+test_that('builtin_annotations() has canonical annotations, with intergenic, for current assemblies', {
+    annots = builtin_annotations()
+    canonical = grep('_canonical_|basiccanonical', annots, value = TRUE)
+
+    expect_setequal(unique(sub('_.*', '', canonical)), c('hg38', 'mm39', 'rn7', 'danRer11', 'dm6', 'oviariramb2'))
+    expect_contains(canonical, c('mm39_basiccanonical', 'mm39_canonical_promoters', 'mm39_canonical_intergenic'))
+    expect_false('hg19_canonical_promoters' %in% annots)
+
+    expect_setequal(expand_annotations('mm39_basiccanonical'), sprintf('mm39_canonical_%s', c('1to5kb', 'promoters', '5UTRs', 'exons', 'introns', '3UTRs')))
+    expect_named(tidy_annotations(c('mm39_canonical_promoters', 'mm39_canonical_firstexons')), c('canonical promoters', 'canonical first exons'))
+})
+
 test_that('builtin_annotations() has MANE annotations for hg38 only, without intergenic', {
     annots = builtin_annotations()
     mane = grep('_mane_|basicmane', annots, value = TRUE)
@@ -91,6 +103,33 @@ test_that('expand_annotations() expands shortcuts', {
         'ActivePromoter', 'WeakPromoter', 'PoisedPromoter', 'StrongEnhancer', 'WeakEnhancer',
         'Insulator', 'TxnTransition', 'TxnElongation', 'WeakTxn', 'Repressed',
         'Heterochrom/lo', 'Repetitive/CNV')))
+})
+
+test_that('get_chrom_aliases() maps Ensembl and other names to UCSC names', {
+    skip_network()
+
+    # UCSC database genome, with a 'ucsc' column in the header
+    aliases = get_chrom_aliases('mm39', cache = FALSE)
+    expect_equal(unname(aliases[c('1', 'MT', 'chr1', 'NC_000067.7')]), c('chr1', 'chrM', 'chr1', 'chr1'))
+
+    # hg38's header has no 'ucsc' column, so the first column is the UCSC name
+    aliases = get_chrom_aliases('hg38', cache = FALSE)
+    expect_equal(unname(aliases[c('1', 'X', 'KI270728.1')]), c('chr1', 'chrX', 'chr16_KI270728v1_random'))
+
+    # GenArk genome
+    aliases = get_chrom_aliases('oviariramb2', cache = FALSE)
+    expect_equal(unname(aliases['MT']), 'chrM')
+})
+
+test_that('ucsc_seqlevels() renames to UCSC names, and drops sequences without one', {
+    skip_network()
+
+    gr = GenomicRanges::GRanges(c('1', 'MT', 'not_a_chromosome'), IRanges::IRanges(1, 10))
+    gr = ucsc_seqlevels(gr, 'mm39', cache = FALSE)
+
+    expect_equal(as.character(GenomicRanges::seqnames(gr)), c('chr1', 'chrM'))
+    expect_equal(unique(Seqinfo::genome(gr)), 'mm39')
+    expect_equal(unname(Seqinfo::seqlengths(gr)['chr1']), 195154279)
 })
 
 test_that('standardize_mcols() gives annotations the same columns', {

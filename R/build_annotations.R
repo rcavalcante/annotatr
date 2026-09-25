@@ -46,10 +46,12 @@ annotatr_cache <- local({
 #'
 #' Create a \code{GRanges} object consisting of all the desired \code{annotations}. Supported annotation codes are listed by \code{builtin_annotations()}. The basis for enhancer annotations are FANTOM5 data, the basis for CpG related annotations are CpG island tracks from \code{AnnotationHub}, and the basis for genic annotations are from the \code{TxDb.*} and \code{org.db} group of packages.
 #'
+#' The \code{[genome]_canonical_*} annotations (hg38, mm39, rn7, danRer11, dm6, and oviariramb2) are the same gene annotations, built only from the Ensembl canonical transcript of each gene (all biotypes, e.g. protein-coding and lncRNA), from the Ensembl 113 \code{EnsDb} in \code{AnnotationHub}. For human, the canonical transcript is the MANE Select transcript when there is one, and otherwise is chosen by Ensembl from conservation, expression, APPRIS, UniProt, CDS length, and clinical variants. For other species, Ensembl chooses by biotype (protein-coding first) and then the longest combined exon length, so the canonical transcript is roughly the longest protein-coding transcript. Genes on alternate haplotypes and fix patches (\code{_alt} and \code{_fix} sequences), which Ensembl gives separate gene IDs, are left out. \code{gene_id} and \code{ensembl_id} are the Ensembl gene ID. The \code{[genome]_basiccanonical} shortcut builds the same types as \code{basicgenes}.
+#'
 #' The \code{hg38_mane_*} annotations are the same gene annotations (except intergenic), built only from the MANE Select transcripts: one transcript per protein-coding gene, agreed on by NCBI and Ensembl (\url{https://www.ncbi.nlm.nih.gov/refseq/MANE/}). Use them to annotate regions to the main isoform of each gene, instead of every isoform in \code{hg38_genes_*}. MANE Plus Clinical transcripts are not included.
 #'
 #' @param genome The genome assembly.
-#' @param annotations A character vector of annotations to build. Valid annotation codes are listed with \code{builtin_annotations()}. The "basicgenes" shortcut builds the following regions: 1-5Kb upstream of TSSs, promoters, 5UTRs, exons, introns, and 3UTRs. The "basicmane" shortcut (hg38 only) builds the same regions from MANE Select transcripts. The "cpgs" shortcut builds the following regions: CpG islands, shores, shelves, and interCGI regions. NOTE: Shortcuts need to be appended by the genome, e.g. \code{hg19_basicgenes}.
+#' @param annotations A character vector of annotations to build. Valid annotation codes are listed with \code{builtin_annotations()}. The "basicgenes" shortcut builds the following regions: 1-5Kb upstream of TSSs, promoters, 5UTRs, exons, introns, and 3UTRs. The "basicmane" shortcut (hg38 only) builds the same regions from MANE Select transcripts, and the "basiccanonical" shortcut from Ensembl canonical transcripts. The "cpgs" shortcut builds the following regions: CpG islands, shores, shelves, and interCGI regions. NOTE: Shortcuts need to be appended by the genome, e.g. \code{hg19_basicgenes}.
 #' @param cache A logical stating whether to load annotations from, and save them to, the cache on disk (TRUE), or to build them from scratch without the cache (FALSE). See \code{\link{cached-annotations}}.
 #' Custom annotations whose names are of the form \code{[genome]_custom_[name]} should also be included. Custom annotations should be read in and converted to \code{GRanges} with \code{read_annotations()}. They can be for a \code{supported_genome()}, or for an unsupported genome.
 #'
@@ -79,9 +81,10 @@ build_annotations = function(genome, annotations, cache = TRUE) {
     enh_annotations = grep('_enhancers_', annotations, value=TRUE)
     gene_annotations = grep('_genes_', annotations, value=TRUE)
     mane_annotations = grep('_mane_', annotations, value=TRUE)
+    canonical_annotations = grep('_canonical_', annotations, value=TRUE)
     cpg_annotations = grep('_cpg_', annotations, value=TRUE)
     lncrna_annotations = grep('_lncrna_', annotations, value=TRUE)
-    builtin_annotations = c(enh_annotations, hmm_annotations, gene_annotations, mane_annotations, cpg_annotations, lncrna_annotations)
+    builtin_annotations = c(enh_annotations, hmm_annotations, gene_annotations, mane_annotations, canonical_annotations, cpg_annotations, lncrna_annotations)
 
     # Check builtin_annotations
     if(length(builtin_annotations) > 0) {
@@ -125,6 +128,9 @@ build_annotations = function(genome, annotations, cache = TRUE) {
     }
     if(any(mane_annotations %in% to_build)) {
         built_grl = c(built_grl, suppressWarnings(build_gene_annots(genome = genome, annotations = intersect(mane_annotations, to_build), cache = cache)))
+    }
+    if(any(canonical_annotations %in% to_build)) {
+        built_grl = c(built_grl, suppressWarnings(build_gene_annots(genome = genome, annotations = intersect(canonical_annotations, to_build), cache = cache)))
     }
     if(any(cpg_annotations %in% to_build)) {
         built_grl = c(built_grl, suppressWarnings(build_cpg_annots(genome = genome, annotations = intersect(cpg_annotations, to_build), cache = cache)))
@@ -427,7 +433,7 @@ build_cpg_annots = function(genome = annotatr::builtin_genomes(), annotations = 
             } else if(genome %in% GENARK$genome) {
                 # GenArk CpG islands are a bigBed with RefSeq sequence names
                 islands = GenomicRanges::granges(rtracklayer::import(download_annotation_file(con, genome = genome, cache = cache), format = 'bigBed'))
-                islands = ucsc_genark_seqlevels(islands, genome, cache = cache)
+                islands = ucsc_seqlevels(islands, genome, cache = cache)
             } else {
                 # Read from URL. There is surprisingly nothing in base that
                 # does this as easily, so here we are with readr again.
@@ -638,13 +644,24 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
     genome = match.arg(genome)
     annotations = match.arg(annotations, several.ok = TRUE)
 
-    # The annotation group, genes or mane, e.g. hg38_mane_promoters
+    # The annotation group, genes, mane, or canonical, e.g. hg38_mane_promoters
     group = unique(vapply(strsplit(annotations, '_'), `[`, character(1), 2))
-    if(length(group) != 1 || !(group %in% c('genes', 'mane'))) {
-        stop('Error: annotations must all be genes or all be mane annotations.')
+    if(length(group) != 1 || !(group %in% GENE_GROUPS)) {
+        stop('Error: annotations must all be from one group: genes, mane, or canonical.')
     }
 
-    if(group == 'mane') {
+    if(group == 'canonical') {
+        # Get the EnsDb from AnnotationHub, with only the canonical transcripts
+        if(!requireNamespace('ensembldb', quietly = TRUE)) {
+            stop('The package ensembldb is not installed, please install it via Bioconductor.')
+        }
+        ah = AnnotationHub::AnnotationHub()
+        txdb = ah[[CANONICAL[CANONICAL$genome == genome, 'ensdb']]]
+        txdb = ensembldb::filter(txdb, ensembldb::TxIsCanonicalFilter(1))
+
+        # The EnsDb has the gene symbols and Entrez IDs
+        gene_table = NULL
+    } else if(group == 'mane') {
         txdb = build_mane_txdb(cache = cache)
 
         # The MANE summary maps Entrez IDs to gene symbols and Ensembl IDs
@@ -700,8 +717,17 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
     genes = build_txdb_gene_annots(txdb, prefix = sprintf('%s_%s', genome, group), annotations = annotations, gene_table = gene_table)
 
     # EnsDb sequences have Ensembl names, use the UCSC-style names
-    if(genome %in% GENARK$genome) {
-        genes = ucsc_genark_seqlevels(genes, genome, cache = cache)
+    if(genome %in% GENARK$genome || group == 'canonical') {
+        genes = ucsc_seqlevels(genes, genome, cache = cache)
+    }
+
+    # Ensembl gives genes on alternate haplotypes and fix patches their own
+    # gene IDs, so they would be second copies of the same genes. Keep one
+    # canonical transcript per gene on the reference assembly.
+    if(group == 'canonical') {
+        genes = S4Vectors::endoapply(genes, function(gr) {
+            gr[!grepl('_(alt|fix)$', as.character(GenomicRanges::seqnames(gr)))]
+        })
     }
 
     # The MANE GTF has no seqinfo, use the genome's
