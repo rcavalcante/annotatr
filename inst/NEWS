@@ -62,6 +62,10 @@ BUGFIXES
     gene IDs are FlyBase or Ensembl IDs, but symbols were looked up by Entrez
     ID. They now have symbols, Entrez IDs, and Ensembl IDs.
 
+USER-FACING CHANGES
+
+  o Require R >= 4.6.0, the version Bioconductor 3.24 runs on.
+
 DEPRECATED AND DEFUNCT
 
   o Deprecate randomize_regions(). Regions placed uniformly at random across the
