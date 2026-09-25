@@ -23,7 +23,7 @@ read_annotations(con, name, genome = NA, format, extraCols = character(), ...)
 The \code{GRanges} object of the custom annotations, invisibly. Combine it with other annotations using \code{c()}, e.g. \code{c(read_annotations(...), build_annotations(...))}. It is also stored in \code{annotatr_cache} for the current R session as \code{'[genome]_custom_[name]'}, which can be included in the call to \code{build_annotations()}. See examples below.
 }
 \description{
-\code{read_annotations()} is a wrapper for the \code{rtracklayer::import()} function that creates a \code{GRanges} object matching the structure of annotations built with \code{build_annotations()}. The structure is defined by \code{GRanges}, with the \code{mcols()} with names \code{c('id','tx_id','gene_id','symbol','type')}.
+\code{read_annotations()} is a wrapper for the \code{rtracklayer::import()} function that creates a \code{GRanges} object matching the structure of annotations built with \code{build_annotations()}. The structure is defined by \code{GRanges}, with the \code{mcols()} with names \code{c('id','tx_id','gene_id','symbol','entrez_id','ensembl_id','type')}. Columns named \code{tx_id}, \code{gene_id}, \code{symbol}, \code{entrez_id}, or \code{ensembl_id} in \code{extraCols} are kept, and the others are \code{NA}.
 }
 \examples{
 

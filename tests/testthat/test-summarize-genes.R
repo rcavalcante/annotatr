@@ -19,6 +19,8 @@ gene_example = function() {
         tx_id = c('tx1', 'tx1', 'tx1', 'tx2', NA),
         gene_id = c('1', '1', '1', '2', NA),
         symbol = c('geneA', 'geneA', 'geneA', 'geneB', NA),
+        entrez_id = c('1', '1', '1', '2', NA),
+        ensembl_id = c('ENSG01', 'ENSG01', 'ENSG01', 'ENSG02', NA),
         type = c('hg19_genes_promoters', 'hg19_genes_exons', 'hg19_genes_exons', 'hg19_genes_promoters', 'hg19_cpg_islands'))
 
     annotate_regions(regions = regions, annotations = annotations, quiet = TRUE)
@@ -30,7 +32,9 @@ test_that('summarize_genes() gives one row per gene', {
     expect_s3_class(g, 'tbl_df')
     expect_equal(g$gene_id, c('1', '2'))
     expect_equal(g$symbol, c('geneA', 'geneB'))
-    expect_named(g, c('gene_id', 'symbol', 'n_regions', 'n_promoters', 'n_exons',
+    expect_equal(g$entrez_id, c('1', '2'))
+    expect_equal(g$ensembl_id, c('ENSG01', 'ENSG02'))
+    expect_named(g, c('gene_id', 'symbol', 'entrez_id', 'ensembl_id', 'n_regions', 'n_promoters', 'n_exons',
         'n_hyper', 'n_hypo', 'diff_meth_mean', 'diff_meth_median', 'diff_meth_sd'))
 
     # geneA has r1, r2, and r3. r1 overlaps two of its annotations but counts once.
@@ -55,7 +59,7 @@ test_that('summarize_genes() leaves out non-gene annotations', {
 test_that('summarize_genes() gives one row per gene and annotation type in long format', {
     l = summarize_genes(gene_example(), over = 'diff_meth', by = 'DM_status', format = 'long', quiet = TRUE)
 
-    expect_named(l, c('gene_id', 'symbol', 'annot.type', 'n', 'n_hyper', 'n_hypo', 'diff_meth_mean', 'diff_meth_median', 'diff_meth_sd'))
+    expect_named(l, c('gene_id', 'symbol', 'entrez_id', 'ensembl_id', 'annot.type', 'n', 'n_hyper', 'n_hypo', 'diff_meth_mean', 'diff_meth_median', 'diff_meth_sd'))
     expect_equal(l$gene_id, c('1', '1', '2'))
     expect_equal(l$annot.type, c('promoters', 'exons', 'promoters'))
     expect_equal(l$n, c(2L, 2L, 2L))
@@ -65,7 +69,7 @@ test_that('summarize_genes() gives one row per gene and annotation type in long 
 test_that('summarize_genes() works without over or by', {
     g = summarize_genes(gene_example(), quiet = TRUE)
 
-    expect_named(g, c('gene_id', 'symbol', 'n_regions', 'n_promoters', 'n_exons'))
+    expect_named(g, c('gene_id', 'symbol', 'entrez_id', 'ensembl_id', 'n_regions', 'n_promoters', 'n_exons'))
 })
 
 test_that('summarize_genes() summarizes MANE annotations, alone or with genes', {
@@ -74,13 +78,13 @@ test_that('summarize_genes() summarizes MANE annotations, alone or with genes', 
     mane$annot$type = sub('hg19_genes_', 'hg38_mane_', mane$annot$type)
 
     g = summarize_genes(mane, quiet = TRUE)
-    expect_named(g, c('gene_id', 'symbol', 'n_regions', 'n_promoters', 'n_exons'))
+    expect_named(g, c('gene_id', 'symbol', 'entrez_id', 'ensembl_id', 'n_regions', 'n_promoters', 'n_exons'))
     expect_equal(g$n_regions, c(3L, 2L))
 
     # With both groups, a gene has one row, and the MANE types are prefixed
     both = c(a, mane[mane$annot$type == 'hg38_mane_promoters'])
     g = summarize_genes(both, quiet = TRUE)
-    expect_named(g, c('gene_id', 'symbol', 'n_regions', 'n_promoters', 'n_exons', 'n_mane_promoters'))
+    expect_named(g, c('gene_id', 'symbol', 'entrez_id', 'ensembl_id', 'n_regions', 'n_promoters', 'n_exons', 'n_mane_promoters'))
     expect_equal(g$n_mane_promoters, c(2L, 2L))
 
     l = summarize_genes(both, format = 'long', quiet = TRUE)

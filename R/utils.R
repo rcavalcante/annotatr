@@ -48,6 +48,9 @@ BASIC_GENE_TYPES = c('1to5kb', 'promoters', '5UTRs', 'exons', 'introns', '3UTRs'
 # annotations from build_txdb_annotations() use other group names.
 BUILTIN_GROUPS = c('genes', 'mane', 'cpg', 'enhancers', 'chromatin', 'lncrna', 'custom')
 
+# The mcols of every annotation, in order
+ANNOTATION_MCOLS = c('id', 'tx_id', 'gene_id', 'symbol', 'entrez_id', 'ensembl_id', 'type')
+
 HMMCELLLINES = c('Gm12878','H1hesc','Hepg2','Hmec','Hsmm','Huvec','K562','Nhek','Nhlf')
 
 HMMCODES = c('1_Active_Promoter', '2_Weak_Promoter' ,'3_Poised_Promoter' ,'4_Strong_Enhancer', '5_Strong_Enhancer', '6_Weak_Enhancer', '7_Weak_Enhancer', '8_Insulator', '9_Txn_Transition', '10_Txn_Elongation', '11_Weak_Txn', '12_Repressed', '13_Heterochrom/lo', '14_Repetitive/CNV')
@@ -465,4 +468,67 @@ subset_order_tbl = function(tbl, col, col_order) {
         }
     }
     return(tbl)
+}
+
+#' Function to give an annotation the standard mcols
+#'
+#' Adds any missing columns of \code{id}, \code{tx_id}, \code{gene_id}, \code{symbol}, \code{entrez_id}, \code{ensembl_id}, and \code{type} as \code{NA}, and drops any others, so annotations can be combined with \code{c()}.
+#'
+#' @param gr A \code{GRanges} object of an annotation.
+#'
+#' @return The \code{GRanges} object with the standard mcols, in order.
+standardize_mcols = function(gr) {
+    for(col in setdiff(ANNOTATION_MCOLS, colnames(GenomicRanges::mcols(gr)))) {
+        GenomicRanges::mcols(gr)[[col]] = rep(NA_character_, length(gr))
+    }
+    GenomicRanges::mcols(gr) = GenomicRanges::mcols(gr)[, ANNOTATION_MCOLS]
+
+    return(gr)
+}
+
+#' Function to remove the version from Ensembl IDs
+#'
+#' @param ids A character vector of IDs, e.g. \code{'ENSG00000121410.14'}.
+#'
+#' @return The IDs without versions, e.g. \code{'ENSG00000121410'}. IDs without a version are unchanged.
+strip_id_version = function(ids) {
+    return(sub('\\.[0-9]+$', '', ids))
+}
+
+#' Function to map gene IDs to gene symbols, Entrez IDs, and Ensembl IDs
+#'
+#' When an ID maps to more than one symbol, Entrez ID, or Ensembl ID, the first is used.
+#'
+#' @param gene_ids A character vector of gene IDs.
+#' @param orgdb An \code{OrgDb} object to map the IDs with, or \code{NULL} to only use the IDs themselves (per \code{keytype}).
+#' @param keytype A string giving the type of \code{gene_ids}, as a \code{keytype} of \code{orgdb}, e.g. \code{'ENTREZID'}, \code{'ENSEMBL'}, or \code{'FLYBASE'}. Versions of Ensembl IDs are ignored. If \code{NULL}, the type is unknown.
+#'
+#' @return A \code{data.frame} with one row per unique gene ID, and columns \code{gene_id}, \code{symbol}, \code{entrez_id}, and \code{ensembl_id}.
+get_gene_table = function(gene_ids, orgdb = NULL, keytype = NULL) {
+    gene_ids = unique(as.character(gene_ids[!is.na(gene_ids)]))
+    lookup = if(identical(keytype, 'ENSEMBL')) strip_id_version(gene_ids) else gene_ids
+
+    table = data.frame(
+        gene_id = gene_ids,
+        symbol = rep(NA_character_, length(gene_ids)),
+        entrez_id = if(identical(keytype, 'ENTREZID')) gene_ids else rep(NA_character_, length(gene_ids)),
+        ensembl_id = if(identical(keytype, 'ENSEMBL')) lookup else rep(NA_character_, length(gene_ids)),
+        stringsAsFactors = FALSE)
+
+    if(!is.null(orgdb) && !is.null(keytype) && length(gene_ids) > 0) {
+        targets = c(symbol = 'SYMBOL', entrez_id = 'ENTREZID', ensembl_id = 'ENSEMBL')
+        for(col in names(targets)) {
+            if(targets[[col]] == keytype || !(targets[[col]] %in% AnnotationDbi::columns(orgdb))) {
+                next
+            }
+            mapped = tryCatch(
+                suppressMessages(AnnotationDbi::mapIds(orgdb, keys = unique(lookup), column = targets[[col]], keytype = keytype, multiVals = 'first')),
+                error = function(e) NULL)
+            if(!is.null(mapped)) {
+                table[[col]] = unname(mapped[lookup])
+            }
+        }
+    }
+
+    return(table)
 }

@@ -43,7 +43,7 @@ test_that('read_regions() reads BED6+ and renames name and score', {
 ################################################################################
 # read_annotations()
 
-annotation_cols = c('id', 'tx_id', 'gene_id', 'symbol', 'type')
+annotation_cols = c('id', 'tx_id', 'gene_id', 'symbol', 'entrez_id', 'ensembl_id', 'type')
 
 test_that('read_annotations() names the cache entry from genome and name', {
     file = extdata('test_annotations_3.bed')

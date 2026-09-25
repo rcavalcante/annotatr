@@ -4,7 +4,7 @@
 \alias{build_txdb_gene_annots}
 \title{A helper function to build genic annotations from a TxDb or EnsDb}
 \usage{
-build_txdb_gene_annots(txdb, prefix, annotations, eg2symbol = NULL)
+build_txdb_gene_annots(txdb, prefix, annotations, gene_table = NULL)
 }
 \arguments{
 \item{txdb}{A \code{TxDb} or \code{EnsDb} object.}
@@ -13,10 +13,10 @@ build_txdb_gene_annots(txdb, prefix, annotations, eg2symbol = NULL)
 
 \item{annotations}{A character vector of annotation codes of the form \code{[prefix]_[type]}, where the types are \code{1to5kb}, \code{promoters}, \code{5UTRs}, \code{cds}, \code{exons}, \code{firstexons}, \code{introns}, \code{intronexonboundaries}, \code{exonintronboundaries}, \code{3UTRs}, and \code{intergenic}.}
 
-\item{eg2symbol}{A \code{data.frame} with columns \code{gene_id} and \code{symbol} mapping the gene IDs of \code{txdb} to gene symbols. If \code{NULL}, the gene names of an \code{EnsDb} are used, and the symbols of a \code{TxDb} are \code{NA}.}
+\item{gene_table}{A \code{data.frame} from \code{get_gene_table()}, with columns \code{gene_id}, \code{symbol}, \code{entrez_id}, and \code{ensembl_id}, for the gene IDs of \code{txdb}. If \code{NULL}, the gene names and Entrez IDs of an \code{EnsDb} are used, and those of a \code{TxDb} are \code{NA}.}
 }
 \value{
-A \code{GRangesList} with one \code{GRanges} per annotation, with \code{mcols} \code{id}, \code{tx_id}, \code{gene_id}, \code{symbol}, and \code{type}.
+A \code{GRangesList} with one \code{GRanges} per annotation, with the standard \code{mcols} (see \code{standardize_mcols()}).
 }
 \description{
 This does the work for \code{build_gene_annots()} and \code{build_txdb_annotations()}.

@@ -12,10 +12,10 @@
 #' @param genome A string giving the genome assembly of \code{txdb}, e.g. \code{'mm39'}. If \code{txdb} records a genome, they must agree.
 #' @param group A string naming the source of the gene models, e.g. \code{'gencode'} or \code{'refseq'}. It must be letters and numbers only, and can't be a built-in group (\code{genes}, \code{mane}, \code{cpg}, \code{enhancers}, \code{chromatin}, \code{lncrna}, \code{custom}).
 #' @param annotations A character vector of annotation types to build: \code{1to5kb}, \code{promoters}, \code{5UTRs}, \code{cds}, \code{exons}, \code{firstexons}, \code{introns}, \code{intronexonboundaries}, \code{exonintronboundaries}, \code{3UTRs}, and \code{intergenic}. The \code{basicgenes} shortcut (the default) builds 1-5kb upstream of TSSs, promoters, 5UTRs, exons, introns, and 3UTRs.
-#' @param orgdb An optional \code{OrgDb} object, e.g. \code{org.Mm.eg.db::org.Mm.eg.db}, to get gene symbols for the gene IDs of a \code{TxDb}. An \code{EnsDb} has gene symbols already.
+#' @param orgdb An optional \code{OrgDb} object, e.g. \code{org.Mm.eg.db::org.Mm.eg.db}, to get gene symbols, Entrez IDs, and Ensembl IDs for the gene IDs of a \code{TxDb}. An \code{EnsDb} has them already.
 #' @param keytype A string giving the type of the gene IDs in \code{txdb}, as a \code{keytype} of \code{orgdb}, e.g. \code{'ENTREZID'} (the default) or \code{'ENSEMBL'}. For \code{'ENSEMBL'}, versions of gene IDs (e.g. the \code{.12} in \code{ENSMUSG00000000001.12}) are ignored when looking up symbols.
 #'
-#' @return A \code{GRanges} object with \code{mcols} \code{id}, \code{tx_id}, \code{gene_id}, \code{symbol}, and \code{type}, as from \code{build_annotations()}. The \code{tx_id} and \code{gene_id} are the transcript names and gene IDs of \code{txdb}, and \code{symbol} is \code{NA} when there is no \code{orgdb} or \code{EnsDb} gene name.
+#' @return A \code{GRanges} object with \code{mcols} \code{id}, \code{tx_id}, \code{gene_id}, \code{symbol}, \code{entrez_id}, \code{ensembl_id}, and \code{type}, as from \code{build_annotations()}. The \code{tx_id} and \code{gene_id} are the transcript names and gene IDs of \code{txdb}. The \code{symbol}, \code{entrez_id}, and \code{ensembl_id} come from an \code{EnsDb}, or from \code{orgdb} (the first, when a gene ID maps to more than one), and are \code{NA} without either.
 #'
 #' @seealso \code{\link{build_annotations}}, \code{\link{read_annotations}} for annotations from BED files.
 #'
@@ -64,8 +64,8 @@ build_txdb_annotations = function(txdb, genome, group, annotations = 'basicgenes
             paste(unsupported, collapse = ', '), paste(c(GENE_TYPES, 'intergenic'), collapse = ', ')))
     }
 
-    # Map gene IDs to symbols
-    eg2symbol = NULL
+    # Map gene IDs to symbols, Entrez IDs, and Ensembl IDs. An EnsDb has them.
+    gene_table = NULL
     if(!is.null(orgdb)) {
         if(!methods::is(orgdb, 'OrgDb')) {
             stop('Error: orgdb must be an OrgDb object, e.g. org.Mm.eg.db::org.Mm.eg.db.')
@@ -74,15 +74,9 @@ build_txdb_annotations = function(txdb, genome, group, annotations = 'basicgenes
             stop(sprintf('Error: keytype %s is not a keytype of orgdb. See AnnotationDbi::keytypes(orgdb).', keytype))
         }
         if(methods::is(txdb, 'EnsDb')) {
-            message('Using the gene names in the EnsDb, not orgdb.')
+            message('Using the gene names and Entrez IDs in the EnsDb, not orgdb.')
         } else {
-            gene_ids = AnnotationDbi::keys(txdb, keytype = 'GENEID')
-            lookup_ids = if(keytype == 'ENSEMBL') sub('\\.[0-9]+$', '', gene_ids) else gene_ids
-            symbols = suppressMessages(AnnotationDbi::mapIds(orgdb, keys = unique(lookup_ids), column = 'SYMBOL', keytype = keytype, multiVals = 'first'))
-            eg2symbol = data.frame(
-                gene_id = gene_ids,
-                symbol = unname(symbols[lookup_ids]),
-                stringsAsFactors = FALSE)
+            gene_table = get_gene_table(AnnotationDbi::keys(txdb, keytype = 'GENEID'), orgdb = orgdb, keytype = keytype)
         }
     }
 
@@ -90,7 +84,7 @@ build_txdb_annotations = function(txdb, genome, group, annotations = 'basicgenes
     # Promoters and flanks can extend past the ends of chromosomes before
     # they are trimmed, which warns
     genes = withCallingHandlers(
-        build_txdb_gene_annots(txdb, prefix = prefix, annotations = sprintf('%s_%s', prefix, annotations), eg2symbol = eg2symbol),
+        build_txdb_gene_annots(txdb, prefix = prefix, annotations = sprintf('%s_%s', prefix, annotations), gene_table = gene_table),
         warning = function(w) {
             if(grepl('out-of-bound range', conditionMessage(w))) {
                 invokeRestart('muffleWarning')

@@ -3,6 +3,12 @@ CHANGES IN VERSION 1.40.0
 
 NEW FEATURES
 
+  o All annotations have entrez_id and ensembl_id columns, next to gene_id
+    and symbol. For gene annotations of every genome, symbol, entrez_id, and
+    ensembl_id (without version) are filled in from the org.*.eg.db package,
+    the EnsDb, or the MANE summary, whatever kind of gene ID the source uses.
+    When a gene ID maps to more than one, the first is used. gene_id is
+    unchanged. summarize_genes() includes the new columns.
   o Add build_txdb_annotations(), which builds the gene annotation types
     (promoters, exons, introns, intergenic, etc.) from any TxDb or EnsDb, e.g.
     one made from a GENCODE or RefSeq GTF with txdbmaker::makeTxDbFromGFF().
@@ -29,6 +35,12 @@ NEW FEATURES
     annotations come from the Ensembl 113 EnsDb in AnnotationHub (AH119381), so
     tx_id and gene_id are Ensembl IDs. CpG islands come from the UCSC GenArk
     assembly hub. Sequences use UCSC-style names (chr1, ..., chrUn_*).
+
+BUGFIXES
+
+  o Gene annotations for dm3, dm6, and rn4 had no gene symbols, because their
+    gene IDs are FlyBase or Ensembl IDs, but symbols were looked up by Entrez
+    ID. They now have symbols, Entrez IDs, and Ensembl IDs.
 
 DEPRECATED AND DEFUNCT
 

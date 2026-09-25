@@ -10,7 +10,7 @@ get_mane_summary(cache = TRUE)
 \item{cache}{A logical stating whether to use the cache on disk for downloads.}
 }
 \value{
-A \code{data.frame} with one row per MANE Select transcript, and columns \code{tx_id} (Ensembl transcript ID with version), \code{gene_id} (Entrez ID), and \code{symbol}.
+A \code{data.frame} with one row per MANE Select transcript, and columns \code{tx_id} (Ensembl transcript ID with version), \code{gene_id} (Entrez ID), \code{symbol}, and \code{ensembl_id} (Ensembl gene ID without version).
 }
 \description{
 Function to get the MANE Select summary

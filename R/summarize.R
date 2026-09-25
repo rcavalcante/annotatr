@@ -227,7 +227,7 @@ summarize_categorical = function(annotated_regions, by = c('annot.type', 'annot.
 #' @param format Either \code{'wide'} (the default) for one row per gene with a count column per annotation type, or \code{'long'} for one row per gene and annotation type.
 #' @param quiet Print progress messages (FALSE) or not (TRUE).
 #'
-#' @return A \code{tbl_df} with columns \code{gene_id} and \code{symbol}, then for \code{format = 'wide'}, \code{n_regions} and \code{n_[type]} for each annotation type (e.g. \code{n_promoters}), or for \code{format = 'long'}, \code{annot.type} and \code{n}. These are followed by \code{n_[category]} for each category in \code{by}, and \code{[column]_mean}, \code{[column]_median}, and \code{[column]_sd} for each column in \code{over}. Genes with the most regions come first.
+#' @return A \code{tbl_df} with columns \code{gene_id}, \code{symbol}, \code{entrez_id}, and \code{ensembl_id}, then for \code{format = 'wide'}, \code{n_regions} and \code{n_[type]} for each annotation type (e.g. \code{n_promoters}), or for \code{format = 'long'}, \code{annot.type} and \code{n}. These are followed by \code{n_[category]} for each category in \code{by}, and \code{[column]_mean}, \code{[column]_median}, and \code{[column]_sd} for each column in \code{over}. Genes with the most regions come first.
 #'
 #' @examples
 #'  if(requireNamespace('TxDb.Hsapiens.UCSC.hg19.knownGene', quietly = TRUE) &&
@@ -303,10 +303,21 @@ summarize_genes = function(annotated_regions, over = NULL, by = NULL, format = c
         if(g == 'genes' || length(groups) == 1) GENE_TYPES else paste(g, GENE_TYPES, sep = '_')
     }))
 
-    # A gene's symbol, from any of its annotations
+    # A gene's symbol, Entrez ID, and Ensembl ID, from any of its annotations.
+    # Annotations from before annotatr 1.40.0 have no Entrez or Ensembl IDs.
+    for(col in c('annot.symbol', 'annot.entrez_id', 'annot.ensembl_id')) {
+        if(!(col %in% colnames(tbl))) {
+            tbl[[col]] = NA_character_
+        }
+    }
+    first_id = function(x) {
+        dplyr::first(stats::na.omit(as.character(x)), default = NA_character_)
+    }
     symbols = dplyr::summarize(
         dplyr::group_by(tbl, .data$gene_id),
-        symbol = dplyr::first(stats::na.omit(.data$annot.symbol), default = NA_character_))
+        symbol = first_id(.data$annot.symbol),
+        entrez_id = first_id(.data$annot.entrez_id),
+        ensembl_id = first_id(.data$annot.ensembl_id))
 
     # Count each region once per group (gene, or gene and annotation type), and
     # summarize the data columns
