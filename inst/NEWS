@@ -16,6 +16,13 @@ DEPRECATED AND DEFUNCT
     pass it as annotated_random, or use regioneR::permTest() or
     regioneR::resampleRegions(). See ?`annotatr-deprecated` and the vignette.
 
+INTERNAL CHANGES
+
+  o Move the tests to testthat 3rd edition. Tests no longer depend on each
+    other or on file order, and plot tests build the plots. Build tests for
+    small downloads run whenever online. Full build tests for every genome run
+    with ANNOTATR_FULL_TESTS=true, which docker/check.sh sets.
+
 USER-FACING CHANGES
 
   o summarize_annotations(), plot_annotation(), and plot_categorical() label the
@@ -24,6 +31,8 @@ USER-FACING CHANGES
 
 BUGFIXES
 
+  o Fix plot_categorical() with the default fill = NULL, which failed when the
+    plot was drawn.
   o Fix hg38_lncrna_gencode and mm10_lncrna_gencode, which failed after
     AnnotationHub removed its GENCODE resources (AH75123, AH49550). All lncRNA
     annotations are now downloaded from GENCODE over HTTPS, using the same

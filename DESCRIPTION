@@ -1,6 +1,6 @@
 Package: annotatr
 Title: Annotation of Genomic Regions to Genomic Annotations
-Version: 1.39.3
+Version: 1.39.4
 Date: 2025-06-21
 Authors@R: c(
     person("Raymond G.", "Cavalcante", email = "rcavalca@umich.edu", role = c("aut", "cre")),
@@ -29,6 +29,7 @@ Imports:
 Suggests:
     GenomeInfoDb,
     BiocStyle,
+    curl,
     devtools,
     ensembldb,
     knitr,
@@ -39,7 +40,7 @@ Suggests:
     org.Rn.eg.db,
     rmarkdown,
     roxygen2,
-    testthat,
+    testthat (>= 3.2.0),
     TxDb.Dmelanogaster.UCSC.dm3.ensGene,
     TxDb.Dmelanogaster.UCSC.dm6.ensGene,
     TxDb.Drerio.UCSC.danRer10.refGene,
@@ -60,4 +61,5 @@ License: GPL-3
 LazyData: true
 RoxygenNote: 7.3.3
 Encoding: UTF-8
+Config/testthat/edition: 3
 biocViews: Software, Annotation, GenomeAnnotation, FunctionalGenomics, Visualization

@@ -680,25 +680,27 @@ plot_categorical = function(annotated_regions, annotated_random, x, fill=NULL, x
 
         # Combine the tbl_dfs in preparation for visualization
         annotated_regions = dplyr::bind_rows("All" = annotated_regions, "Background" = annotated_random, .id = 'data_type')
+    } else {
+        # A column for the All bar, since a constant x is dropped when there's no fill
+        annotated_regions$data_type = 'All'
     }
 
     ########################################################################
     # Construct the plot
 
-    # Make base ggplot
-    if(!missing(annotated_random)) {
-        plot =
-            ggplot(annotated_regions, aes(x = .data[["data_type"]])) +
-            geom_bar(aes(fill = .data[[fill]]), position=position, width=0.5) + # The All bar
-            geom_bar(data = sub_annot_regions, aes(x = .data[[x]], fill = .data[[fill]]), position=position, width=0.5) + # The subsets bars
-            theme(axis.text.x = element_text(angle = 30, hjust = 1))
+    # With no fill, the bars are the total counts of the x classes
+    if(is.null(fill)) {
+        fill_value = NULL
     } else {
-        plot =
-            ggplot(annotated_regions, aes(x = 'All')) +
-            geom_bar(aes(fill = .data[[fill]]), position=position, width=0.5) + # The All bar
-            geom_bar(data = sub_annot_regions, aes(x = .data[[x]], fill = .data[[fill]]), position=position, width=0.5) + # The subsets bars
-            theme(axis.text.x = element_text(angle = 30, hjust = 1))
+        fill_value = rlang::expr(.data[[!!fill]])
     }
+
+    # Make base ggplot
+    plot =
+        ggplot(annotated_regions, aes(x = .data[["data_type"]])) +
+        geom_bar(aes(fill = !!fill_value), position=position, width=0.5) + # The All (and Background) bars
+        geom_bar(data = sub_annot_regions, aes(x = .data[[x]], fill = !!fill_value), position=position, width=0.5) + # The subsets bars
+        theme(axis.text.x = element_text(angle = 30, hjust = 1))
 
     # Change the fill scale and name if legend_title isn't null
     if(!missing(legend_title)) {
