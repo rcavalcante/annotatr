@@ -14,6 +14,11 @@ args = commandArgs(trailingOnly = TRUE)
 update = '--update' %in% args
 description = setdiff(args, '--update')[1]
 
+# bioconductor.org sometimes closes connections partway through large
+# downloads, e.g. methylSig's bsseqData (128 MB), so retries use this mirror
+# instead
+mirror = 'https://bioconductor.statistik.tu-dortmund.de'
+
 fields = read.dcf(description, fields = c('Depends', 'Imports', 'Suggests'))
 pkgs = trimws(sub('\\(.*', '', unlist(strsplit(paste(fields[!is.na(fields)], collapse = ','), ','))))
 pkgs = setdiff(c(pkgs[pkgs != ''], 'BiocCheck'), 'R')
@@ -47,7 +52,8 @@ for(i in seq_len(tries)) {
         break
     }
     if(i > 1) {
-        message(sprintf('Retrying in 30 seconds (try %s of %s)', i, tries))
+        message(sprintf('Retrying in 30 seconds from %s (try %s of %s)', mirror, i, tries))
+        options(BioC_mirror = mirror)
         Sys.sleep(30)
     }
     BiocManager::install(c(missing, outdated), ask = FALSE, update = FALSE)
