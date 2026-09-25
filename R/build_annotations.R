@@ -46,8 +46,10 @@ annotatr_cache <- local({
 #'
 #' Create a \code{GRanges} object consisting of all the desired \code{annotations}. Supported annotation codes are listed by \code{builtin_annotations()}. The basis for enhancer annotations are FANTOM5 data, the basis for CpG related annotations are CpG island tracks from \code{AnnotationHub}, and the basis for genic annotations are from the \code{TxDb.*} and \code{org.db} group of packages.
 #'
+#' The \code{hg38_mane_*} annotations are the same gene annotations (except intergenic), built only from the MANE Select transcripts: one transcript per protein-coding gene, agreed on by NCBI and Ensembl (\url{https://www.ncbi.nlm.nih.gov/refseq/MANE/}). Use them to annotate regions to the main isoform of each gene, instead of every isoform in \code{hg38_genes_*}. MANE Plus Clinical transcripts are not included.
+#'
 #' @param genome The genome assembly.
-#' @param annotations A character vector of annotations to build. Valid annotation codes are listed with \code{builtin_annotations()}. The "basicgenes" shortcut builds the following regions: 1-5Kb upstream of TSSs, promoters, 5UTRs, exons, introns, and 3UTRs. The "cpgs" shortcut builds the following regions: CpG islands, shores, shelves, and interCGI regions. NOTE: Shortcuts need to be appended by the genome, e.g. \code{hg19_basicgenes}.
+#' @param annotations A character vector of annotations to build. Valid annotation codes are listed with \code{builtin_annotations()}. The "basicgenes" shortcut builds the following regions: 1-5Kb upstream of TSSs, promoters, 5UTRs, exons, introns, and 3UTRs. The "basicmane" shortcut (hg38 only) builds the same regions from MANE Select transcripts. The "cpgs" shortcut builds the following regions: CpG islands, shores, shelves, and interCGI regions. NOTE: Shortcuts need to be appended by the genome, e.g. \code{hg19_basicgenes}.
 #' @param cache A logical stating whether to load annotations from, and save them to, the cache on disk (TRUE), or to build them from scratch without the cache (FALSE). See \code{\link{cached-annotations}}.
 #' Custom annotations whose names are of the form \code{[genome]_custom_[name]} should also be included. Custom annotations should be read in and converted to \code{GRanges} with \code{read_annotations()}. They can be for a \code{supported_genome()}, or for an unsupported genome.
 #'
@@ -69,9 +71,10 @@ build_annotations = function(genome, annotations, cache = TRUE) {
     hmm_annotations = grep('_chromatin_', annotations, value=TRUE)
     enh_annotations = grep('_enhancers_', annotations, value=TRUE)
     gene_annotations = grep('_genes_', annotations, value=TRUE)
+    mane_annotations = grep('_mane_', annotations, value=TRUE)
     cpg_annotations = grep('_cpg_', annotations, value=TRUE)
     lncrna_annotations = grep('_lncrna_', annotations, value=TRUE)
-    builtin_annotations = c(enh_annotations, hmm_annotations, gene_annotations, cpg_annotations, lncrna_annotations)
+    builtin_annotations = c(enh_annotations, hmm_annotations, gene_annotations, mane_annotations, cpg_annotations, lncrna_annotations)
 
     # Check builtin_annotations
     if(length(builtin_annotations) > 0) {
@@ -112,6 +115,9 @@ build_annotations = function(genome, annotations, cache = TRUE) {
     }
     if(any(gene_annotations %in% to_build)) {
         built_grl = c(built_grl, suppressWarnings(build_gene_annots(genome = genome, annotations = intersect(gene_annotations, to_build), cache = cache)))
+    }
+    if(any(mane_annotations %in% to_build)) {
+        built_grl = c(built_grl, suppressWarnings(build_gene_annots(genome = genome, annotations = intersect(mane_annotations, to_build), cache = cache)))
     }
     if(any(cpg_annotations %in% to_build)) {
         built_grl = c(built_grl, suppressWarnings(build_cpg_annots(genome = genome, annotations = intersect(cpg_annotations, to_build), cache = cache)))
@@ -553,12 +559,62 @@ build_cpg_annots = function(genome = annotatr::builtin_genomes(), annotations = 
     return(cpgs)
 }
 
+#' Function to get the MANE Select summary
+#'
+#' @param cache A logical stating whether to use the cache on disk for downloads.
+#'
+#' @return A \code{data.frame} with one row per MANE Select transcript, and columns \code{tx_id} (Ensembl transcript ID with version), \code{gene_id} (Entrez ID), and \code{symbol}.
+get_mane_summary = function(cache = TRUE) {
+    path = download_annotation_file(sprintf('%s/MANE.GRCh38.v%s.summary.txt.gz', MANE$url, MANE$version), genome = 'hg38', cache = cache)
+    summary = utils::read.delim(path, colClasses = 'character', check.names = FALSE)
+    summary = summary[summary$MANE_status == 'MANE Select', ]
+
+    return(data.frame(
+        tx_id = summary$Ensembl_nuc,
+        gene_id = sub('^GeneID:', '', summary[['#NCBI_GeneID']]),
+        symbol = summary$symbol,
+        stringsAsFactors = FALSE))
+}
+
+#' Function to build a TxDb of the MANE Select transcripts
+#'
+#' The transcripts come from the Ensembl version of the MANE GTF, and their gene IDs are replaced by Entrez IDs from the MANE summary.
+#'
+#' @param cache A logical stating whether to use the cache on disk for downloads.
+#'
+#' @return A \code{TxDb} object.
+build_mane_txdb = function(cache = TRUE) {
+    if(!requireNamespace('txdbmaker', quietly = TRUE)) {
+        stop('The package txdbmaker is not installed, please install it via Bioconductor.')
+    }
+
+    path = download_annotation_file(sprintf('%s/MANE.GRCh38.v%s.ensembl_genomic.gtf.gz', MANE$url, MANE$version), genome = 'hg38', cache = cache)
+    gtf = rtracklayer::import(path, format = 'gtf')
+
+    # Only MANE Select, not MANE Plus Clinical, and only the features a TxDb uses.
+    # Select by transcript ID, since import() keeps only one of several tags.
+    summary = get_mane_summary(cache = cache)
+    gtf = gtf[gtf$transcript_id %in% summary$tx_id & gtf$type %in% c('transcript', 'exon', 'CDS', 'start_codon', 'stop_codon')]
+
+    gtf$gene_id = summary$gene_id[match(gtf$transcript_id, summary$tx_id)]
+    GenomicRanges::mcols(gtf) = GenomicRanges::mcols(gtf)[, c('source', 'type', 'phase', 'gene_id', 'transcript_id', 'exon_number', 'exon_id')]
+
+    # No organism or taxonomy ID, which would need the GenomeInfoDbData package
+    metadata = data.frame(
+        name = c('Data source', 'MANE version'),
+        value = c('MANE Select (Ensembl GTF)', MANE$version))
+
+    return(suppressWarnings(txdbmaker::makeTxDbFromGRanges(gtf, metadata = metadata)))
+}
+
 #' A helper function to build genic annotations.
 #'
 #' Using the \code{TxDb.*} group of packages, construct genic annotations consisting of any combination of 1-5kb upstream of a TSS, promoters (< 1kb from TSS), 5UTRs, CDS, exons, first exons, introns, intron/exon and exon/intron boundaries, 3UTRs, and intergenic. For genomes without a \code{TxDb.*} package (e.g. sheep, \code{oviariramb2}), an Ensembl \code{EnsDb} from \code{AnnotationHub} is used instead, and \code{tx_id} and \code{gene_id} are Ensembl IDs.
 #'
+#' The \code{mane} annotations (hg38 only) are built the same way from the MANE Select transcripts, one per protein-coding gene, with a TxDb made from the MANE GTF. Their \code{tx_id} is the Ensembl transcript ID, and \code{gene_id} is the Entrez ID, as for \code{hg38_genes_*}.
+#'
 #' @param genome The genome assembly.
-#' @param annotations A character vector with entries of the form \code{[genome]_genes_{1to5kb,promoters,5UTRs,cds,exons,firstexons,introns,intronexonboundaries,exonintronboundaries,3UTRs,intergenic}}.
+#' @param annotations A character vector with entries of the form \code{[genome]_genes_{1to5kb,promoters,5UTRs,cds,exons,firstexons,introns,intronexonboundaries,exonintronboundaries,3UTRs,intergenic}}, or \code{hg38_mane_*} with the same types except intergenic. All entries must be from the same group, \code{genes} or \code{mane}.
 #'
 #' @param cache A logical stating whether to use the cache on disk for downloads.
 #'
@@ -568,24 +624,39 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
     genome = match.arg(genome)
     annotations = match.arg(annotations, several.ok = TRUE)
 
+    # The annotation group, genes or mane, e.g. hg38_mane_promoters
+    group = unique(vapply(strsplit(annotations, '_'), `[`, character(1), 2))
+    if(length(group) != 1 || !(group %in% c('genes', 'mane'))) {
+        stop('Error: annotations must all be genes or all be mane annotations.')
+    }
+    prefix = sprintf('%s_%s', genome, group)
+
     annot_codes = data.frame(
-        code = c(sprintf('%s_genes_promoters', genome),
-            sprintf('%s_genes_1to5kb', genome),
-            sprintf('%s_genes_cds', genome),
-            sprintf('%s_genes_5UTRs', genome),
-            sprintf('%s_genes_exons', genome),
-            sprintf('%s_genes_firstexons', genome),
-            sprintf('%s_genes_introns', genome),
-            sprintf('%s_genes_intronexonboundaries', genome),
-            sprintf('%s_genes_exonintronboundaries', genome),
-            sprintf('%s_genes_3UTRs', genome),
-            sprintf('%s_genes_intergenic', genome)),
+        code = c(sprintf('%s_promoters', prefix),
+            sprintf('%s_1to5kb', prefix),
+            sprintf('%s_cds', prefix),
+            sprintf('%s_5UTRs', prefix),
+            sprintf('%s_exons', prefix),
+            sprintf('%s_firstexons', prefix),
+            sprintf('%s_introns', prefix),
+            sprintf('%s_intronexonboundaries', prefix),
+            sprintf('%s_exonintronboundaries', prefix),
+            sprintf('%s_3UTRs', prefix),
+            sprintf('%s_intergenic', prefix)),
         var = c('promoters_gr','onetofive_gr','cds_gr','fiveUTRs_gr','exons_gr',
             'firstexons_gr','introns_gr','intronexon_gr','exonintron_gr',
             'threeUTRs_gr','intergenic_gr'),
         stringsAsFactors = FALSE)
 
-    if(genome %in% GENARK$genome) {
+    if(group == 'mane') {
+        txdb = build_mane_txdb(cache = cache)
+
+        # The MANE summary has the Entrez ID to gene symbol mapping
+        eg2symbol = get_mane_summary(cache = cache)[, c('gene_id', 'symbol')]
+
+        # Build the base transcripts
+        tx_gr = transcripts(txdb, columns = c('TXID','GENEID','TXNAME'))
+    } else if(genome %in% GENARK$genome) {
         # Get the EnsDb from AnnotationHub
         if(!requireNamespace('ensembldb', quietly = TRUE)) {
             stop('The package ensembldb is not installed, please install it via Bioconductor.')
@@ -678,7 +749,7 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
             # Add Entrez ID, symbol, and type
             GenomicRanges::mcols(promoters_gr)$gene_id = id_maps[match(GenomicRanges::mcols(promoters_gr)$tx_id, id_maps$TXID), 'GENEID']
             GenomicRanges::mcols(promoters_gr)$symbol = eg2symbol[match(GenomicRanges::mcols(promoters_gr)$gene_id, eg2symbol$gene_id), 'symbol']
-            GenomicRanges::mcols(promoters_gr)$type = sprintf('%s_genes_promoters', genome)
+            GenomicRanges::mcols(promoters_gr)$type = sprintf('%s_promoters', prefix)
             GenomicRanges::mcols(promoters_gr)$id = paste0('promoter:', seq_along(promoters_gr))
 
             GenomicRanges::mcols(promoters_gr) = GenomicRanges::mcols(promoters_gr)[, c('id','tx_name','gene_id','symbol','type')]
@@ -691,7 +762,7 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
                 onetofive_gr = GenomicRanges::trim(onetofive_gr)
                 # Add Entrez ID, symbol, and type (all but type are inherited from promoters_gr)
                 GenomicRanges::mcols(onetofive_gr)$id = paste0('1to5kb:', seq_along(onetofive_gr))
-                GenomicRanges::mcols(onetofive_gr)$type = sprintf('%s_genes_1to5kb', genome)
+                GenomicRanges::mcols(onetofive_gr)$type = sprintf('%s_1to5kb', prefix)
 
             if(any(grepl('intergenic', annotations))) {
                 message('Building intergenic...')
@@ -712,7 +783,7 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
                     GenomicRanges::mcols(intergenic_gr)$tx_id = NA
                     GenomicRanges::mcols(intergenic_gr)$gene_id = NA
                     GenomicRanges::mcols(intergenic_gr)$symbol = NA
-                    GenomicRanges::mcols(intergenic_gr)$type = sprintf('%s_genes_intergenic', genome)
+                    GenomicRanges::mcols(intergenic_gr)$type = sprintf('%s_intergenic', prefix)
             }
         }
     }
@@ -730,7 +801,7 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
             # Add Entrez ID, symbol, and type
             GenomicRanges::mcols(cds_gr)$gene_id = id_maps[match(GenomicRanges::mcols(cds_gr)$tx_name, id_maps$TXNAME), 'GENEID']
             GenomicRanges::mcols(cds_gr)$symbol = eg2symbol[match(GenomicRanges::mcols(cds_gr)$gene_id, eg2symbol$gene_id), 'symbol']
-            GenomicRanges::mcols(cds_gr)$type = sprintf('%s_genes_cds', genome)
+            GenomicRanges::mcols(cds_gr)$type = sprintf('%s_cds', prefix)
             GenomicRanges::mcols(cds_gr)$id = paste0('CDS:', seq_along(cds_gr))
 
             GenomicRanges::mcols(cds_gr) = GenomicRanges::mcols(cds_gr)[, c('id','tx_name','gene_id','symbol','type')]
@@ -751,7 +822,7 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
             # NOTE: here we match on the tx_name because the tx_id is not given
             GenomicRanges::mcols(fiveUTRs_gr)$gene_id = id_maps[match(GenomicRanges::mcols(fiveUTRs_gr)$tx_name, id_maps$TXNAME), 'GENEID']
             GenomicRanges::mcols(fiveUTRs_gr)$symbol = eg2symbol[match(GenomicRanges::mcols(fiveUTRs_gr)$gene_id, eg2symbol$gene_id), 'symbol']
-            GenomicRanges::mcols(fiveUTRs_gr)$type = sprintf('%s_genes_5UTRs', genome)
+            GenomicRanges::mcols(fiveUTRs_gr)$type = sprintf('%s_5UTRs', prefix)
             GenomicRanges::mcols(fiveUTRs_gr)$id = paste0('5UTR:', seq_along(fiveUTRs_gr))
 
             GenomicRanges::mcols(fiveUTRs_gr) = GenomicRanges::mcols(fiveUTRs_gr)[, c('id','tx_name','gene_id','symbol','type')]
@@ -772,7 +843,7 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
             # NOTE: here we match on the tx_name because the tx_id is not given
             GenomicRanges::mcols(threeUTRs_gr)$gene_id = id_maps[match(GenomicRanges::mcols(threeUTRs_gr)$tx_name, id_maps$TXNAME), 'GENEID']
             GenomicRanges::mcols(threeUTRs_gr)$symbol = eg2symbol[match(GenomicRanges::mcols(threeUTRs_gr)$gene_id, eg2symbol$gene_id), 'symbol']
-            GenomicRanges::mcols(threeUTRs_gr)$type = sprintf('%s_genes_3UTRs', genome)
+            GenomicRanges::mcols(threeUTRs_gr)$type = sprintf('%s_3UTRs', prefix)
             GenomicRanges::mcols(threeUTRs_gr)$id = paste0('3UTR:', seq_along(threeUTRs_gr))
 
             GenomicRanges::mcols(threeUTRs_gr) = GenomicRanges::mcols(threeUTRs_gr)[, c('id','tx_name','gene_id','symbol','type')]
@@ -793,7 +864,7 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
             # Add Entrez ID, symbol, and type
             GenomicRanges::mcols(exons_gr)$gene_id = id_maps[match(GenomicRanges::mcols(exons_gr)$tx_name, id_maps$TXNAME), 'GENEID']
             GenomicRanges::mcols(exons_gr)$symbol = eg2symbol[match(GenomicRanges::mcols(exons_gr)$gene_id, eg2symbol$gene_id), 'symbol']
-            GenomicRanges::mcols(exons_gr)$type = sprintf('%s_genes_exons', genome)
+            GenomicRanges::mcols(exons_gr)$type = sprintf('%s_exons', prefix)
             GenomicRanges::mcols(exons_gr)$id = paste0('exon:', seq_along(exons_gr))
 
             # This needs to be here before we remove the exon_rank mcol in exons_gr
@@ -802,7 +873,7 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
                 ### first exons
                     firstexons_gr = exons_gr[sapply(exons_gr$exon_rank, function(er){1 %in% er})]
                     # NOTE: The mcol() contents are CharacterLists and IntegerLists, which requires a different approach from previous
-                    GenomicRanges::mcols(firstexons_gr)$type = sprintf('%s_genes_firstexons', genome)
+                    GenomicRanges::mcols(firstexons_gr)$type = sprintf('%s_firstexons', prefix)
                     GenomicRanges::mcols(firstexons_gr)$id = paste0('firstexon:', seq_along(firstexons_gr))
 
                     GenomicRanges::mcols(firstexons_gr) = GenomicRanges::mcols(firstexons_gr)[, c('id','tx_name','gene_id','symbol','type')]
@@ -824,7 +895,7 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
             # NOTE: here we match on the tx_name because the tx_id is not given
             GenomicRanges::mcols(introns_gr)$gene_id = id_maps[match(GenomicRanges::mcols(introns_gr)$tx_name, id_maps$TXNAME), 'GENEID']
             GenomicRanges::mcols(introns_gr)$symbol = eg2symbol[match(GenomicRanges::mcols(introns_gr)$gene_id, eg2symbol$gene_id), 'symbol']
-            GenomicRanges::mcols(introns_gr)$type = sprintf('%s_genes_introns', genome)
+            GenomicRanges::mcols(introns_gr)$type = sprintf('%s_introns', prefix)
             GenomicRanges::mcols(introns_gr)$id = paste0('intron:', seq_along(introns_gr))
 
             GenomicRanges::mcols(introns_gr) = GenomicRanges::mcols(introns_gr)[, c('id','tx_name','gene_id','symbol','type')]
@@ -858,7 +929,7 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
 
                 # Expand 200bp up and down
                 intronexon_gr = GenomicRanges::flank(intronexon_gr, width = 200, both = TRUE)
-                GenomicRanges::mcols(intronexon_gr)$type = sprintf('%s_genes_intronexonboundaries', genome)
+                GenomicRanges::mcols(intronexon_gr)$type = sprintf('%s_intronexonboundaries', prefix)
                 GenomicRanges::mcols(intronexon_gr)$id = paste0('intronexonboundary:', seq_along(intronexon_gr))
 
                 GenomicRanges::mcols(intronexon_gr) = GenomicRanges::mcols(intronexon_gr)[, c('id','tx_id','gene_id','symbol','type')]
@@ -894,7 +965,7 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
 
                 # Expand 200bp up and down
                 exonintron_gr = GenomicRanges::flank(exonintron_gr, width = 200, both = TRUE)
-                GenomicRanges::mcols(exonintron_gr)$type = sprintf('%s_genes_exonintronboundaries', genome)
+                GenomicRanges::mcols(exonintron_gr)$type = sprintf('%s_exonintronboundaries', prefix)
                 GenomicRanges::mcols(exonintron_gr)$id = paste0('exonintronboundary:', seq_along(exonintron_gr))
 
                 GenomicRanges::mcols(exonintron_gr) = GenomicRanges::mcols(exonintron_gr)[, c('id','tx_id','gene_id','symbol','type')]
@@ -912,6 +983,11 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
     # EnsDb sequences have Ensembl names, use the UCSC-style names
     if(genome %in% GENARK$genome) {
         genes = ucsc_genark_seqlevels(genes, genome, cache = cache)
+    }
+
+    # The MANE GTF has no seqinfo, use the genome's
+    if(group == 'mane') {
+        genes = set_genome_seqinfo(genes, genome)
     }
 
     return(genes)

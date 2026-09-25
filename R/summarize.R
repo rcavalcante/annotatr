@@ -219,7 +219,9 @@ summarize_categorical = function(annotated_regions, by = c('annot.type', 'annot.
 #'
 #' A region counts once toward a gene, however many of the gene's annotations it overlaps, and once toward each annotation type of the gene. A region annotated to more than one gene counts toward each of them.
 #'
-#' @param annotated_regions The \code{GRanges} result of \code{annotate_regions()}, with gene annotations such as \code{[genome]_basicgenes}.
+#' MANE annotations (\code{hg38_mane_*}) are summarized the same way. If both \code{hg38_genes_*} and \code{hg38_mane_*} annotations are present, the MANE annotation types are prefixed with \code{mane_}, e.g. \code{n_promoters} and \code{n_mane_promoters}. Both use Entrez gene IDs, so a gene has one row.
+#'
+#' @param annotated_regions The \code{GRanges} result of \code{annotate_regions()}, with gene annotations such as \code{[genome]_basicgenes} or \code{hg38_basicmane}.
 #' @param over A character vector of numerical data columns to summarize with the mean, median, and standard deviation over each gene's regions. Default \code{NULL}, no numerical summaries.
 #' @param by A single categorical data column to count the categories of over each gene's regions, e.g. \code{'DM_status'}. Default \code{NULL}, no category counts.
 #' @param format Either \code{'wide'} (the default) for one row per gene with a count column per annotation type, or \code{'long'} for one row per gene and annotation type.
@@ -268,9 +270,9 @@ summarize_genes = function(annotated_regions, over = NULL, by = NULL, format = c
     }
 
     # Keep the gene annotations with a gene ID
-    tbl = tbl[!is.na(tbl$annot.gene_id) & grepl('_genes_', tbl$annot.type), , drop = FALSE]
+    tbl = tbl[!is.na(tbl$annot.gene_id) & grepl('_(genes|mane)_', tbl$annot.type), , drop = FALSE]
     if(nrow(tbl) == 0) {
-        stop('Error: No regions are annotated to genes. Include gene annotations, e.g. [genome]_basicgenes, in build_annotations().')
+        stop('Error: No regions are annotated to genes. Include gene annotations, e.g. [genome]_basicgenes or hg38_basicmane, in build_annotations().')
     }
 
     if(!quiet) {
@@ -279,8 +281,12 @@ summarize_genes = function(annotated_regions, over = NULL, by = NULL, format = c
 
     tbl$gene_id = as.character(tbl$annot.gene_id)
     tbl$region = paste(tbl$seqnames, tbl$start, tbl$end, sep = ':')
-    # Drop the genome prefix, e.g. hg19_genes_promoters to promoters
-    tbl$annot.type = sub('^.*_genes_', '', tbl$annot.type)
+    # Drop the genome and group prefix, e.g. hg19_genes_promoters to promoters,
+    # but keep mane_ when there are both genes and mane annotations
+    both_groups = any(grepl('_genes_', tbl$annot.type)) && any(grepl('_mane_', tbl$annot.type))
+    tbl$annot.type = sub('^[^_]*_genes_', '', tbl$annot.type)
+    tbl$annot.type = sub('^[^_]*_mane_', if(both_groups) 'mane_' else '', tbl$annot.type)
+    type_levels = c(GENE_TYPES, paste0('mane_', GENE_TYPES))
 
     # A gene's symbol, from any of its annotations
     symbols = dplyr::summarize(
@@ -322,7 +328,7 @@ summarize_genes = function(annotated_regions, over = NULL, by = NULL, format = c
         # One count column per annotation type, in genomic order
         type_counts = dplyr::count(dplyr::distinct(tbl, .data$gene_id, .data$annot.type, .data$region), .data$gene_id, .data$annot.type)
         type_counts = reshape2::dcast(type_counts, gene_id ~ annot.type, value.var = 'n', fill = 0L)
-        types = c(intersect(GENE_TYPES, colnames(type_counts)), setdiff(colnames(type_counts), c('gene_id', GENE_TYPES)))
+        types = c(intersect(type_levels, colnames(type_counts)), setdiff(colnames(type_counts), c('gene_id', type_levels)))
         type_counts = type_counts[, c('gene_id', types), drop = FALSE]
         type_counts[types] = lapply(type_counts[types], as.integer)
         colnames(type_counts) = c('gene_id', paste0('n_', types))
@@ -332,7 +338,7 @@ summarize_genes = function(annotated_regions, over = NULL, by = NULL, format = c
         count_col = 'n_regions'
     } else {
         agg = summarize_group(tbl, c('gene_id', 'annot.type'))
-        agg$annot.type = factor(agg$annot.type, levels = c(intersect(GENE_TYPES, agg$annot.type), setdiff(agg$annot.type, GENE_TYPES)))
+        agg$annot.type = factor(agg$annot.type, levels = c(intersect(type_levels, agg$annot.type), setdiff(agg$annot.type, type_levels)))
         count_col = 'n'
     }
 

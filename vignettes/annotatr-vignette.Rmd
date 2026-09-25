@@ -64,6 +64,21 @@ The genic annotations have populated `tx_id`, `gene_id`, and `symbol` columns. R
 
 Genic annotations are available for all hg19, hg38, mm9, mm10, rn4, rn5, rn6, dm3, and dm6.
 
+## MANE Select Transcripts
+
+The genic annotations above include every transcript of a gene, so a region in an exon of one isoform may be in an intron of another. To annotate regions to one main isoform per gene, use the MANE Select transcripts for hg38 ([Morales et al., 2022](https://doi.org/10.1038/s41586-022-04558-8)). MANE (Matched Annotation from NCBI and EMBL-EBI) chooses one representative transcript for each human protein-coding gene, which is identical in RefSeq and Ensembl/GENCODE.
+
+The MANE annotations have the same types as the genic annotations, except intergenic: MANE only covers protein-coding genes, so the regions outside MANE transcripts would include non-coding genes. The codes are of the form `hg38_mane_promoters`, and the `hg38_basicmane` shortcut builds the same types as `hg38_basicgenes`. The `tx_id` column is the Ensembl transcript ID, and `gene_id` is the Entrez Gene ID, as for `hg38_genes_*`. The annotations are built from the MANE GTF from NCBI, which needs the `txdbmaker` package, and are cached like the others. MANE Plus Clinical transcripts, which some clinical genes have in addition to MANE Select, are not included.
+
+```{r, eval = FALSE}
+# One transcript per gene
+mane_annotations = build_annotations(genome = 'hg38', annotations = 'hg38_basicmane')
+
+# Or alongside all transcripts, e.g. to compare them
+annotations = build_annotations(genome = 'hg38',
+    annotations = c('hg38_genes_promoters', 'hg38_mane_promoters'))
+```
+
 ## FANTOM5 Permissive Enhancers
 
 FANTOM5 permissive enhancers were determined from bi-directional CAGE transcription as in [Andersson et al. (2014)](http://www.nature.com/nature/journal/v507/n7493/full/nature12787.html), and are downloaded and processed for hg19 and mm9 from the [FANTOM5](http://fantom.gsc.riken.jp/5/datafiles/phase2.0/extra/Enhancers/) resource. Using the `rtracklayer::liftOver()` function, enhancers from hg19 are lifted to hg38, and mm9 to mm10.
