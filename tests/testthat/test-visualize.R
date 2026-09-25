@@ -6,7 +6,7 @@ dm_order = c('hyper', 'hypo', 'none')
 test_that('plot_annotation() warns about annotations not in the data', {
     expect_warning(
         plot_annotation(annotated_regions = annotate_dm_regions(), annotation_order = c('hypor', 'hype', '')),
-        'elements in col_order that are not present')
+        "not in the data, and are left out: 'hypor', 'hype', ''")
 })
 
 test_that('plot_annotation() plots counts per annotation', {
@@ -176,10 +176,10 @@ test_that('plot_categorical() warns about orders not in the data', {
 
     expect_warning(
         plot_categorical(annotated_regions = a, x = 'DM_status', fill = 'annot.type', x_order = cpg_types),
-        'elements in col_order that are not present')
+        'order for DM_status are not in the data')
     expect_warning(
         plot_categorical(annotated_regions = a, x = 'DM_status', fill = 'annot.type', fill_order = dm_order),
-        'elements in col_order that are not present')
+        "order for annot.type are not in the data, and are left out: 'hyper', 'hypo', 'none'")
 })
 
 test_that('plot_categorical() errors for a background with a data fill', {

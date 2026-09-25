@@ -224,7 +224,7 @@ The following example is based on the results of testing for differential methyl
 
 ## Reading Genomic Regions
 
-`read_regions()` uses the `rtracklayer::import()` function to read in BED files and convert them to `GRanges` objects. The `name` and `score` columns in a normal BED file can be used for categorical and numeric data, respectively. Additionally, an arbitrary number of categorical and numeric data columns can be appended to a BED6 file. The `extraCols` parameter is used for this purpose, and the `rename_name` and `rename_score` columns allow users to give more descriptive names to these columns.
+`read_regions()` uses the `rtracklayer::import()` function to read in BED files and convert them to `GRanges` objects. BED files are 0-based and `GRanges` are 1-based, so the BED line `chr1 99 100` becomes the single base `chr1:100`. A single CpG written with a 1-based start, `chr1 100 100`, would become an empty range that overlaps no annotations, so check the coordinates of files from other tools. The `name` and `score` columns in a normal BED file can be used for categorical and numeric data, respectively. Additionally, an arbitrary number of categorical and numeric data columns can be appended to a BED6 file. The `extraCols` parameter is used for this purpose, and the `rename_name` and `rename_score` columns allow users to give more descriptive names to these columns.
 
 ```{r, warning = FALSE, message = FALSE}
 # This file in inst/extdata represents regions tested for differential

@@ -567,9 +567,11 @@ subset_order_tbl = function(tbl, col, col_order) {
             if( all(col_order %in% all_col_names) ) {
                 tbl = subset(tbl, tbl[[col]] %in% col_order)
             } else {
-        # Intersect col_order with unique(tbl[[col]]) to deal with possible 0 tallies
-        col_order = intersect(col_order, unique(tbl[[col]]))
-                warning('There are elements in col_order that are not present in the corresponding column. Check for typos, or this could be a result of 0 tallies.')
+                # Name what's missing, then keep the rest, to deal with possible 0 tallies
+                missing = setdiff(col_order, all_col_names)
+                col_order = intersect(col_order, all_col_names)
+                warning(sprintf('These elements of the order for %s are not in the data, and are left out: %s. Check for typos; otherwise, no regions have them.',
+                    col, paste(sprintf("'%s'", missing), collapse = ', ')))
             }
         }
 
