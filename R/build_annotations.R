@@ -306,7 +306,7 @@ build_enhancer_annots = function(genome = c('hg19','hg38','mm9','mm10'), cache =
         hg19_enhancers = rtracklayer::import.bed(download_annotation_file('https://fantom.gsc.riken.jp/5/datafiles/phase2.0/extra/Enhancers/human_permissive_enhancers_phase_1_and_2.bed.gz', genome = genome, cache = cache), genome = 'hg19')
 
         enhancers = rtracklayer::liftOver(x = hg19_enhancers, chain = chain)
-        enhancers = sort(unlist(enhancers))
+        enhancers = set_genome_seqinfo(sort(unlist(enhancers)), genome)
     } else if (genome == 'mm9') {
         enhancers = rtracklayer::import.bed(download_annotation_file('https://fantom.gsc.riken.jp/5/datafiles/phase2.0/extra/Enhancers/mouse_permissive_enhancers_phase_1_and_2.bed.gz', genome = genome, cache = cache), genome = 'mm9')
     } else if (genome == 'mm10') {
@@ -318,7 +318,7 @@ build_enhancer_annots = function(genome = c('hg19','hg38','mm9','mm10'), cache =
         mm9_enhancers = rtracklayer::import.bed(download_annotation_file('https://fantom.gsc.riken.jp/5/datafiles/phase2.0/extra/Enhancers/mouse_permissive_enhancers_phase_1_and_2.bed.gz', genome = genome, cache = cache), genome = 'mm9')
 
         enhancers = rtracklayer::liftOver(x = mm9_enhancers, chain = chain)
-        enhancers = sort(unlist(enhancers))
+        enhancers = set_genome_seqinfo(sort(unlist(enhancers)), genome)
     }
 
     enhancers = GenomicRanges::granges(enhancers)
@@ -524,6 +524,10 @@ build_cpg_annots = function(genome = annotatr::builtin_genomes(), annotations = 
                         inter_cgi = GenomicRanges::gaps(extended_cgi)
                         inter_cgi = inter_cgi[GenomicRanges::strand(inter_cgi) == '*']
 
+                        # Only chromosomes with CpG islands, e.g. not unplaced contigs or
+                        # alternate haplotypes without islands, which would be entirely interCGI
+                        inter_cgi = inter_cgi[GenomicRanges::seqnames(inter_cgi) %in% Seqinfo::seqlevelsInUse(islands)]
+
                         # Rename the interCGI
                         GenomicRanges::mcols(inter_cgi)$id = paste0('inter:', seq_along(inter_cgi))
 
@@ -699,6 +703,10 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
 
                     # A quirk in gaps gives the entire + and - strand of a chromosome, ignore those
                     intergenic_gr = intergenic_gr[GenomicRanges::strand(intergenic_gr) == '*']
+
+                    # Only chromosomes with genes, e.g. not unplaced contigs or alternate
+                    # haplotypes without genes, which would be entirely intergenic
+                    intergenic_gr = intergenic_gr[GenomicRanges::seqnames(intergenic_gr) %in% Seqinfo::seqlevelsInUse(genic_gr)]
 
                     GenomicRanges::mcols(intergenic_gr)$id = paste0('intergenic:', seq_along(intergenic_gr))
                     GenomicRanges::mcols(intergenic_gr)$tx_id = NA

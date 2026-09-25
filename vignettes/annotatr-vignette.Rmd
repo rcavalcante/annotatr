@@ -162,6 +162,23 @@ dm_regions = dm_regions[1:2000]
 print(dm_regions)
 ```
 
+## Genome Information
+
+Every `GRanges` has a `Seqinfo` describing its genome: the chromosome names, their lengths, whether they are circular, and the genome (e.g. `hg19`). Setting `genome` in `read_regions()` fills this in, and annotations from `build_annotations()` have it for their genome.
+
+When regions are annotated, `annotate_regions()` checks the regions and annotations match:
+
+* If they are from different genomes, e.g. regions from `hg38` and annotations from `hg19`, it gives an error, rather than annotating regions to the wrong places.
+* If they have no chromosome names in common, e.g. `2` in the regions and `chr2` in the annotations, it gives an error. Annotations from `build_annotations()` use UCSC-style names (`chr1`, `chr2`, etc.), and `GenomeInfoDb::seqlevelsStyle(regions) = 'UCSC'` changes the regions to match.
+* If the regions have no genome, it can't check the genomes match, so it suggests setting `genome` in `read_regions()`.
+
+The `Seqinfo` of regions or annotations can be seen with `Seqinfo::seqinfo()`, and the genome with `Seqinfo::genome()`.
+
+```{r, warning = FALSE, message = FALSE}
+# The genome of the regions read in above
+print(unique(Seqinfo::genome(dm_regions)))
+```
+
 ## Annotating Regions
 
 Users may select annotations a la carte via the accessors listed with `builtin_annotations()`, shortcuts, or use custom annotations as described above. The `hg19_cpgs` shortcut annotates regions to CpG islands, CpG shores, CpG shelves, and inter-CGI. The `hg19_basicgenes` shortcut annotates regions to 1-5Kb, promoters, 5'UTRs, exons, introns, and 3'UTRs. Shortcuts for other `builtin_genomes()` are accessed in a similar way.

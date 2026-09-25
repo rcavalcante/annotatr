@@ -173,6 +173,29 @@ get_orgdb_name = function(genome = annotatr::builtin_genomes()) {
     return(org)
 }
 
+#' Function to give a GRanges the seqinfo of a genome
+#'
+#' Some operations, e.g. \code{rtracklayer::liftOver()}, drop the genome and sequence lengths. This restores them from \code{Seqinfo::Seqinfo(genome = genome)}. If that fails, e.g. offline, or if the ranges are on sequences the genome doesn't have, only the genome is set.
+#'
+#' @param gr A \code{GRanges} object.
+#' @param genome A string giving the genome assembly, e.g. \code{'hg38'}.
+#'
+#' @return \code{gr} with the seqinfo of \code{genome}, trimmed to the ends of its sequences.
+set_genome_seqinfo = function(gr, genome) {
+    seqinfo = tryCatch(Seqinfo::Seqinfo(genome = genome), error = function(e) NULL)
+
+    if(!is.null(seqinfo) && all(Seqinfo::seqlevelsInUse(gr) %in% Seqinfo::seqlevels(seqinfo))) {
+        Seqinfo::seqlevels(gr, pruning.mode = 'coarse') = Seqinfo::seqlevels(seqinfo)
+        # Out-of-bound ranges warn here, and are trimmed next
+        suppressWarnings(Seqinfo::seqinfo(gr) <- seqinfo)
+        gr = GenomicRanges::trim(gr)
+    } else {
+        Seqinfo::genome(gr) = genome
+    }
+
+    return(gr)
+}
+
 #' Function to get the URL of a file in the UCSC GenArk hub for a genome
 #'
 #' @param genome A string giving the genome assembly, one of \code{GENARK$genome}.

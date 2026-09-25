@@ -72,3 +72,18 @@ test_that('expand_annotations() expands shortcuts', {
         'Insulator', 'TxnTransition', 'TxnElongation', 'WeakTxn', 'Repressed',
         'Heterochrom/lo', 'Repetitive/CNV')))
 })
+
+test_that('set_genome_seqinfo() gives ranges the seqinfo of a genome', {
+    gr = GenomicRanges::GRanges('chr1', IRanges::IRanges(1, 1e9))
+
+    # Unknown genomes get only the genome
+    unknown = set_genome_seqinfo(gr, 'notagenome')
+    expect_equal(unname(Seqinfo::genome(unknown)), 'notagenome')
+
+    skip_network()
+    hg19 = set_genome_seqinfo(gr, 'hg19')
+    expect_equal(unique(unname(Seqinfo::genome(hg19))), 'hg19')
+    expect_equal(unname(Seqinfo::seqlengths(hg19)['chr1']), 249250621)
+    # Trimmed to the end of chr1
+    expect_equal(GenomicRanges::end(hg19), 249250621)
+})
