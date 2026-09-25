@@ -26,27 +26,35 @@ if (!requireNamespace("BiocManager", quietly=TRUE))
 BiocManager::install("annotatr")
 ```
 
-The development version of `annotatr` can be obtained via the [GitHub repository](https://github.com/rcavalcante/annotatr) or [Bioconductor](https://bioconductor.org/packages/devel/bioc/html/annotatr.html). It is easiest to install development versions with the [`devtools`](https://cran.r-project.org/web/packages/devtools/index.html) package as follows:
+The development version of `annotatr` is available from [Bioconductor devel](https://bioconductor.org/packages/devel/bioc/html/annotatr.html), which needs the devel version of R and Bioconductor:
 
 ```{r, eval=FALSE}
-devtools::install_github('rcavalcante/annotatr')
+BiocManager::install("annotatr", version = "devel")
 ```
 
-Changelogs for development releases will be detailed on [GitHub releases](https://github.com/rcavalcante/annotatr/releases).
+The source is on [GitHub](https://github.com/rcavalcante/annotatr). Changes in each version are listed in the package's NEWS, `news(package = "annotatr")`.
 
 # Annotations
 
-There are three types of annotations available to annotatr:
+There are three kinds of annotations available to annotatr:
 
-1. Built-in annotations including CpG annotations, genic annotations, enhancers, GENCODE lncRNAs, and chromatin states from chromHMM. Base data for each of these annotations is retrieved and processed in some way. See each below for details on data source and processing.
-2. AnnotationHub annotations include any GRanges resource within the Bioconductor AnnotationHub web resource.
-3. Custom annotations provided by the user.
+1. Built-in annotations: genic annotations (from all transcripts, MANE Select transcripts, or Ensembl canonical transcripts), CpG annotations, FANTOM5 enhancers, ENCODE candidate cis-regulatory elements (cCREs), GENCODE lncRNAs, and chromatin states from chromHMM. See each below for details on data source and processing.
+2. Annotations from `AnnotationHub`: any `GRanges` resource in the Bioconductor AnnotationHub web resource.
+3. Custom annotations provided by the user, from BED files or from any `TxDb` or `EnsDb` of gene models.
+
+Built-in annotations are named by codes of the form `[genome]_[group]_[type]`, e.g. `hg38_genes_promoters` or `mm10_cpg_islands`, and all codes are listed by `builtin_annotations()`. `builtin_annotations_table()` shows which groups are available for which genome builds:
+
+```{r, echo = FALSE, results = 'asis'}
+availability = annotatr::builtin_annotations_table()
+availability[-1] = lapply(availability[-1], function(x) ifelse(x, '✓', ''))
+knitr::kable(availability, align = c('l', rep('c', ncol(availability) - 1)))
+```
+
+Shortcuts build a whole group: `[genome]_basicgenes`, `hg38_basicmane`, `[genome]_basiccanonical`, `[genome]_cpgs`, `[genome]_ccres`, and `hg19_[cell line]-chromatin`. The gene shortcuts build 1-5Kb upstream of the TSS, promoters, 5'UTRs, exons, introns, and 3'UTRs.
 
 ## CpG Annotations
 
-The CpG islands are the basis for all CpG annotations, and are given by the `AnnotationHub` package for the given organism. CpG shores are defined as 2Kb upstream/downstream from the ends of the CpG islands, less the CpG islands. CpG shelves are defined as another 2Kb upstream/downstream of the farthest upstream/downstream limits of the CpG shores, less the CpG islands and CpG shores. The remaining genomic regions make up the inter-CGI annotation.
-
-CpG annotations are available for hg19, hg38, mm9, mm10, rn4, rn5, rn6.
+The CpG islands are the basis for all CpG annotations. They are the UCSC Genome Browser's CpG island track for the genome, from `AnnotationHub` for hg19, mm9, rn4, and rn5, from the UCSC database for most other genomes, and from the UCSC GenArk assembly hub for sheep (`oviariramb2`). CpG shores are defined as 2Kb upstream/downstream from the ends of the CpG islands, less the CpG islands. CpG shelves are defined as another 2Kb upstream/downstream of the farthest upstream/downstream limits of the CpG shores, less the CpG islands and CpG shores. The remaining genomic regions make up the inter-CGI annotation.
 
 ![Schematic of CpG annotations.](annotatr_cpgs.jpeg)
 
@@ -62,7 +70,7 @@ For sheep (`oviariramb2`), which has no `TxDb.*` or `org.*.eg.db` packages, gene
 
 Non-intergenic gene annotations have populated `tx_id`, `gene_id`, `symbol`, `entrez_id`, and `ensembl_id` columns. The `tx_id` and `gene_id` are the transcript and gene IDs of the source of the gene models: Entrez Gene IDs for most genomes, Ensembl IDs for `rn4` and sheep, and FlyBase IDs for `dm3` and `dm6`. Whatever the source's IDs are, the `symbol`, `entrez_id`, and `ensembl_id` columns give the gene symbol, Entrez Gene ID, and Ensembl gene ID (without version), from the `org.*.eg.db` package for the organism, or the `EnsDb` for sheep. When a gene ID maps to more than one symbol or ID, the first is used.
 
-Genic annotations are available for all hg19, hg38, mm9, mm10, rn4, rn5, rn6, dm3, and dm6.
+Genic annotations are available for every genome in `builtin_genomes()`.
 
 ## MANE Select Transcripts
 
@@ -93,26 +101,6 @@ canonical_annotations = build_annotations(genome = 'mm39',
     annotations = c('mm39_basiccanonical', 'mm39_canonical_intergenic'))
 ```
 
-## Gene Annotations from Any TxDb
-
-The genic annotations above come from the `TxDb.*` packages that `annotatr` knows about. To build the same annotation types from other gene models, e.g. GENCODE or RefSeq, or for a genome without built-in annotations, use `build_txdb_annotations()` with any `TxDb` or `EnsDb` object. A GTF or GFF3 file can be made into a `TxDb` with `txdbmaker::makeTxDbFromGFF()`.
-
-The `genome` and `group` arguments are required. The annotation codes are of the form `[genome]_[group]_[type]`, e.g. `mm39_gencode_promoters`, so `group` names where the gene models came from, and annotations from different gene models can be used side by side. The `annotations` argument takes the gene annotation types, or the `basicgenes` shortcut (the default). Gene symbols come from an `EnsDb`, or from an `OrgDb` given with `orgdb`, with `keytype` saying what kind of gene IDs the `TxDb` has.
-
-```{r, eval = FALSE}
-# A TxDb from the GENCODE mouse GTF, with Ensembl gene IDs
-gencode_txdb = txdbmaker::makeTxDbFromGFF('gencode.vM38.annotation.gtf.gz')
-
-gencode_annots = build_txdb_annotations(gencode_txdb, genome = 'mm39', group = 'gencode',
-    annotations = c('basicgenes', 'intergenic'),
-    orgdb = org.Mm.eg.db::org.Mm.eg.db, keytype = 'ENSEMBL')
-
-# Combine with built-in annotations, and use as any other annotations
-annotations = c(gencode_annots, build_annotations(genome = 'mm39', annotations = 'mm39_cpgs'))
-```
-
-These annotations are not cached on disk, since they are built from a `TxDb` already in memory. `summarize_genes()` and the plotting functions work with them as with built-in gene annotations.
-
 ## FANTOM5 Permissive Enhancers
 
 FANTOM5 permissive enhancers were determined from bi-directional CAGE transcription as in [Andersson et al. (2014)](http://www.nature.com/nature/journal/v507/n7493/full/nature12787.html), and are downloaded and processed for hg19 and mm9 from the [FANTOM5](http://fantom.gsc.riken.jp/5/datafiles/phase2.0/extra/Enhancers/) resource. Using the `rtracklayer::liftOver()` function, enhancers from hg19 are lifted to hg38, and mm9 to mm10.
@@ -140,7 +128,7 @@ ccre_annotations = build_annotations(genome = 'hg38', annotations = 'hg38_ccres'
 
 ## GENCODE lncRNA transcripts
 
-The long non-coding RNA (lncRNA) annotations are from [GENCODE](https://www.gencodegenes.org) for hg19, hg38, and mm10. The lncRNA transcripts are used, and we eventually plan to include the lncRNA introns/exons at a later date. The lncRNA annotations have populated `tx_id`, `gene_id`, and `symbol` columns. Respectively they are, the Ensembl transcript name, Entrez Gene ID, and gene symbol. As per the `transcript_type` field in the GENCODE anntotations, the [biotypes](https://www.gencodegenes.org/gencode_biotypes.html) are given in the `id` column.
+The long non-coding RNA (lncRNA) transcripts are from [GENCODE](https://www.gencodegenes.org) for hg19 (release 19), hg38 (release 31), and mm10 (release M6). The `tx_id` column is the Ensembl transcript ID, `ensembl_id` is the Ensembl gene ID, `symbol` is the gene symbol, and `gene_id` and `entrez_id` are the Entrez Gene ID matched by symbol. The transcript [biotype](https://www.gencodegenes.org/pages/biotypes.html), from GENCODE's `transcript_type` field, is at the start of the `id` column.
 
 ## Chromatin states from ChromHMM
 
@@ -171,7 +159,7 @@ print(annotatr_cache$get('hg19_H3K4me3_Gm12878'))
 
 ## Custom Annotations
 
-Users may load their own annotations from BED files using the `read_annotations()` function, which uses the `rtracklayer::import()` function. The output is a `GRanges` with `mcols()` for `id`, `tx_id`, `gene_id`, `symbol`, and `type`. If a user wants to include `tx_id`, `gene_id`, and/or `symbol` in their custom annotations they can be included as extra columns on a BED6 input file.
+Users may load their own annotations from BED files using the `read_annotations()` function, which uses the `rtracklayer::import()` function. The output is a `GRanges` with the same `mcols()` as built-in annotations: `id`, `tx_id`, `gene_id`, `symbol`, `entrez_id`, `ensembl_id`, and `type`. Any of `tx_id`, `gene_id`, `symbol`, `entrez_id`, and `ensembl_id` can be included as extra columns of a BED6 input file, with the `extraCols` argument, and the others are `NA`.
 
 ```{r, warning = FALSE, message = FALSE}
 ## Use ENCODE ChIP-seq peaks for EZH2 in GM12878
@@ -189,6 +177,26 @@ Custom annotations can be combined with other annotations using `c()`, e.g. `c(e
 ```{r, warning = FALSE, message = FALSE}
 print(annotatr_cache$list_env())
 ```
+
+## Custom Gene Annotations from Any TxDb
+
+The built-in genic annotations come from the `TxDb.*` packages, MANE, and Ensembl for the genomes `annotatr` knows about. To build the same annotation types from other gene models, e.g. GENCODE or RefSeq, or for a genome without built-in annotations, use `build_txdb_annotations()` with any `TxDb` or `EnsDb` object. A GTF or GFF3 file can be made into a `TxDb` with `txdbmaker::makeTxDbFromGFF()`.
+
+The `genome` and `group` arguments are required. The annotation codes are of the form `[genome]_[group]_[type]`, e.g. `mm39_gencode_promoters`, so `group` names where the gene models came from, and annotations from different gene models can be used side by side. The `annotations` argument takes the gene annotation types, or the `basicgenes` shortcut (the default). Gene symbols come from an `EnsDb`, or from an `OrgDb` given with `orgdb`, with `keytype` saying what kind of gene IDs the `TxDb` has.
+
+```{r, eval = FALSE}
+# A TxDb from the GENCODE mouse GTF, with Ensembl gene IDs
+gencode_txdb = txdbmaker::makeTxDbFromGFF('gencode.vM38.annotation.gtf.gz')
+
+gencode_annots = build_txdb_annotations(gencode_txdb, genome = 'mm39', group = 'gencode',
+    annotations = c('basicgenes', 'intergenic'),
+    orgdb = org.Mm.eg.db::org.Mm.eg.db, keytype = 'ENSEMBL')
+
+# Combine with built-in annotations, and use as any other annotations
+annotations = c(gencode_annots, build_annotations(genome = 'mm39', annotations = 'mm39_cpgs'))
+```
+
+These annotations are not cached on disk, since they are built from a `TxDb` already in memory. `summarize_genes()` and the plotting functions work with them as with built-in gene annotations.
 
 ## Caching Built Annotations
 
@@ -251,7 +259,7 @@ print(unique(Seqinfo::genome(dm_regions)))
 
 ## Annotating Regions
 
-Users may select annotations a la carte via the accessors listed with `builtin_annotations()`, shortcuts, or use custom annotations as described above. The `hg19_cpgs` shortcut annotates regions to CpG islands, CpG shores, CpG shelves, and inter-CGI. The `hg19_basicgenes` shortcut annotates regions to 1-5Kb, promoters, 5'UTRs, exons, introns, and 3'UTRs. Shortcuts for other `builtin_genomes()` are accessed in a similar way.
+Users may select annotations a la carte via the codes listed with `builtin_annotations()`, shortcuts, or use custom annotations as described above. The `hg19_cpgs` shortcut annotates regions to CpG islands, CpG shores, CpG shelves, and inter-CGI. The `hg19_basicgenes` shortcut annotates regions to 1-5Kb, promoters, 5'UTRs, exons, introns, and 3'UTRs. The other shortcuts, and the genomes they are available for, are described in the Annotations section above.
 
 `annotate_regions()` requires a `GRanges` object (either the result of `read_regions()` or an existing object), a `GRanges` object of the `annotations`, and a logical value indicating whether to `ignore.strand` when calling `GenomicRanges::findOverlaps()`. The positive integer `minoverlap` is also passed to `GenomicRanges::findOverlaps()` and specifies the minimum overlap required for a region to be assigned to an annotation.
 
@@ -283,7 +291,7 @@ The `annotate_regions()` function returns a `GRanges`, but it may be more conven
 # Coerce to a data.frame
 df_dm_annotated = data.frame(dm_annotated)
 
-# See the GRanges column of dm_annotaed expanded
+# See the GRanges column of dm_annotated expanded
 print(head(df_dm_annotated))
 
 # Subset based on a gene symbol, in this case NOTCH1
@@ -457,7 +465,7 @@ dm_vs_regions_annot2 = plot_numerical(
     facet = c('annot.type','DM_status'),
     facet_order = list(c('hg19_genes_promoters','hg19_genes_5UTRs','hg19_cpg_islands'), c('hyper','hypo','none')),
     bin_width = 5,
-    plot_title = 'Group 0 Region Methylation In Genes',
+    plot_title = 'Methylation Differences by Annotation and DM Status',
     x_label = 'Methylation Difference')
 print(dm_vs_regions_annot2)
 ```
@@ -581,4 +589,10 @@ dm_vs_kg_cat = plot_categorical(
     x_label = 'knownGene Annotations',
     y_label = 'Proportion')
 print(dm_vs_kg_cat)
+```
+
+# Session Information
+
+```{r}
+sessionInfo()
 ```

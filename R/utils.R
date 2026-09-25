@@ -191,6 +191,47 @@ builtin_annotations = function() {
     return(annots)
 }
 
+#' Table of builtin annotations by genome
+#'
+#' Summarizes \code{builtin_annotations()} as one row per genome and one column per group of annotations, showing which are available for which genome builds.
+#'
+#' The columns and the shortcuts that build the whole group:
+#' \describe{
+#'   \item{genes}{Gene annotations from all transcripts (\code{[genome]_basicgenes}, or e.g. \code{[genome]_genes_promoters}).}
+#'   \item{mane}{Gene annotations from MANE Select transcripts (\code{[genome]_basicmane}).}
+#'   \item{canonical}{Gene annotations from Ensembl canonical transcripts (\code{[genome]_basiccanonical}).}
+#'   \item{cpgs}{CpG islands, shores, shelves, and inter-CGI (\code{[genome]_cpgs}).}
+#'   \item{enhancers}{FANTOM5 enhancers (\code{[genome]_enhancers_fantom}).}
+#'   \item{chromatin}{chromHMM chromatin states for 9 cell lines (e.g. \code{[genome]_Gm12878-chromatin}).}
+#'   \item{lncrna}{GENCODE lncRNA transcripts (\code{[genome]_lncrna_gencode}).}
+#'   \item{ccres}{ENCODE candidate cis-regulatory elements (\code{[genome]_ccres}).}
+#' }
+#'
+#' @return A \code{data.frame} with a \code{genome} column, and a logical column for each group, in the order of \code{builtin_genomes()}.
+#'
+#' @examples
+#' builtin_annotations_table()
+#'
+#' @export
+builtin_annotations_table = function() {
+    groups = c(genes = 'genes', mane = 'mane', canonical = 'canonical', cpgs = 'cpg',
+        enhancers = 'enhancers', chromatin = 'chromatin', lncrna = 'lncrna', ccres = 'ccre')
+
+    # Annotation codes, not shortcuts, are [genome]_[group]_[type]
+    tokens = strsplit(annotatr::builtin_annotations(), '_')
+    tokens = tokens[lengths(tokens) >= 3]
+    genome = vapply(tokens, `[`, character(1), 1)
+    group = vapply(tokens, `[`, character(1), 2)
+
+    genomes = annotatr::builtin_genomes()
+    table = data.frame(genome = genomes, stringsAsFactors = FALSE)
+    for(col in names(groups)) {
+        table[[col]] = genomes %in% genome[group == groups[[col]]]
+    }
+
+    return(table)
+}
+
 #' Function returning supported TxDb.* genomes
 #'
 #' @return A character vector of genomes for supported TxDb.* packages

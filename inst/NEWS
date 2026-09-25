@@ -3,6 +3,11 @@ CHANGES IN VERSION 1.40.0
 
 NEW FEATURES
 
+  o Add builtin_annotations_table(), which shows which groups of annotations
+    are available for which genome builds, one row per genome.
+  o Update the vignette: a table of available annotations, the new
+    annotations (MANE, Ensembl canonical, cCREs, any TxDb), current data
+    sources and installation, and session information.
   o Add ENCODE candidate cis-regulatory element (cCRE) annotations from the
     SCREEN registry (version 4) for hg38 and mm10: '[genome]_ccre_[class]' for
     the 8 classes (PLS, pELS, dELS, CA-H3K4me3, CA-CTCF, CA-TF, CA, TF), and the

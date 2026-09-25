@@ -38,6 +38,18 @@ test_that('builtin_annotations() has canonical annotations, with intergenic, for
     expect_named(tidy_annotations(c('mm39_canonical_promoters', 'mm39_canonical_firstexons')), c('canonical promoters', 'canonical first exons'))
 })
 
+test_that('builtin_annotations_table() shows which groups each genome has', {
+    t = builtin_annotations_table()
+
+    expect_named(t, c('genome', 'genes', 'mane', 'canonical', 'cpgs', 'enhancers', 'chromatin', 'lncrna', 'ccres'))
+    expect_equal(t$genome, builtin_genomes())
+    expect_true(all(t$genes))
+    expect_equal(t$genome[t$mane], 'hg38')
+    expect_equal(t$genome[t$chromatin], 'hg19')
+    expect_setequal(t$genome[t$ccres], c('hg38', 'mm10'))
+    expect_setequal(t$genome[!t$cpgs], c('dm3', 'dm6'))
+})
+
 test_that('builtin_annotations() has cCRE annotations for hg38 and mm10', {
     annots = builtin_annotations()
     ccres = grep('_ccre_|_ccres$', annots, value = TRUE)
