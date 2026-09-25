@@ -3,6 +3,11 @@ CHANGES IN VERSION 1.40.0
 
 NEW FEATURES
 
+  o Add builtin_annotations_table(), which shows which groups of annotations
+    are available for which genome builds, one row per genome.
+  o Update the vignette: a table of available annotations, the new
+    annotations (MANE, Ensembl canonical, cCREs, any TxDb), current data
+    sources and installation, and session information.
   o Add ENCODE candidate cis-regulatory element (cCRE) annotations from the
     SCREEN registry (version 4) for hg38 and mm10: '[genome]_ccre_[class]' for
     the 8 classes (PLS, pELS, dELS, CA-H3K4me3, CA-CTCF, CA-TF, CA, TF), and the
@@ -48,6 +53,10 @@ NEW FEATURES
 
 BUGFIXES
 
+  o The warning from plots about orders (e.g. fill_order) with elements not in
+    the data now names those elements (issue #16).
+  o Document that BED files are 0-based, so single bases need start = end - 1,
+    in read_regions() and the vignette (issue #27).
   o Fix CpG islands read from UCSC database tables (hg38, mm10, mm39, rn6,
     rn7, danRer10, danRer11, galGal5), and hg19 chromHMM states, which started
     1 bp early because UCSC's 0-based starts were used as 1-based. CpG shores,
@@ -56,6 +65,10 @@ BUGFIXES
   o Gene annotations for dm3, dm6, and rn4 had no gene symbols, because their
     gene IDs are FlyBase or Ensembl IDs, but symbols were looked up by Entrez
     ID. They now have symbols, Entrez IDs, and Ensembl IDs.
+
+USER-FACING CHANGES
+
+  o Require R >= 4.6.0, the version Bioconductor 3.24 runs on.
 
 DEPRECATED AND DEFUNCT
 

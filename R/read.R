@@ -2,6 +2,8 @@
 #'
 #' \code{read_regions()} reads genomic regions by calling the \code{rtracklayer::import()} function. This function can automatically deal with BEDX files from BED3 to BED6. For BED6+Y, the \code{extraCols} argument should be used to correctly interpret the extra columns.
 #'
+#' BED files have 0-based, half-open coordinates, and \code{GRanges} are 1-based and closed, so \code{rtracklayer::import()} adds 1 to each start. For example, the BED line \code{chr1 99 100} is the single base \code{chr1:100}. A file with 1-based starts, e.g. single CpGs written as \code{chr1 100 100}, gives ranges of width 0 (\code{chr1:101-100}), which overlap no annotations. Such files should have 1 subtracted from their starts first.
+#'
 #' NOTE: The \code{name} (4th) and \code{score} (5th) columns are so named. If these columns have a particular meaning for your data, they should be renamed with the \code{rename_name} and/or \code{rename_score} parameters.
 #'
 #' @param con A path, URL, connection or BEDFile object. See \code{rtracklayer::import()} documentation.

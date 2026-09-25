@@ -1,13 +1,13 @@
 Package: annotatr
 Title: Annotation of Genomic Regions to Genomic Annotations
-Version: 1.39.14
+Version: 1.39.15
 Date: 2025-06-21
 Authors@R: c(
     person("Raymond G.", "Cavalcante", email = "rcavalca@umich.edu", role = c("aut", "cre")),
     person(c("Maureen A."), "Sartor", email = "sartorma@med.umich.edu", role = c("ths")))
 Description: Given a set of genomic sites/regions (e.g. ChIP-seq peaks, CpGs, differentially methylated CpGs or regions, SNPs, etc.) it is often of interest to investigate the intersecting genomic annotations. Such annotations include those relating to gene models (promoters, 5'UTRs, exons, introns, and 3'UTRs), CpGs (CpG islands, CpG shores, CpG shelves), or regulatory sequences such as enhancers. The annotatr package provides an easy way to summarize and visualize the intersection of genomic sites/regions with genomic annotations.
 Depends:
-    R (>= 4.0.0)
+    R (>= 4.6.0)
 Imports:
     AnnotationDbi,
     AnnotationHub,
