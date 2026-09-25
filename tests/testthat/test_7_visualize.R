@@ -291,3 +291,12 @@ test_that('Test plot_categorical() success', {
     expect_s3_class(dm_vn, "ggplot")
     expect_s3_class(dm_vn_rnd, "ggplot")
 })
+
+test_that('Test plot_categorical() without fill can be drawn', {
+    dm_vn_nofill = plot_categorical(
+        annotated_regions = dm_annots,
+        x = 'annot.type')
+
+    expect_s3_class(dm_vn_nofill, "ggplot")
+    expect_no_error(ggplot2::ggplot_build(dm_vn_nofill))
+})
