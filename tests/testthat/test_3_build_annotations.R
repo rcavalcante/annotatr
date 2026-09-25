@@ -50,4 +50,8 @@ test_that('Test error for non-existent custom annotations', {
 #     annots = c('dm6_basicgenes', 'dm6_genes_intergenic', 'dm6_genes_cds', 'dm6_genes_firstexons', 'dm6_genes_intronexonboundaries', 'dm6_genes_exonintronboundaries')
 #     annotations = build_annotations(genome = 'dm6', annotations = annots)
 #     expect_true( dplyr::setequal(unique(annotations$type), expand_annotations(annots)) )
+#
+#     annots = c('oviariramb2_basicgenes', 'oviariramb2_cpgs', 'oviariramb2_genes_intergenic', 'oviariramb2_genes_cds', 'oviariramb2_genes_firstexons', 'oviariramb2_genes_intronexonboundaries', 'oviariramb2_genes_exonintronboundaries')
+#     annotations = build_annotations(genome = 'oviariramb2', annotations = annots)
+#     expect_true( dplyr::setequal(unique(annotations$type), expand_annotations(annots)) )
 # })

@@ -335,6 +335,10 @@ build_cpg_annots = function(genome = annotatr::builtin_genomes(), annotations = 
     } else if (genome == 'galGal5') {
         use_ah = FALSE
         con = 'http://hgdownload.cse.ucsc.edu/goldenpath/galGal5/database/cpgIslandExt.txt.gz'
+    } else if (genome %in% GENARK$genome) {
+        use_ah = FALSE
+        con = get_genark_url(genome, sprintf('bbi/%s_%s.cpgIslandExt.bb',
+            GENARK[GENARK$genome == genome, 'accession'], GENARK[GENARK$genome == genome, 'assembly']))
     } else {
         stop(sprintf('CpG features are not supported for genome %s', genome))
     }
@@ -356,6 +360,10 @@ build_cpg_annots = function(genome = annotatr::builtin_genomes(), annotations = 
             # Extract and sort the islands based on use_ah
             if(use_ah) {
                 islands = ah[[ID]]
+            } else if(genome %in% GENARK$genome) {
+                # GenArk CpG islands are a bigBed with RefSeq sequence names
+                islands = GenomicRanges::granges(rtracklayer::import(con, format = 'bigBed'))
+                islands = ucsc_genark_seqlevels(islands, genome)
             } else {
                 # Read from URL. There is surprisingly nothing in base that
                 # does this as easily, so here we are with readr again.
@@ -496,7 +504,7 @@ build_cpg_annots = function(genome = annotatr::builtin_genomes(), annotations = 
 
 #' A helper function to build genic annotations.
 #'
-#' Using the \code{TxDb.*} group of packages, construct genic annotations consisting of any combination of 1-5kb upstream of a TSS, promoters (< 1kb from TSS), 5UTRs, CDS, exons, first exons, introns, intron/exon and exon/intron boundaries, 3UTRs, and intergenic.
+#' Using the \code{TxDb.*} group of packages, construct genic annotations consisting of any combination of 1-5kb upstream of a TSS, promoters (< 1kb from TSS), 5UTRs, CDS, exons, first exons, introns, intron/exon and exon/intron boundaries, 3UTRs, and intergenic. For genomes without a \code{TxDb.*} package (e.g. sheep, \code{oviariramb2}), an Ensembl \code{EnsDb} from \code{AnnotationHub} is used instead, and \code{tx_id} and \code{gene_id} are Ensembl IDs.
 #'
 #' @param genome The genome assembly.
 #' @param annotations A character vector with entries of the form \code{[genome]_genes_{1to5kb,promoters,5UTRs,cds,exons,firstexons,introns,intronexonboundaries,exonintronboundaries,3UTRs,intergenic}}.
@@ -524,36 +532,64 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
             'threeUTRs_gr','intergenic_gr'),
         stringsAsFactors = FALSE)
 
-    # Load the appropriate TxDb.* library and get the txdb
-    err_mess = NULL
-    txdb_name = get_txdb_name(genome)
-    if(requireNamespace(txdb_name, quietly = TRUE)) {
-        library(txdb_name, character.only = TRUE)
-    } else {
-        err_mess = sprintf('The package %s is not installed, please install it via Bioconductor.', txdb_name)
-    }
-    txdb = get(txdb_name)
+    if(genome %in% GENARK$genome) {
+        # Get the EnsDb from AnnotationHub
+        if(!requireNamespace('ensembldb', quietly = TRUE)) {
+            stop('The package ensembldb is not installed, please install it via Bioconductor.')
+        }
+        ah = AnnotationHub::AnnotationHub()
+        txdb = ah[[GENARK[GENARK$genome == genome, 'ensdb']]]
 
-    # Get the org.XX.eg.db mapping from Entrez ID to gene symbol
-    # First element returned is package name, second is eg2SYMBOL name
-    orgdb_name = get_orgdb_name(genome)
-    if(requireNamespace(sprintf('org.%s.eg.db', orgdb_name), quietly = TRUE)) {
-        library(sprintf('org.%s.eg.db', orgdb_name), character.only = TRUE)
-    } else {
-        err_mess = paste(
-            err_mess,
-            sprintf('The package org.%s.eg.db is not installed, please install it via Bioconductor.', orgdb_name),
-            sep='\n')
-    }
-    if(!is.null(err_mess)) {
-        stop(err_mess)
-    }
-    x = get(sprintf('org.%s.egSYMBOL', orgdb_name))
-    mapped_genes = mappedkeys(x)
-    eg2symbol = as.data.frame(x[mapped_genes])
+        # The EnsDb has the Ensembl gene ID to gene symbol mapping
+        genes_gr = GenomicFeatures::genes(txdb)
+        eg2symbol = data.frame(
+            gene_id = genes_gr$gene_id,
+            symbol = ifelse(genes_gr$gene_name == '', NA, genes_gr$gene_name),
+            stringsAsFactors = FALSE)
 
-    # Build the base transcripts
-    tx_gr = transcripts(txdb, columns = c('TXID','GENEID','TXNAME'))
+        # Build the base transcripts
+        tx_gr = transcripts(txdb)
+    } else {
+        # Load the appropriate TxDb.* library and get the txdb
+        err_mess = NULL
+        txdb_name = get_txdb_name(genome)
+        if(requireNamespace(txdb_name, quietly = TRUE)) {
+            library(txdb_name, character.only = TRUE)
+        } else {
+            err_mess = sprintf('The package %s is not installed, please install it via Bioconductor.', txdb_name)
+        }
+        txdb = get(txdb_name)
+
+        # Get the org.XX.eg.db mapping from Entrez ID to gene symbol
+        # First element returned is package name, second is eg2SYMBOL name
+        orgdb_name = get_orgdb_name(genome)
+        if(requireNamespace(sprintf('org.%s.eg.db', orgdb_name), quietly = TRUE)) {
+            library(sprintf('org.%s.eg.db', orgdb_name), character.only = TRUE)
+        } else {
+            err_mess = paste(
+                err_mess,
+                sprintf('The package org.%s.eg.db is not installed, please install it via Bioconductor.', orgdb_name),
+                sep='\n')
+        }
+        if(!is.null(err_mess)) {
+            stop(err_mess)
+        }
+        x = get(sprintf('org.%s.egSYMBOL', orgdb_name))
+        mapped_genes = mappedkeys(x)
+        eg2symbol = as.data.frame(x[mapped_genes])
+
+        # Build the base transcripts
+        tx_gr = transcripts(txdb, columns = c('TXID','GENEID','TXNAME'))
+    }
+
+    # EnsDb *By() accessors don't take use.names, their names are already the tx_id
+    by_tx = function(accessor, ...) {
+        if(methods::is(txdb, 'EnsDb')) {
+            accessor(txdb, ...)
+        } else {
+            accessor(txdb, ..., use.names = TRUE)
+        }
+    }
     # Create TSS GRanges for later use with intronexon boundaries
     tss_gr = GenomicRanges::GRanges(
         seqnames = seqnames(tx_gr),
@@ -573,7 +609,15 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
     seqinfo(tes_gr) = seqinfo(tx_gr)
 
     # Build tables to map TXID to TXNAME and GENEID
-    id_maps = AnnotationDbi::select(txdb, keys = as.character(GenomicRanges::mcols(tx_gr)$TXID), columns = c('TXNAME','GENEID'), keytype = 'TXID')
+    if(methods::is(txdb, 'EnsDb')) {
+        id_maps = data.frame(
+            TXID = tx_gr$tx_id,
+            TXNAME = tx_gr$tx_name,
+            GENEID = tx_gr$gene_id,
+            stringsAsFactors = FALSE)
+    } else {
+        id_maps = AnnotationDbi::select(txdb, keys = as.character(GenomicRanges::mcols(tx_gr)$TXID), columns = c('TXNAME','GENEID'), keytype = 'TXID')
+    }
 
     # Each annotation should be a GRanges object with the following mcols:
     # id, tx_id, gene_id, symbol, type
@@ -623,7 +667,7 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
     if(any(grepl('cds', annotations))) {
         message('Building cds...')
         ### cds
-            cds_grl = GenomicFeatures::cdsBy(txdb, by = 'tx', use.names = TRUE)
+            cds_grl = by_tx(GenomicFeatures::cdsBy, by = 'tx')
             # Create Rle of the tx_names
             cds_txname_rle = S4Vectors::Rle(names(cds_grl), S4Vectors::elementNROWS(cds_grl))
             cds_txname_vec = as.character(cds_txname_rle)
@@ -643,7 +687,7 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
     if(any(grepl('5UTR', annotations))) {
         message('Building 5UTRs...')
         ### fiveUTRs
-            fiveUTRs_grl = GenomicFeatures::fiveUTRsByTranscript(txdb, use.names = TRUE)
+            fiveUTRs_grl = by_tx(GenomicFeatures::fiveUTRsByTranscript)
             # Create Rle of the tx_names
             fiveUTRs_txname_rle = S4Vectors::Rle(names(fiveUTRs_grl), S4Vectors::elementNROWS(fiveUTRs_grl))
             fiveUTRs_txname_vec = as.character(fiveUTRs_txname_rle)
@@ -665,7 +709,7 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
     if(any(grepl('3UTR', annotations))) {
         message('Building 3UTRs...')
         ### threeUTRs
-            threeUTRs_grl = GenomicFeatures::threeUTRsByTranscript(txdb, use.names = TRUE)
+            threeUTRs_grl = by_tx(GenomicFeatures::threeUTRsByTranscript)
             # Create Rle of the tx_names
             threeUTRs_txname_rle = S4Vectors::Rle(names(threeUTRs_grl), S4Vectors::elementNROWS(threeUTRs_grl))
             threeUTRs_txname_vec = as.character(threeUTRs_txname_rle)
@@ -686,7 +730,7 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
 
         message('Building exons...')
         ### exons
-            exons_grl = GenomicFeatures::exonsBy(txdb, by = 'tx', use.names = TRUE)
+            exons_grl = by_tx(GenomicFeatures::exonsBy, by = 'tx')
             # Create Rle of the tx_names
             exons_txname_rle = S4Vectors::Rle(names(exons_grl), S4Vectors::elementNROWS(exons_grl))
             exons_txname_vec = as.character(exons_txname_rle)
@@ -717,7 +761,7 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
 
         message('Building introns...')
         ### introns
-            introns_grl = GenomicFeatures::intronsByTranscript(txdb, use.names = TRUE)
+            introns_grl = by_tx(GenomicFeatures::intronsByTranscript)
             # Create Rle of the tx_names
             introns_txname_rle = S4Vectors::Rle(names(introns_grl), S4Vectors::elementNROWS(introns_grl))
             introns_txname_vec = as.character(introns_txname_rle)
@@ -808,6 +852,11 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
     mgets = annot_codes[annot_codes$code %in% annotations, 'var']
     genes = do.call('GRangesList', mget(mgets))
     names(genes) = annotations
+
+    # EnsDb sequences have Ensembl names, use the UCSC-style names
+    if(genome %in% GENARK$genome) {
+        genes = ucsc_genark_seqlevels(genes, genome)
+    }
 
     return(genes)
 }

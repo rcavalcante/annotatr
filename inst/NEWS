@@ -1,3 +1,13 @@
+CHANGES IN VERSION 1.40.0
+-------------------------
+
+NEW FEATURES
+
+  o Add support for sheep (ARS-UI_Ramb_v2.0) as 'oviariramb2'. Gene
+    annotations come from the Ensembl 113 EnsDb in AnnotationHub (AH119381), so
+    tx_id and gene_id are Ensembl IDs. CpG islands come from the UCSC GenArk
+    assembly hub. Sequences use UCSC-style names (chr1, ..., chrUn_*).
+
 CHANGES IN VERSION 1.16.0
 -------------------------
 

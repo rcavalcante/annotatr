@@ -30,6 +30,7 @@ Suggests:
     GenomeInfoDb,
     BiocStyle,
     devtools,
+    ensembldb,
     knitr,
     org.Dm.eg.db,
     org.Gg.eg.db,
