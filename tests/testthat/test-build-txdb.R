@@ -87,6 +87,7 @@ test_that('build_txdb_annotations() checks its arguments', {
     expect_error(build_txdb_annotations(txdb, genome = 'hg19'), 'group must be')
     expect_error(build_txdb_annotations(txdb, genome = 'hg19', group = 'my_tx'), 'group must be')
     expect_error(build_txdb_annotations(txdb, genome = 'hg19', group = 'genes'), 'built-in group')
+    expect_error(build_txdb_annotations(txdb, genome = 'hg19', group = 'canonical'), 'built-in group')
     expect_error(build_txdb_annotations(txdb, genome = 'hg19', group = 'Custom'), 'built-in group')
     expect_error(build_txdb_annotations(txdb, genome = 'hg19', group = 'mytx', annotations = c('exons', 'enhancers')), '"enhancers" is\\(are\\) not gene annotation types')
 

@@ -46,7 +46,17 @@ BASIC_GENE_TYPES = c('1to5kb', 'promoters', '5UTRs', 'exons', 'introns', '3UTRs'
 
 # The groups of builtin annotation codes, [genome]_[group]_[type]. Gene
 # annotations from build_txdb_annotations() use other group names.
-BUILTIN_GROUPS = c('genes', 'mane', 'cpg', 'enhancers', 'chromatin', 'lncrna', 'custom')
+BUILTIN_GROUPS = c('genes', 'mane', 'canonical', 'cpg', 'enhancers', 'chromatin', 'lncrna', 'custom')
+
+# The builtin groups of gene annotations
+GENE_GROUPS = c('genes', 'mane', 'canonical')
+
+# Ensembl canonical transcripts, one per gene, for the hg38_canonical_*
+# annotations and the like, from the Ensembl 113 EnsDbs in AnnotationHub
+CANONICAL = data.frame(
+    genome = c('hg38', 'mm39', 'rn7', 'danRer11', 'dm6', 'oviariramb2'),
+    ensdb = c('AH119325', 'AH119358', 'AH119437', 'AH119289', 'AH119285', 'AH119381'),
+    stringsAsFactors = FALSE)
 
 # The mcols of every annotation, in order
 ANNOTATION_MCOLS = c('id', 'tx_id', 'gene_id', 'symbol', 'entrez_id', 'ensembl_id', 'type')
@@ -98,7 +108,7 @@ get_cellline_from_code = function(code) {
 #' @export
 builtin_annotations = function() {
     # Create annotation code endings
-        shortcut_ends = c('basicgenes','basicmane','cpgs')
+        shortcut_ends = c('basicgenes','basicmane','basiccanonical','cpgs')
 
         # Gene codes
         gene_genomes = annotatr::builtin_genomes()
@@ -128,6 +138,9 @@ builtin_annotations = function() {
             expand.grid(gene_genomes, 'genes', gene_ends, stringsAsFactors = FALSE),
             1, paste, collapse='_')
         mane_codes = paste('hg38', 'mane', mane_ends, sep='_')
+        canonical_codes = apply(
+            expand.grid(CANONICAL$genome, 'canonical', gene_ends, stringsAsFactors = FALSE),
+            1, paste, collapse='_')
         cpg_codes = apply(
             expand.grid(cpg_genomes, 'cpg', cpg_ends, stringsAsFactors= FALSE),
             1, paste, collapse='_')
@@ -142,14 +155,15 @@ builtin_annotations = function() {
             expand.grid(gene_genomes, 'basicgenes', stringsAsFactors = FALSE),
             1, paste, collapse='_')
         mane_shortcut_codes = 'hg38_basicmane'
+        canonical_shortcut_codes = paste(CANONICAL$genome, 'basiccanonical', sep='_')
         cpg_shortcut_codes = apply(
             expand.grid(cpg_genomes, 'cpgs', stringsAsFactors = FALSE),
             1, paste, collapse='_')
         chromatin_shortcut_codes = paste('hg19', chromatin_shortcut_ends, sep='_')
 
     # Create the big vector of supported annotations
-    annots = c(gene_codes, mane_codes, cpg_codes, chromatin_codes, enhancer_codes, lncrna_codes,
-        gene_shortcut_codes, mane_shortcut_codes, cpg_shortcut_codes, chromatin_shortcut_codes)
+    annots = c(gene_codes, mane_codes, canonical_codes, cpg_codes, chromatin_codes, enhancer_codes, lncrna_codes,
+        gene_shortcut_codes, mane_shortcut_codes, canonical_shortcut_codes, cpg_shortcut_codes, chromatin_shortcut_codes)
 
     return(annots)
 }
@@ -233,18 +247,32 @@ get_genark_url = function(genome, file) {
     return(sprintf('https://hgdownload.soe.ucsc.edu/hubs/%s/%s', hub_dir, file))
 }
 
-#' Function to map any chromosome alias of a GenArk genome to its UCSC-style name
+#' Function to map any chromosome alias of a genome to its UCSC-style name
 #'
-#' @param genome A string giving the genome assembly, one of \code{GENARK$genome}.
+#' Uses the chromAlias file of the UCSC GenArk hub (for \code{GENARK} genomes) or of the UCSC database (\code{goldenPath/[genome]/bigZips}), e.g. to rename the Ensembl sequence names of an \code{EnsDb} (\code{1}, \code{MT}, \code{KI270728.1}) to UCSC names (\code{chr1}, \code{chrM}, \code{chr1_KI270728v1_random}).
+#'
+#' @param genome A string giving the genome assembly, e.g. \code{'mm39'} or \code{'oviariramb2'}.
 #'
 #' @param cache A logical stating whether to use the cache on disk for downloads.
 #'
-#' @return A named character vector whose names are aliases (RefSeq, GenBank, NCBI, UCSC) and whose values are UCSC-style names.
-get_genark_aliases = function(genome, cache = TRUE) {
-    alias_tbl = utils::read.delim(download_annotation_file(get_genark_url(genome, sprintf('%s.chromAlias.txt', GENARK[GENARK$genome == genome, 'accession'])), genome = genome, cache = cache),
-        header = FALSE, comment.char = '#', colClasses = 'character')
+#' @return A named character vector whose names are aliases (e.g. Ensembl, GenBank, RefSeq, and UCSC names) and whose values are UCSC-style names.
+get_chrom_aliases = function(genome, cache = TRUE) {
+    if(genome %in% GENARK$genome) {
+        url = get_genark_url(genome, sprintf('%s.chromAlias.txt', GENARK[GENARK$genome == genome, 'accession']))
+    } else {
+        url = sprintf('https://hgdownload.soe.ucsc.edu/goldenPath/%s/bigZips/%s.chromAlias.txt', genome, genome)
+    }
+    path = download_annotation_file(url, genome = genome, cache = cache)
 
-    ucsc = alias_tbl[[ncol(alias_tbl)]]
+    alias_tbl = utils::read.delim(path, header = FALSE, comment.char = '#', colClasses = 'character')
+
+    # The header names the columns, e.g. '# ucsc ensembl genbank refseq'. The
+    # UCSC name is the 'ucsc' column, or the first column if there is none
+    # (e.g. hg38, '# sequenceName alias names').
+    header = strsplit(sub('^#\\s*', '', readLines(path, n = 1)), '\t')[[1]]
+    ucsc_col = if('ucsc' %in% header) match('ucsc', header) else 1
+
+    ucsc = alias_tbl[[ucsc_col]]
     aliases = unlist(alias_tbl, use.names = FALSE)
     names(aliases) = aliases
     aliases[] = rep(ucsc, times = ncol(alias_tbl))
@@ -263,7 +291,7 @@ get_genark_aliases = function(genome, cache = TRUE) {
 get_genark_seqinfo = function(genome, cache = TRUE) {
     sizes = utils::read.delim(download_annotation_file(get_genark_url(genome, sprintf('%s.chrom.sizes.txt', GENARK[GENARK$genome == genome, 'accession'])), genome = genome, cache = cache),
         header = FALSE, col.names = c('chr', 'length'), colClasses = c('character', 'numeric'))
-    aliases = get_genark_aliases(genome, cache = cache)
+    aliases = get_chrom_aliases(genome, cache = cache)
 
     seqinfo = Seqinfo::Seqinfo(
         seqnames = unname(aliases[sizes$chr]),
@@ -274,21 +302,32 @@ get_genark_seqinfo = function(genome, cache = TRUE) {
     return(seqinfo)
 }
 
-#' Function to rename the sequences of a GenArk genome's GRanges to UCSC-style names
+#' Function to rename sequences to UCSC-style names
 #'
-#' @param gr A \code{GRanges} or \code{GRangesList} with sequence names that are any alias in the GenArk chromAlias file.
-#' @param genome A string giving the genome assembly, one of \code{GENARK$genome}.
-#' @param seqinfo A \code{Seqinfo} object from \code{get_genark_seqinfo()}.
+#' Renames sequences from any alias in the genome's chromAlias file (see \code{get_chrom_aliases()}), e.g. the Ensembl names of an \code{EnsDb}, to UCSC-style names, and sets the genome's full \code{seqinfo}. Sequences without a UCSC name are dropped.
+#'
+#' @param gr A \code{GRanges} or \code{GRangesList}.
+#' @param genome A string giving the genome assembly, e.g. \code{'mm39'} or \code{'oviariramb2'}.
 #'
 #' @param cache A logical stating whether to use the cache on disk for downloads.
 #'
-#' @return \code{gr} with UCSC-style sequence names and the full \code{seqinfo}.
-ucsc_genark_seqlevels = function(gr, genome, cache = TRUE, seqinfo = get_genark_seqinfo(genome, cache = cache)) {
-    aliases = get_genark_aliases(genome, cache = cache)
+#' @return \code{gr} with UCSC-style sequence names and the genome's \code{seqinfo}.
+ucsc_seqlevels = function(gr, genome, cache = TRUE) {
+    aliases = get_chrom_aliases(genome, cache = cache)
 
+    # Drop sequences without a UCSC name, keeping the rest of each element of
+    # a GRangesList
+    mapped = Seqinfo::seqlevels(gr)[Seqinfo::seqlevels(gr) %in% names(aliases)]
+    Seqinfo::seqlevels(gr, pruning.mode = 'tidy') = mapped
     Seqinfo::seqlevels(gr) = unname(aliases[Seqinfo::seqlevels(gr)])
-    Seqinfo::seqlevels(gr) = Seqinfo::seqlevels(seqinfo)
-    Seqinfo::seqinfo(gr) = seqinfo
+
+    if(genome %in% GENARK$genome) {
+        seqinfo = get_genark_seqinfo(genome, cache = cache)
+        Seqinfo::seqlevels(gr) = Seqinfo::seqlevels(seqinfo)
+        Seqinfo::seqinfo(gr) = seqinfo
+    } else {
+        gr = set_genome_seqinfo(gr, genome)
+    }
 
     return(gr)
 }
@@ -308,7 +347,7 @@ tidy_annotations = function(annotations) {
             } else {
                 return(paste('CpG', tokens[3]))
             }
-        } else if (tokens[2] %in% c('genes', 'mane') || (!(tokens[2] %in% BUILTIN_GROUPS) && length(tokens) == 3 && tokens[3] %in% c(GENE_TYPES, 'intergenic'))) {
+        } else if (tokens[2] %in% GENE_GROUPS || (!(tokens[2] %in% BUILTIN_GROUPS) && length(tokens) == 3 && tokens[3] %in% c(GENE_TYPES, 'intergenic'))) {
             if(tokens[3] == 'firstexons') {
                 type = 'first exons'
             } else if (tokens[3] == 'intronexonboundaries') {
@@ -389,18 +428,19 @@ check_annotations = function(annotations) {
 expand_annotations = function(annotations) {
     are_basicgenes = any(grepl('basicgenes', annotations))
     are_basicmane = any(grepl('basicmane', annotations))
+    are_basiccanonical = any(grepl('basiccanonical', annotations))
     are_cpgs = any(grepl('cpgs', annotations))
     are_hmms = any(grepl('-chromatin', annotations))
 
-    which_are_shortcuts = c(which(grepl('basicgenes', annotations)), which(grepl('basicmane', annotations)), which(grepl('cpgs', annotations)), which(grepl('-chromatin', annotations)))
+    which_are_shortcuts = c(which(grepl('basicgenes', annotations)), which(grepl('basicmane', annotations)), which(grepl('basiccanonical', annotations)), which(grepl('cpgs', annotations)), which(grepl('-chromatin', annotations)))
 
     # expand_shortcuts() will always be run after check_annotations() so we can be
     # sure that the genome prefixes are the same for all annotaitons.
     genome = unique( sapply(annotations, function(a){ unlist(strsplit(a, '_'))[1] }, USE.NAMES = FALSE) )
 
-    if(are_basicgenes || are_basicmane || are_cpgs || are_hmms) {
+    if(are_basicgenes || are_basicmane || are_basiccanonical || are_cpgs || are_hmms) {
 
-        # Check for shortcut annotation accessors 'cpgs', 'basicgenes', 'basicmane'
+        # Check for shortcut annotation accessors 'cpgs', 'basicgenes', 'basicmane', 'basiccanonical'
         # and create the right annotations based on the genome
         new_annotations = c()
         remove_shortcuts = c()
@@ -412,6 +452,9 @@ expand_annotations = function(annotations) {
         }
         if(are_basicmane) {
             new_annotations = c(new_annotations, paste(genome, 'mane', BASIC_GENE_TYPES, sep='_'))
+        }
+        if(are_basiccanonical) {
+            new_annotations = c(new_annotations, paste(genome, 'canonical', BASIC_GENE_TYPES, sep='_'))
         }
         if(are_hmms) {
             # Could conceivably use shortcuts for multiple cell lines

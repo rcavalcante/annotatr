@@ -79,6 +79,20 @@ annotations = build_annotations(genome = 'hg38',
     annotations = c('hg38_genes_promoters', 'hg38_mane_promoters'))
 ```
 
+## Ensembl Canonical Transcripts
+
+Ensembl chooses one canonical transcript for every gene, of every biotype (protein-coding, lncRNA, etc.). The `[genome]_canonical_*` annotations are the genic annotations built from only those transcripts, for the current assemblies hg38, mm39, rn7, danRer11, dm6, and oviariramb2, from the Ensembl 113 `EnsDb` in `AnnotationHub`. The `[genome]_basiccanonical` shortcut builds the same types as `basicgenes`, and intergenic regions are available too, since every gene has a canonical transcript.
+
+How Ensembl chooses the canonical transcript depends on the species. For human, it is the MANE Select transcript when there is one (see above), and otherwise is chosen from conservation, expression, APPRIS and UniProt annotations, CDS length, and clinical variants. For other species, Ensembl chooses by biotype (protein-coding first) and then the longest combined exon length, so the canonical transcript is roughly the longest protein-coding transcript.
+
+The `gene_id` and `ensembl_id` columns are Ensembl gene IDs, and `symbol` and `entrez_id` come from the `EnsDb`. Genes on alternate haplotypes and fix patches (e.g. `chr6_GL000251v2_alt`), which Ensembl annotates as separate genes, are left out, so there is one canonical transcript per gene on the reference assembly.
+
+```{r, eval = FALSE}
+# One transcript per gene, for all genes, in mouse
+canonical_annotations = build_annotations(genome = 'mm39',
+    annotations = c('mm39_basiccanonical', 'mm39_canonical_intergenic'))
+```
+
 ## Gene Annotations from Any TxDb
 
 The genic annotations above come from the `TxDb.*` packages that `annotatr` knows about. To build the same annotation types from other gene models, e.g. GENCODE or RefSeq, or for a genome without built-in annotations, use `build_txdb_annotations()` with any `TxDb` or `EnsDb` object. A GTF or GFF3 file can be made into a `TxDb` with `txdbmaker::makeTxDbFromGFF()`.

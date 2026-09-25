@@ -274,7 +274,7 @@ summarize_genes = function(annotated_regions, over = NULL, by = NULL, format = c
     tokens = strsplit(as.character(tbl$annot.type), '_')
     group = vapply(tokens, function(t) if(length(t) == 3) t[2] else NA_character_, character(1))
     gene_type = vapply(tokens, function(t) if(length(t) == 3) t[3] else NA_character_, character(1))
-    is_gene = !is.na(group) & (group %in% c('genes', 'mane') | !(group %in% BUILTIN_GROUPS)) & gene_type %in% GENE_TYPES
+    is_gene = !is.na(group) & (group %in% GENE_GROUPS | !(group %in% BUILTIN_GROUPS)) & gene_type %in% GENE_TYPES
     keep = !is.na(tbl$annot.gene_id) & is_gene
     tbl = tbl[keep, , drop = FALSE]
     group = group[keep]

@@ -134,6 +134,28 @@ for(genome in builtin_genomes()) {
     })
 }
 
+# Ensembl canonical transcripts come from a different EnsDb for each genome
+for(genome in CANONICAL$genome) {
+    test_that(sprintf('Canonical annotations build for %s, with one transcript per gene', genome), {
+        skip_if_not_full_tests()
+        skip_network()
+        skip_if_not_installed('ensembldb')
+
+        annots = c(sprintf('%s_canonical_promoters', genome), sprintf('%s_canonical_intergenic', genome))
+        a = suppressMessages(build_annotations(genome = genome, annotations = annots, cache = FALSE))
+        expect_built(a, annots)
+        expect_equal(unique(Seqinfo::genome(a)), genome)
+        expect_true(all(startsWith(Seqinfo::seqlevelsInUse(a), 'chr')))
+        # No second copies of genes on alternate haplotypes or fix patches
+        expect_false(any(grepl('_(alt|fix)$', Seqinfo::seqlevelsInUse(a))))
+
+        promoters = a[a$type == sprintf('%s_canonical_promoters', genome)]
+        expect_false(anyDuplicated(promoters$gene_id) > 0)
+        expect_equal(promoters$ensembl_id, promoters$gene_id)
+        expect_gt(mean(!is.na(promoters$symbol)), 0.5)
+    })
+}
+
 # The remaining gene annotation types use the same code for every genome
 test_that('All gene annotation types build', {
     skip_if_not_full_tests()
