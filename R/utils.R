@@ -18,8 +18,18 @@ TXDBS = c(
 
 # org.* family of packages
 ORGDBS = data.frame(
-    genome = c('dm3','dm6','danRer10','danRer11','galGal5','hg19','hg38','mm9','mm10','mm39','rn4','rn5','rn6','rn7'),
-    org = c('Dm','Dm','Dr','Dr','Gg','Hs','Hs','Mm','Mm','Mm','Rn','Rn','Rn','Rn'),
+    genome = c('dm3','dm6','danRer10','danRer11','galGal5','hg19','hg38','mm9','mm10','mm39','oviariramb2','rn4','rn5','rn6','rn7'),
+    org = c('Dm','Dm','Dr','Dr','Gg','Hs','Hs','Mm','Mm','Mm',NA,'Rn','Rn','Rn','Rn'),
+    stringsAsFactors = FALSE)
+
+# Genomes without TxDb.* / org.* packages. Gene models come from an AnnotationHub
+# EnsDb, and CpG islands, chromosome sizes, and chromosome name aliases come from
+# the UCSC GenArk assembly hub. Sequences are renamed to the UCSC-style names.
+GENARK = data.frame(
+    genome = c('oviariramb2'),
+    accession = c('GCF_016772045.1'),
+    assembly = c('ARS-UI_Ramb_v2.0'),
+    ensdb = c('AH119381'),
     stringsAsFactors = FALSE)
 
 HMMCELLLINES = c('Gm12878','H1hesc','Hepg2','Hmec','Hsmm','Huvec','K562','Nhek','Nhlf')
@@ -158,6 +168,76 @@ get_orgdb_name = function(genome = annotatr::builtin_genomes()) {
     org = ORGDBS[ORGDBS$genome == genome, 'org']
 
     return(org)
+}
+
+#' Function to get the URL of a file in the UCSC GenArk hub for a genome
+#'
+#' @param genome A string giving the genome assembly, one of \code{GENARK$genome}.
+#' @param file A string giving the path of the file within the hub directory, e.g. \code{'GCF_016772045.1.chromAlias.txt'}.
+#'
+#' @return A string giving the URL.
+get_genark_url = function(genome, file) {
+    accession = GENARK[GENARK$genome == genome, 'accession']
+
+    # GCF_016772045.1 lives at GCF/016/772/045/GCF_016772045.1
+    digits = substr(accession, 5, 13)
+    hub_dir = paste(substr(accession, 1, 3), substr(digits, 1, 3), substr(digits, 4, 6), substr(digits, 7, 9), accession, sep = '/')
+
+    return(sprintf('https://hgdownload.soe.ucsc.edu/hubs/%s/%s', hub_dir, file))
+}
+
+#' Function to map any chromosome alias of a GenArk genome to its UCSC-style name
+#'
+#' @param genome A string giving the genome assembly, one of \code{GENARK$genome}.
+#'
+#' @return A named character vector whose names are aliases (RefSeq, GenBank, NCBI, UCSC) and whose values are UCSC-style names.
+get_genark_aliases = function(genome) {
+    alias_tbl = utils::read.delim(get_genark_url(genome, sprintf('%s.chromAlias.txt', GENARK[GENARK$genome == genome, 'accession'])),
+        header = FALSE, comment.char = '#', colClasses = 'character')
+
+    ucsc = alias_tbl[[ncol(alias_tbl)]]
+    aliases = unlist(alias_tbl, use.names = FALSE)
+    names(aliases) = aliases
+    aliases[] = rep(ucsc, times = ncol(alias_tbl))
+    aliases = aliases[names(aliases) != '' & !duplicated(names(aliases))]
+
+    return(aliases)
+}
+
+#' Function to get the Seqinfo of a GenArk genome with UCSC-style names
+#'
+#' @param genome A string giving the genome assembly, one of \code{GENARK$genome}.
+#'
+#' @return A \code{Seqinfo} object.
+get_genark_seqinfo = function(genome) {
+    sizes = utils::read.delim(get_genark_url(genome, sprintf('%s.chrom.sizes.txt', GENARK[GENARK$genome == genome, 'accession'])),
+        header = FALSE, col.names = c('chr', 'length'), colClasses = c('character', 'numeric'))
+    aliases = get_genark_aliases(genome)
+
+    seqinfo = Seqinfo::Seqinfo(
+        seqnames = unname(aliases[sizes$chr]),
+        seqlengths = sizes$length,
+        isCircular = unname(aliases[sizes$chr]) == 'chrM',
+        genome = genome)
+
+    return(seqinfo)
+}
+
+#' Function to rename the sequences of a GenArk genome's GRanges to UCSC-style names
+#'
+#' @param gr A \code{GRanges} or \code{GRangesList} with sequence names that are any alias in the GenArk chromAlias file.
+#' @param genome A string giving the genome assembly, one of \code{GENARK$genome}.
+#' @param seqinfo A \code{Seqinfo} object from \code{get_genark_seqinfo()}.
+#'
+#' @return \code{gr} with UCSC-style sequence names and the full \code{seqinfo}.
+ucsc_genark_seqlevels = function(gr, genome, seqinfo = get_genark_seqinfo(genome)) {
+    aliases = get_genark_aliases(genome)
+
+    Seqinfo::seqlevels(gr) = unname(aliases[Seqinfo::seqlevels(gr)])
+    Seqinfo::seqlevels(gr) = Seqinfo::seqlevels(seqinfo)
+    Seqinfo::seqinfo(gr) = seqinfo
+
+    return(gr)
 }
 
 #' Function to tidy up annotation accessors for visualization

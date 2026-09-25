@@ -10,6 +10,16 @@ test_that('Test get_*_name() functions', {
         'should be one of')
 })
 
+test_that('Test GenArk genomes are builtin', {
+    expect_true(all(GENARK$genome %in% builtin_genomes()))
+    expect_true('oviariramb2_basicgenes' %in% builtin_annotations())
+    expect_true('oviariramb2_cpgs' %in% builtin_annotations())
+
+    expect_equal(
+        get_genark_url('oviariramb2', 'GCF_016772045.1.chromAlias.txt'),
+        'https://hgdownload.soe.ucsc.edu/hubs/GCF/016/772/045/GCF_016772045.1/GCF_016772045.1.chromAlias.txt')
+})
+
 test_that('Test tidy_annotations()', {
     hg19_annots = c('hg19_cpg_islands', 'hg19_cpg_inter', 'hg19_genes_firstexons', 'hg19_genes_intronexonboundaries', 'hg19_genes_exonintronboundaries', 'hg19_lncrna_gencode', 'hg19_chromatin_Gm12878-ActivePromoter')
     mm9_annots = c('mm9_cpg_islands','mm9_genes_exonsCDSs','mm9_cpg_inter')
