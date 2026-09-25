@@ -13,5 +13,5 @@ build_lncrna_annots(genome = c("hg19", "hg38", "mm10"))
 A \code{GRanges} object with \code{id} giving the \code{transcript_type} from the GENCODE file, \code{tx_id} being the Ensembl transcript ID, \code{gene_id} being the Entrez ID coming from a mapping of gene symbol to Entrez ID, \code{symbol} being the gene_name from the GENCODE file, and the \code{type} being \code{[genome]_lncrna_gencode}.
 }
 \description{
-Using the \code{AnnotationHub} package, retrieve transcript level lncRNA annotations for either human (GRCh38) or mouse (GRCm38). If the genome is 'hg19', use the permalink from GENCODE and \code{rtracklayer::import()} to download and process.
+Download transcript level lncRNA annotations from GENCODE for human (hg19: release 19, hg38: release 31) or mouse (mm10: release M6), and process them with \code{rtracklayer::import()}.
 }

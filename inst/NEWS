@@ -1,3 +1,13 @@
+CHANGES IN VERSION 1.38.1
+-------------------------
+
+BUGFIXES
+
+  o Fix hg38_lncrna_gencode and mm10_lncrna_gencode, which failed after
+    AnnotationHub removed its GENCODE resources (AH75123, AH49550). All lncRNA
+    annotations are now downloaded from GENCODE over HTTPS, using the same
+    releases as before (hg19: 19, hg38: 31, mm10: M6).
+
 CHANGES IN VERSION 1.16.0
 -------------------------
 
