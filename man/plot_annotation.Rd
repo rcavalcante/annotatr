@@ -17,7 +17,7 @@ plot_annotation(
 \arguments{
 \item{annotated_regions}{The \code{GRanges} result of \code{annotate_regions()}.}
 
-\item{annotated_random}{The \code{GRanges} result of \code{annotate_regions()} on the randomized regions created from \code{randomize_regions()}.}
+\item{annotated_random}{The \code{GRanges} result of \code{annotate_regions()} on a background of regions, i.e. the regions your data could have come from (e.g. all tested CpGs when \code{annotated_regions} are differentially methylated CpGs). Despite the name, this should not be randomized regions; \code{randomize_regions()} is deprecated.}
 
 \item{annotation_order}{A character vector which doubles as the subset of annotations desired for the plot as well as the ordering. If \code{NULL}, all annotations are displayed.}
 
@@ -37,33 +37,33 @@ Given a \code{GRanges} of annotated regions, plot the number of regions with the
 }
 \examples{
    ########################################################################
-   # An example of ChIP-seq peaks with signalValue used for score
+   # An example of differentially methylated (DM) regions compared to
+   # all regions tested for differential methylation
 
    # Get premade CpG annotations
    data('annotations', package = 'annotatr')
 
-   chip_bed = system.file('extdata', 'Gm12878_Stat3_chr2.bed.gz', package = 'annotatr')
-   chip_regions = read_regions(con = chip_bed, genome = 'hg19')
+   dm_file = system.file('extdata', 'IDH2mut_v_NBM_multi_data_chr9.txt.gz', package = 'annotatr')
+   extraCols = c(diff_meth = 'numeric', mu1 = 'numeric', mu0 = 'numeric')
+   tested_regions = read_regions(con = dm_file, genome = 'hg19', extraCols = extraCols,
+       rename_score = 'pval', rename_name = 'DM_status', format = 'bed')
 
-   chip_rnd = randomize_regions(regions = chip_regions)
-
-   chip_annots = annotate_regions(
-       regions = chip_regions,
+   # Annotate all tested regions, which are the background
+   tested_annots = annotate_regions(
+       regions = tested_regions,
        annotations = annotations,
        ignore.strand = TRUE)
 
-   chip_rnd_annots = annotate_regions(
-       regions = chip_rnd,
-       annotations = annotations,
-       ignore.strand = TRUE)
+   # The data are the DM regions
+   dm_annots = tested_annots[tested_annots$DM_status != 'none']
 
    annots_order = c(
        'hg19_cpg_islands',
        'hg19_cpg_shores')
 
-   p_annots = plot_annotation(annotated_regions = chip_annots,
+   p_annots = plot_annotation(annotated_regions = dm_annots,
        annotation_order = annots_order)
-   p_annots_rnd = plot_annotation(annotated_regions = chip_annots,
-       annotated_random = chip_rnd_annots, annotation_order = annots_order)
+   p_annots_bg = plot_annotation(annotated_regions = dm_annots,
+       annotated_random = tested_annots, annotation_order = annots_order)
 
 }

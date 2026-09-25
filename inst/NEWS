@@ -8,6 +8,20 @@ NEW FEATURES
     tx_id and gene_id are Ensembl IDs. CpG islands come from the UCSC GenArk
     assembly hub. Sequences use UCSC-style names (chr1, ..., chrUn_*).
 
+DEPRECATED AND DEFUNCT
+
+  o Deprecate randomize_regions(). Regions placed uniformly at random across the
+    genome are a poor null model for most data. Instead, annotate a background
+    of the regions the data could have come from (e.g. all tested CpGs) and
+    pass it as annotated_random, or use regioneR::permTest() or
+    regioneR::resampleRegions(). See ?`annotatr-deprecated` and the vignette.
+
+USER-FACING CHANGES
+
+  o summarize_annotations(), plot_annotation(), and plot_categorical() label the
+    regions in annotated_random as "Background" instead of "Random Regions".
+    The argument name annotated_random is unchanged.
+
 BUGFIXES
 
   o Fix hg38_lncrna_gencode and mm10_lncrna_gencode, which failed after

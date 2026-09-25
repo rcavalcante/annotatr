@@ -14,7 +14,7 @@ randomize_regions(
 \arguments{
 \item{regions}{A \code{GRanges} object from \code{read_regions}.}
 
-\item{allow.overlaps}{A logical stating whether random regions can overlap input regions (TRUE) or not (FALSE). Default TRUE.}
+\item{allow.overlaps}{A logical stating whether random regions can overlap each other (TRUE) or not (FALSE). Default TRUE.}
 
 \item{per.chromosome}{A logical stating whether the random regions should remain on the same chromosome (TRUE) or not (FALSE). Default TRUE.}
 
@@ -24,9 +24,11 @@ randomize_regions(
 A \code{GRanges} object of randomized regions based on \code{regions} from \code{read_regions()}. NOTE: Data associated with the original regions is not attached to the randomized regions.
 }
 \description{
-\code{randomize_regions} is a wrapper function for \code{regioneR::randomizeRegions()} that simplifies the creation of randomized regions for an input set of regions read with \code{read_regions()}. It relies on the \code{seqlengths} of \code{regions} in order to build the appropriate \code{genome} object for \code{regioneR::randomizeRegions()}.
+\code{randomize_regions} is deprecated and will be removed in a future release. Regions placed uniformly at random across the genome are a poor null model for most data, because real regions come from a much narrower set of possible locations (e.g. mappable sequence, or the CpGs an assay measures). Instead, annotate a background of the regions your data could have come from (e.g. all tested CpGs) with \code{annotate_regions()}, and pass it as \code{annotated_random} to \code{summarize_annotations()}, \code{plot_annotation()}, or \code{plot_categorical()}. For a statistical test, see \code{regioneR::permTest()} or \code{regioneR::resampleRegions()}.
 }
 \details{
+\code{randomize_regions} is a wrapper function for \code{regioneR::randomizeRegions()} that simplifies the creation of randomized regions for an input set of regions read with \code{read_regions()}. It relies on the \code{seqlengths} of \code{regions} in order to build the appropriate \code{genome} object for \code{regioneR::randomizeRegions()}.
+
 NOTE: The data associated with the input \code{regions} are not passed on to the random regions.
 }
 \examples{
@@ -34,6 +36,9 @@ NOTE: The data associated with the input \code{regions} are not passed on to the
    file = system.file('extdata', 'Gm12878_Stat3_chr2.bed.gz', package = 'annotatr')
    r = read_regions(con = file, genome = 'hg19')
 
-   random_r = randomize_regions(regions = r)
+   random_r = suppressWarnings(randomize_regions(regions = r))
 
+}
+\seealso{
+\code{\link{annotatr-deprecated}}
 }

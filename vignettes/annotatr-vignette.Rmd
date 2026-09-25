@@ -184,31 +184,22 @@ notch1_subset = subset(df_dm_annotated, annot.symbol == 'NOTCH1')
 print(head(notch1_subset))
 ```
 
-## Randomizing Regions
+## Comparing to a Background
 
-Given a set of annotated regions, it is important to know how the annotations compare to those of a randomized set of regions. The `randomize_regions()` function is a wrapper of `regioneR::randomizeRegions()` from the [`regioneR`](http://bioconductor.org/packages/release/bioc/html/regioneR.html) package that creates a set of random regions given a `GRanges` object. After creating the random set, they must be annotated with `annotate_regions()` for later use. Only `builtin_genomes()` can be used in our wrapper function. Downstream functions that support using random region annotations are `summarize_annotations()`, `plot_annotation()`, and `plot_categorical()`.
+Knowing how many regions fall in each annotation is more useful when compared to what would be expected. The right comparison is a *background*: the set of regions your data could have come from. For differentially methylated (DM) regions, that is all regions tested for differential methylation. For differentially bound ChIP-seq peaks, it might be a consensus set of all peaks. The background carries the same biases as the data (e.g. mappability, or the CpGs an assay measures), so differences between the two reflect the biology of interest rather than those biases.
 
-It is important to note that if the regions to be randomized have a particular property, for example they are CpGs, the `randomize_regions()` wrapper will not preserve that property! Instead, we recommend using `regioneR::resampleRegions()` with `universe` being the superset of the data regions you want to sample from.
+Here the regions read in above are all regions tested for DM, and the `DM_status` column says which are DM. So the data are the DM regions, and the background is all tested regions, which are already annotated. Downstream functions that support a background are `summarize_annotations()`, `plot_annotation()`, and `plot_categorical()`, via their `annotated_random` argument.
 
 ```{r, warning = FALSE, message = FALSE}
-# Randomize the input regions
-dm_random_regions = randomize_regions(
-    regions = dm_regions,
-    allow.overlaps = TRUE,
-    per.chromosome = TRUE)
-
-# Annotate the random regions using the same annotations as above
-# These will be used in later functions
-dm_random_annotated = annotate_regions(
-    regions = dm_random_regions,
-    annotations = annotations,
-    ignore.strand = TRUE,
-    quiet = TRUE)
+# The data are the DM regions, and the background is all tested regions
+dm_sig_annotated = dm_annotated[dm_annotated$DM_status != 'none']
 ```
+
+NOTE: `randomize_regions()` is deprecated. Placing regions uniformly at random across the genome ignores those biases, so nearly any data look "enriched" in genic and CpG annotations compared to random regions. When there is no natural background, the permutation test `regioneR::permTest()` in the [`regioneR`](https://bioconductor.org/packages/regioneR) package, with an appropriate mask, gives a null distribution and a p-value. If the data are drawn from a fixed set of candidate regions, `regioneR::resampleRegions()` samples from that set.
 
 ## Summarizing Over Annotations
 
-When there is no categorical or numerical information associated with the regions, `summarize_annotations()` is the only possible summarization function to use. It gives the counts of regions in each annotation type (see example below). If there is categorical and/or numerical information, then `summarize_numerical()` and/or `summarize_categorical()` may be used. Using random region annotations is only available for `summarize_annotations()`.
+When there is no categorical or numerical information associated with the regions, `summarize_annotations()` is the only possible summarization function to use. It gives the counts of regions in each annotation type (see example below). If there is categorical and/or numerical information, then `summarize_numerical()` and/or `summarize_categorical()` may be used. Using a background is only available for `summarize_annotations()`.
 
 ```{r, warning = FALSE, message = FALSE}
 # Find the number of regions per annotation type
@@ -217,13 +208,13 @@ dm_annsum = summarize_annotations(
     quiet = TRUE)
 print(dm_annsum)
 
-# Find the number of regions per annotation type
-# and the number of random regions per annotation type
-dm_annsum_rnd = summarize_annotations(
-    annotated_regions = dm_annotated,
-    annotated_random = dm_random_annotated,
+# Find the number of DM regions per annotation type
+# and the number of background regions per annotation type
+dm_annsum_bg = summarize_annotations(
+    annotated_regions = dm_sig_annotated,
+    annotated_random = dm_annotated,
     quiet = TRUE)
-print(dm_annsum_rnd)
+print(dm_annsum_bg)
 
 # Take the mean of the diff_meth column across all regions
 # occurring in an annotation.
@@ -273,11 +264,11 @@ dm_vs_kg_annotations = plot_annotation(
 print(dm_vs_kg_annotations)
 ```
 
-The `plot_annotation()` can also use the annotated random regions in the `annotated_random` argument to plot the number of random regions per annotation type next to the number of input data regions.
+The `plot_annotation()` can also use an annotated background in the `annotated_random` argument to plot the number of background regions per annotation type next to the number of data regions.
 
-```{r, fig.align='center', fig.cap='Number of DM regions per annotation with randomized regions.', fig.height=6, fig.width=6, fig.show = 'hold', warning = FALSE, message = FALSE}
-# View the number of regions per annotation and include the annotation
-# of randomized regions
+```{r, fig.align='center', fig.cap='Number of DM regions per annotation with the background of all tested regions.', fig.height=6, fig.width=6, fig.show = 'hold', warning = FALSE, message = FALSE}
+# View the number of DM regions per annotation and include the
+# annotation of the background of all tested regions
 annots_order = c(
     'hg19_custom_ezh2',
     'hg19_H3K4me3_Gm12878',
@@ -289,14 +280,14 @@ annots_order = c(
     'hg19_genes_introns',
     'hg19_genes_3UTRs',
     'hg19_genes_intergenic')
-dm_vs_kg_annotations_wrandom = plot_annotation(
-    annotated_regions = dm_annotated,
-    annotated_random = dm_random_annotated,
+dm_vs_kg_annotations_wbg = plot_annotation(
+    annotated_regions = dm_sig_annotated,
+    annotated_random = dm_annotated,
     annotation_order = annots_order,
-    plot_title = 'Dist. of Sites Tested for DM (with rndm.)',
+    plot_title = 'Dist. of DM Sites (with background)',
     x_label = 'Annotations',
     y_label = 'Count')
-print(dm_vs_kg_annotations_wrandom)
+print(dm_vs_kg_annotations_wbg)
 ```
 
 ### Plotting Regions Occurring in Pairs of Annotations
@@ -424,24 +415,24 @@ dm_vs_cpg_cat2 = plot_categorical(
 print(dm_vs_cpg_cat2)
 ```
 
-As with `plot_annotation()` one may add annotations for random regions to the `annotated_random` parameter of `plot_categorical()`. The result is a Random Regions bar representing the distribution of random regions for the categorical variable used for `fill`. NOTE: Random regions can only be added when `fill = 'annot.type'`.
+As with `plot_annotation()` one may add an annotated background to the `annotated_random` parameter of `plot_categorical()`. The result is a Background bar representing the distribution of the background regions for the categorical variable used for `fill`. NOTE: A background can only be added when `fill = 'annot.type'`. In the plots above the data include all tested regions, so the All bar already plays this role. Below, the data are only the DM regions, so the All bar is all DM regions and the Background bar is all tested regions.
 
-```{r, fig.align='center', fig.cap='Differential methylation classification with proportion of CpG annotations and random regions.', fig.height=6, fig.width=6, fig.show='hold', warning = FALSE, message = FALSE}
-# Add in the randomized annotations for "Random Regions" bar
+```{r, fig.align='center', fig.cap='Differential methylation classification with proportion of CpG annotations and the background.', fig.height=6, fig.width=6, fig.show='hold', warning = FALSE, message = FALSE}
+# Add in the background of all tested regions for the "Background" bar
 
-# Make a barplot of the data class where each bar
+# Make a barplot of the DM classes where each bar
 # is composed of the *proportion* of CpG annotations, and
-# includes "All" regions tested for DM and "Random Regions"
-# regions consisting of randomized regions.
-dm_vs_cpg_cat_random = plot_categorical(
-    annotated_regions = dm_annotated, annotated_random = dm_random_annotated,
+# includes "All" DM regions and the "Background" of all
+# regions tested for DM.
+dm_vs_cpg_cat_bg = plot_categorical(
+    annotated_regions = dm_sig_annotated, annotated_random = dm_annotated,
     x='DM_status', fill='annot.type',
-    x_order = x_order, fill_order = fill_order, position='fill',
+    x_order = c('hyper', 'hypo'), fill_order = fill_order, position='fill',
     plot_title = 'DM Status by CpG Annotation Proportions',
     legend_title = 'Annotations',
     x_label = 'DM status',
     y_label = 'Proportion')
-print(dm_vs_cpg_cat_random)
+print(dm_vs_cpg_cat_bg)
 ```
 
 ```{r, fig.align='center', fig.cap='Basic gene annotations with proportions of DM classification.', fig.height=6, fig.width=6, fig.show='hold', warning = FALSE, message = FALSE}

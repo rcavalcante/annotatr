@@ -12,10 +12,10 @@ context('Test randomize module')
 
     test_that('Test errors', {
         expect_error(
-            randomize_regions(regions = 'hello', allow.overlaps = TRUE, per.chromosome = TRUE),
+            suppressWarnings(randomize_regions(regions = 'hello', allow.overlaps = TRUE, per.chromosome = TRUE)),
             'regions must have class GRanges')
         expect_error(
-            randomize_regions(regions = regions_nogenome),
+            suppressWarnings(randomize_regions(regions = regions_nogenome)),
             'GRanges object must have a valid genome'
             )
     })
@@ -23,11 +23,17 @@ context('Test randomize module')
 ################################################################################
 # Test randomize_regions()
 
+    test_that('Test randomize_regions() is deprecated', {
+        expect_warning(
+            randomize_regions(regions = regions_genome, quiet = TRUE),
+            'randomize_regions\\(\\) is deprecated')
+    })
+
     test_that('Test randomized regions', {
-        random_regions = randomize_regions(
+        random_regions = suppressWarnings(randomize_regions(
             regions = regions_genome,
             allow.overlaps = TRUE,
-            per.chromosome = TRUE)
+            per.chromosome = TRUE))
 
         expect_equal(class(random_regions)[1], expected = 'GRanges')
         expect_equal(length(random_regions), expected = length(regions_genome))

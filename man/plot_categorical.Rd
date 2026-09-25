@@ -22,7 +22,7 @@ plot_categorical(
 \arguments{
 \item{annotated_regions}{The \code{GRanges} result of \code{annotate_regions()}.}
 
-\item{annotated_random}{The \code{GRanges} result of \code{annotate_regions()} on the randomized regions created from \code{randomize_regions()}. Random regions can only be used with \code{fill == 'annot.type'}.}
+\item{annotated_random}{The \code{GRanges} result of \code{annotate_regions()} on a background of regions, i.e. the regions your data could have come from (e.g. all tested CpGs when \code{annotated_regions} are differentially methylated CpGs). Despite the name, this should not be randomized regions; \code{randomize_regions()} is deprecated. A background can only be used with \code{fill == 'annot.type'}.}
 
 \item{x}{One of 'annot.type' or a categorical data column, indicating whether annotation classes or data classes will appear on the x-axis.}
 
@@ -48,7 +48,7 @@ plot_categorical(
 A \code{ggplot} object which can be viewed by calling it, or saved with \code{ggplot2::ggsave}.
 }
 \description{
-Given a \code{GRanges} of annotated regions from \code{annotate_regions()}, visualize the the distribution of categorical data \code{fill} in categorical data \code{x}. A bar representing the distribution of all \code{fill} in \code{x} will be added according to the contents of \code{fill}. This is the distribution over all values of \code{x}. Additionally, when \code{annotated_random} is not missing, a "Random Regions" bar shows the distribution of random regions over \code{fill}.
+Given a \code{GRanges} of annotated regions from \code{annotate_regions()}, visualize the the distribution of categorical data \code{fill} in categorical data \code{x}. A bar representing the distribution of all \code{fill} in \code{x} will be added according to the contents of \code{fill}. This is the distribution over all values of \code{x}. Additionally, when \code{annotated_random} is not missing, a "Background" bar shows the distribution of the background regions over \code{fill}.
 }
 \details{
 For example, if a differentially methylated region has the categorical label hyper, and is annotated to a promoter, a 5UTR, two exons, and an intron. Each annotation will appear in the All bar once. Likewise for the hyper bar if the differential methylation status is chosen as \code{x} with \code{annot.type} chosen as \code{fill}.
@@ -88,16 +88,12 @@ For example, if a differentially methylated region has the categorical label hyp
        x_label = 'DM status',
        y_label = 'Proportion')
 
-   # Create randomized regions
-   dm_rnd_regions = randomize_regions(regions = dm_regions)
-   dm_rnd_annots = annotate_regions(
-       regions = dm_rnd_regions,
-       annotations = annotations,
-       ignore.strand = TRUE)
+   # Compare the DM regions to all tested regions, which are the background
+   dm_sig_annots = dm_annots[dm_annots$DM_status != 'none']
 
-   dm_vn_rnd = plot_categorical(
-       annotated_regions = dm_annots,
-       annotated_random = dm_rnd_annots,
+   dm_vn_bg = plot_categorical(
+       annotated_regions = dm_sig_annots,
+       annotated_random = dm_annots,
        x = 'DM_status',
        fill = 'annot.type',
        x_order = dm_order,
