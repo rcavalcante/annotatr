@@ -28,6 +28,9 @@ DEPRECATED AND DEFUNCT
 
 INTERNAL CHANGES
 
+  o Replace Travis CI with GitHub Actions, which runs R CMD check and
+    BiocCheck in the Bioconductor devel container on pushes and pull requests
+    to devel, and the full build tests weekly.
   o plot_coannotations() and plot_numerical_coannotations() are 10 to 100
     times faster, without the superseded dplyr::do().
   o Replace the deprecated dplyr::funs() and tidyselect uses of external

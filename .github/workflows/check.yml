@@ -1,0 +1,88 @@
+# Check annotatr with R CMD check and BiocCheck in the Bioconductor devel
+# container, as docker/check.sh does locally.
+#
+# - Pushes to devel and pull requests into devel run the light tests.
+# - Every Monday, and when run by hand from the Actions tab, the full build
+#   tests run too (ANNOTATR_FULL_TESTS=true), to catch changes in the
+#   annotation sources, e.g. removed AnnotationHub resources.
+name: check
+
+on:
+  push:
+    branches: [devel]
+  pull_request:
+    branches: [devel]
+  schedule:
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+
+# A newer push to the same branch or pull request cancels a check in progress
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    container: ghcr.io/bioconductor/bioconductor:devel
+    timeout-minutes: 120
+
+    defaults:
+      run:
+        shell: bash
+
+    env:
+      ANNOTATR_FULL_TESTS: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+      R_LIBS_USER: /__w/_temp/R-library
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Get the R and Bioconductor versions
+        id: versions
+        run: |
+          mkdir -p "$R_LIBS_USER"
+          echo "r=$(Rscript -e 'cat(as.character(getRversion()))')" >> "$GITHUB_OUTPUT"
+          echo "bioc=$(Rscript -e 'cat(as.character(BiocManager::version()))')" >> "$GITHUB_OUTPUT"
+
+      # Reuse the installed dependencies until DESCRIPTION, R, or Bioconductor
+      # changes. Older caches are the starting point when DESCRIPTION changes.
+      - name: Restore the R package cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.R_LIBS_USER }}
+          key: r-${{ steps.versions.outputs.r }}-bioc-${{ steps.versions.outputs.bioc }}-${{ hashFiles('DESCRIPTION') }}
+          restore-keys: r-${{ steps.versions.outputs.r }}-bioc-${{ steps.versions.outputs.bioc }}-
+
+      - name: Install dependencies
+        run: Rscript docker/install_deps.R DESCRIPTION
+
+      - name: R CMD build
+        run: R CMD build .
+
+      # Fail on warnings as well as errors, to keep the check clean
+      - name: R CMD check
+        run: |
+          status=0
+          R CMD check --no-manual annotatr_*.tar.gz || status=$?
+          if [ "$status" -ne 0 ]; then
+            echo "::error::R CMD check failed"
+            exit "$status"
+          fi
+          if grep -qE '^Status:.*WARNING' annotatr.Rcheck/00check.log; then
+            echo "::error::R CMD check found warnings"
+            exit 1
+          fi
+
+      - name: BiocCheck
+        run: Rscript -e 'BiocCheck::BiocCheck(Sys.glob("annotatr_*.tar.gz"), `quit-with-status` = TRUE)'
+
+      - name: Upload the check results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: check-results
+          path: |
+            annotatr.Rcheck
+            annotatr.BiocCheck

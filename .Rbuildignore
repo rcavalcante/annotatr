@@ -2,7 +2,7 @@
 ^data-raw$
 ^docker$
 ^meta$
-^\.travis\.yml$
+^\.github$
 README\.md
 ^\.Rprofile$
 ^doc$
