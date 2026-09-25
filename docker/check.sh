@@ -2,6 +2,10 @@
 # Run R CMD build, R CMD check, and BiocCheck on the committed HEAD in a
 # Bioconductor devel container. Uncommitted changes are not checked.
 #
+# The full build tests run (ANNOTATR_FULL_TESTS=true), so this takes a while.
+# Downloads from AnnotationHub and other caches persist between runs in the
+# annotatr-cache Docker volume.
+#
 # Usage: docker/check.sh [--rebuild]
 #   --rebuild  Rebuild the image, pulling the latest Bioconductor devel image.
 #
@@ -21,7 +25,8 @@ git -C "$repo" archive HEAD | tar -x -C "$work/src"
 
 echo "Checking $(git -C "$repo" rev-parse --short HEAD) in $work"
 
-docker run --rm -v "$work:/work" -w /work "$image" bash -c '
+docker run --rm -v "$work:/work" -v annotatr-cache:/root/.cache -w /work \
+    -e ANNOTATR_FULL_TESTS=true "$image" bash -c '
     set -e
     Rscript /opt/annotatr/install_deps.R src/DESCRIPTION
     R CMD build src
