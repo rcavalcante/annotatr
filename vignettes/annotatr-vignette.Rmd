@@ -103,7 +103,7 @@ canonical_annotations = build_annotations(genome = 'mm39',
 
 ## FANTOM5 Permissive Enhancers
 
-FANTOM5 permissive enhancers were determined from bi-directional CAGE transcription as in [Andersson et al. (2014)](http://www.nature.com/nature/journal/v507/n7493/full/nature12787.html), and are downloaded and processed for hg19 and mm9 from the [FANTOM5](http://fantom.gsc.riken.jp/5/datafiles/phase2.0/extra/Enhancers/) resource. Using the `rtracklayer::liftOver()` function, enhancers from hg19 are lifted to hg38, and mm9 to mm10.
+FANTOM5 permissive enhancers were determined from bi-directional CAGE transcription as in [Andersson et al. (2014)](http://www.nature.com/nature/journal/v507/n7493/full/nature12787.html), and are downloaded and processed for hg19 and mm9 from the [FANTOM5](http://fantom.gsc.riken.jp/5/datafiles/phase2.0/extra/Enhancers/) resource. Using the `rtracklayer::liftOver()` function, enhancers from hg19 are lifted to hg38, and mm9 to mm10. For hg38 and mm10, the enhancer-like ENCODE cCREs (below) are a more recent alternative, identified directly in those genome builds.
 
 ## ENCODE Candidate Cis-Regulatory Elements (cCREs)
 
