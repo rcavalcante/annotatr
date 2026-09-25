@@ -6,13 +6,16 @@
 \usage{
 build_cpg_annots(
   genome = annotatr::builtin_genomes(),
-  annotations = annotatr::builtin_annotations()
+  annotations = annotatr::builtin_annotations(),
+  cache = TRUE
 )
 }
 \arguments{
 \item{genome}{The genome assembly.}
 
 \item{annotations}{A character vector with entries of the form \code{[genome]_cpg_{islands,shores,shelves,inter}}.}
+
+\item{cache}{A logical stating whether to use the cache on disk for downloads.}
 }
 \value{
 A list of \code{GRanges} objects.

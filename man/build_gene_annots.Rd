@@ -6,13 +6,16 @@
 \usage{
 build_gene_annots(
   genome = annotatr::builtin_genomes(),
-  annotations = annotatr::builtin_annotations()
+  annotations = annotatr::builtin_annotations(),
+  cache = TRUE
 )
 }
 \arguments{
 \item{genome}{The genome assembly.}
 
 \item{annotations}{A character vector with entries of the form \code{[genome]_genes_{1to5kb,promoters,5UTRs,cds,exons,firstexons,introns,intronexonboundaries,exonintronboundaries,3UTRs,intergenic}}.}
+
+\item{cache}{A logical stating whether to use the cache on disk for downloads.}
 }
 \value{
 A list of \code{GRanges} objects with unique \code{id} of the form \code{[type]:i}, \code{tx_id} being the UCSC knownGene transcript name, \code{gene_id} being the Entrez Gene ID, \code{symbol} being the gene symbol from the Entrez ID to symbol mapping in \code{org.db} for that species, and \code{type} being the annotation type.

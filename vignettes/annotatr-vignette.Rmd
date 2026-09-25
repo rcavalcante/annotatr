@@ -120,6 +120,26 @@ To see what is in the `annotatr_cache` environment, do the following:
 print(annotatr_cache$list_env())
 ```
 
+## Caching Built Annotations
+
+Building annotations can take a while, especially gene annotations, which are built from the `TxDb.*` packages or an `EnsDb`. So `build_annotations()` saves each annotation it builds, and each file it downloads, in a cache on disk, and later calls load them from the cache in seconds. The cache persists between R sessions. A cached annotation is rebuilt automatically after annotatr is updated, and for gene annotations, after the `TxDb.*` or `org.*.eg.db` package is updated.
+
+```{r, eval = FALSE}
+# See what is cached, with sizes and the versions each annotation was built with
+list_cached_annotations()
+
+# Build without reading or writing the cache
+annotations = build_annotations(genome = 'hg19', annotations = 'hg19_cpgs', cache = FALSE)
+
+# Remove the cached hg19 annotations and downloads, so they are built again
+clear_cached_annotations(genome = 'hg19')
+
+# Keep the cache somewhere else, e.g. on a cluster with a small home directory
+options(annotatr.cache = '/path/with/space')
+```
+
+If annotations seem out of date or a cached file causes errors, see the troubleshooting section of `?"cached-annotations"`. This cache is separate from `annotatr_cache`, which holds custom annotations for the current R session only.
+
 # Usage
 
 The following example is based on the results of testing for differential methylation of genomic regions between two conditions using [methylSig](https://github.com/sartorlab/methylSig). The file (`inst/extdata/IDH2mut_v_NBM_multi_data_chr9.txt.gz`) contains chromosome locations, as well as categorical and numerical data columns, and provides a good example of the flexibility of `annotatr`.

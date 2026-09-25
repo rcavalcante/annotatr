@@ -40,6 +40,7 @@ annotatr_cache <- local({
 #'
 #' @param genome The genome assembly.
 #' @param annotations A character vector of annotations to build. Valid annotation codes are listed with \code{builtin_annotations()}. The "basicgenes" shortcut builds the following regions: 1-5Kb upstream of TSSs, promoters, 5UTRs, exons, introns, and 3UTRs. The "cpgs" shortcut builds the following regions: CpG islands, shores, shelves, and interCGI regions. NOTE: Shortcuts need to be appended by the genome, e.g. \code{hg19_basicgenes}.
+#' @param cache A logical stating whether to load annotations from, and save them to, the cache on disk (TRUE), or to build them from scratch without the cache (FALSE). See \code{\link{cached-annotations}}.
 #' Custom annotations whose names are of the form \code{[genome]_custom_[name]} should also be included. Custom annotations should be read in and converted to \code{GRanges} with \code{read_annotations()}. They can be for a \code{supported_genome()}, or for an unsupported genome.
 #'
 #' @return A \code{GRanges} object of all the \code{annotations} combined. The \code{mcols} are \code{id, tx_id, gene_id, symbol, type}. The \code{id} column is a unique name, the \code{tx_id} column is either a UCSC knownGene transcript ID (genic annotations) or a Ensembl transcript ID (lncRNA annotations), the \code{gene_id} is the Entrez ID, the \code{symbol} is the gene symbol from the \code{org.*.eg.db} mapping from the Entrez ID, and the \code{type} is of the form \code{[genome]_[type]_[name]}.
@@ -52,7 +53,7 @@ annotatr_cache <- local({
 #' # See vignette for an example with custom annotation
 #'
 #' @export
-build_annotations = function(genome, annotations) {
+build_annotations = function(genome, annotations, cache = TRUE) {
     # Expand annotations first
     annotations = expand_annotations(annotations)
 
@@ -62,7 +63,7 @@ build_annotations = function(genome, annotations) {
     gene_annotations = grep('_genes_', annotations, value=TRUE)
     cpg_annotations = grep('_cpg_', annotations, value=TRUE)
     lncrna_annotations = grep('_lncrna_', annotations, value=TRUE)
-    builtin_annotations = c(hmm_annotations, enh_annotations, gene_annotations, cpg_annotations, lncrna_annotations)
+    builtin_annotations = c(enh_annotations, hmm_annotations, gene_annotations, cpg_annotations, lncrna_annotations)
 
     # Check builtin_annotations
     if(length(builtin_annotations) > 0) {
@@ -79,21 +80,53 @@ build_annotations = function(genome, annotations) {
     if(length(other_annotations) > 0) {
         annots_grl = c(annots_grl, GenomicRanges::GRangesList(sapply(other_annotations, function(ca){annotatr_cache$get(ca)})))
     }
-    # Take the builtin_annotations piece by piece
-    if(length(enh_annotations) != 0) {
-        annots_grl = c(annots_grl, GenomicRanges::GRangesList(enhancers_fantom = suppressWarnings(build_enhancer_annots(genome = genome))))
+
+    # Load the builtin_annotations that are already in the cache
+    builtin_grl = list()
+    if(cache) {
+        for(code in builtin_annotations) {
+            gr = load_cached_annotation(code, genome)
+            if(!is.null(gr)) {
+                message(sprintf('Loading %s from the cache...', code))
+                builtin_grl[[code]] = gr
+            }
+        }
     }
-    if(length(hmm_annotations) != 0) {
-        annots_grl = c(annots_grl, GenomicRanges::GRangesList(chromatin = suppressWarnings(build_hmm_annots(genome = genome, annotations = hmm_annotations))))
+    to_build = setdiff(builtin_annotations, names(builtin_grl))
+
+    # Build the rest of the builtin_annotations piece by piece
+    built_grl = GenomicRanges::GRangesList()
+    if(any(enh_annotations %in% to_build)) {
+        built_grl = c(built_grl, GenomicRanges::GRangesList(enhancers_fantom = suppressWarnings(build_enhancer_annots(genome = genome, cache = cache))))
     }
-    if(length(gene_annotations) != 0) {
-        annots_grl = c(annots_grl, suppressWarnings(build_gene_annots(genome = genome, annotations = gene_annotations)))
+    if(any(hmm_annotations %in% to_build)) {
+        built_grl = c(built_grl, GenomicRanges::GRangesList(chromatin = suppressWarnings(build_hmm_annots(genome = genome, annotations = intersect(hmm_annotations, to_build), cache = cache))))
     }
-    if(length(cpg_annotations) != 0) {
-        annots_grl = c(annots_grl, suppressWarnings(build_cpg_annots(genome = genome, annotations = cpg_annotations)))
+    if(any(gene_annotations %in% to_build)) {
+        built_grl = c(built_grl, suppressWarnings(build_gene_annots(genome = genome, annotations = intersect(gene_annotations, to_build), cache = cache)))
     }
-    if(length(lncrna_annotations) != 0) {
-        annots_grl = c(annots_grl, GenomicRanges::GRangesList(lncrna_gencode = suppressWarnings(build_lncrna_annots(genome = genome))))
+    if(any(cpg_annotations %in% to_build)) {
+        built_grl = c(built_grl, suppressWarnings(build_cpg_annots(genome = genome, annotations = intersect(cpg_annotations, to_build), cache = cache)))
+    }
+    if(any(lncrna_annotations %in% to_build)) {
+        built_grl = c(built_grl, GenomicRanges::GRangesList(lncrna_gencode = suppressWarnings(build_lncrna_annots(genome = genome, cache = cache))))
+    }
+
+    # Split what was built into one GRanges per annotation, and cache each
+    if(length(built_grl) > 0) {
+        built = unlist(built_grl, use.names = FALSE)
+        built = as.list(split(built, factor(built$type, levels = to_build)))
+        for(code in to_build) {
+            if(cache) {
+                save_cached_annotation(built[[code]], code, genome)
+            }
+            builtin_grl[[code]] = built[[code]]
+        }
+    }
+
+    # Combine the builtin_annotations in the order they were requested
+    if(length(builtin_annotations) > 0) {
+        annots_grl = c(annots_grl, GenomicRanges::GRangesList(builtin_grl[builtin_annotations]))
     }
 
     gr = unlist(annots_grl, use.names=FALSE)
@@ -170,8 +203,10 @@ build_ah_annots = function(genome, ah_codes, annotation_class) {
 #' @param genome The genome assembly.
 #' @param annotations A character vector of valid chromatin state annotatin codes.
 #'
+#' @param cache A logical stating whether to use the cache on disk for downloads.
+#'
 #' @return A \code{GRanges} object.
-build_hmm_annots = function(genome = c('hg19'), annotations = annotatr::builtin_annotations()) {
+build_hmm_annots = function(genome = c('hg19'), annotations = annotatr::builtin_annotations(), cache = TRUE) {
     # Ensure valid arguments
     genome = match.arg(genome)
     annotations = match.arg(annotations, several.ok = TRUE)
@@ -184,7 +219,7 @@ build_hmm_annots = function(genome = c('hg19'), annotations = annotatr::builtin_
     hmms_list = GenomicRanges::GRangesList(lapply(cell_lines, function(line){
         message(sprintf('Downloading chromHMM track for %s', line))
         # Fetch the correct information for the line
-        con = sprintf('http://hgdownload.cse.ucsc.edu/goldenpath/%s/database/wgEncodeBroadHmm%sHMM.txt.gz', genome, line)
+        con = download_annotation_file(sprintf('https://hgdownload.soe.ucsc.edu/goldenPath/%s/database/wgEncodeBroadHmm%sHMM.txt.gz', genome, line), genome = genome, cache = cache)
         # Read from URL. There is surprisingly nothing in base that
         # does this as easily, so here we are with readr again.
         tbl = readr::read_tsv(con,
@@ -240,8 +275,10 @@ build_hmm_annots = function(genome = c('hg19'), annotations = annotatr::builtin_
 #'
 #' @param genome The genome assembly.
 #'
+#' @param cache A logical stating whether to use the cache on disk for downloads.
+#'
 #' @return A \code{GRanges} object.
-build_enhancer_annots = function(genome = c('hg19','hg38','mm9','mm10')) {
+build_enhancer_annots = function(genome = c('hg19','hg38','mm9','mm10'), cache = TRUE) {
     # Ensure valid arguments
     genome = match.arg(genome)
 
@@ -251,26 +288,26 @@ build_enhancer_annots = function(genome = c('hg19','hg38','mm9','mm10')) {
 
     # Get the enhancer annotations from FANTOM5
     if(genome == 'hg19') {
-        enhancers = rtracklayer::import.bed('http://fantom.gsc.riken.jp/5/datafiles/phase2.0/extra/Enhancers/human_permissive_enhancers_phase_1_and_2.bed.gz', genome = 'hg19')
+        enhancers = rtracklayer::import.bed(download_annotation_file('https://fantom.gsc.riken.jp/5/datafiles/phase2.0/extra/Enhancers/human_permissive_enhancers_phase_1_and_2.bed.gz', genome = genome, cache = cache), genome = 'hg19')
     } else if(genome == 'hg38') {
         # Create AnnotationHub connection
         ah = AnnotationHub::AnnotationHub()
         chain = ah[['AH14150']]
 
         # Get hg19 enhancers
-        hg19_enhancers = rtracklayer::import.bed('http://fantom.gsc.riken.jp/5/datafiles/phase2.0/extra/Enhancers/human_permissive_enhancers_phase_1_and_2.bed.gz', genome = 'hg19')
+        hg19_enhancers = rtracklayer::import.bed(download_annotation_file('https://fantom.gsc.riken.jp/5/datafiles/phase2.0/extra/Enhancers/human_permissive_enhancers_phase_1_and_2.bed.gz', genome = genome, cache = cache), genome = 'hg19')
 
         enhancers = rtracklayer::liftOver(x = hg19_enhancers, chain = chain)
         enhancers = sort(unlist(enhancers))
     } else if (genome == 'mm9') {
-        enhancers = rtracklayer::import.bed('http://fantom.gsc.riken.jp/5/datafiles/phase2.0/extra/Enhancers/mouse_permissive_enhancers_phase_1_and_2.bed.gz', genome = 'mm9')
+        enhancers = rtracklayer::import.bed(download_annotation_file('https://fantom.gsc.riken.jp/5/datafiles/phase2.0/extra/Enhancers/mouse_permissive_enhancers_phase_1_and_2.bed.gz', genome = genome, cache = cache), genome = 'mm9')
     } else if (genome == 'mm10') {
         # Create AnnotationHub connection
         ah = AnnotationHub::AnnotationHub()
         chain = ah[['AH14596']]
 
         # Get hg19 enhancers
-        mm9_enhancers = rtracklayer::import.bed('http://fantom.gsc.riken.jp/5/datafiles/phase2.0/extra/Enhancers/mouse_permissive_enhancers_phase_1_and_2.bed.gz', genome = 'mm9')
+        mm9_enhancers = rtracklayer::import.bed(download_annotation_file('https://fantom.gsc.riken.jp/5/datafiles/phase2.0/extra/Enhancers/mouse_permissive_enhancers_phase_1_and_2.bed.gz', genome = genome, cache = cache), genome = 'mm9')
 
         enhancers = rtracklayer::liftOver(x = mm9_enhancers, chain = chain)
         enhancers = sort(unlist(enhancers))
@@ -293,8 +330,10 @@ build_enhancer_annots = function(genome = c('hg19','hg38','mm9','mm10')) {
 #' @param genome The genome assembly.
 #' @param annotations A character vector with entries of the form \code{[genome]_cpg_{islands,shores,shelves,inter}}.
 #'
+#' @param cache A logical stating whether to use the cache on disk for downloads.
+#'
 #' @return A list of \code{GRanges} objects.
-build_cpg_annots = function(genome = annotatr::builtin_genomes(), annotations = annotatr::builtin_annotations()) {
+build_cpg_annots = function(genome = annotatr::builtin_genomes(), annotations = annotatr::builtin_annotations(), cache = TRUE) {
     # Ensure valid arguments
     genome = match.arg(genome)
     annotations = match.arg(annotations, several.ok = TRUE)
@@ -313,28 +352,28 @@ build_cpg_annots = function(genome = annotatr::builtin_genomes(), annotations = 
         use_ah = TRUE
     } else if (genome == 'hg38') {
         use_ah = FALSE
-        con = 'http://hgdownload.cse.ucsc.edu/goldenpath/hg38/database/cpgIslandExt.txt.gz'
+        con = 'https://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/cpgIslandExt.txt.gz'
     } else if (genome == 'mm10') {
         use_ah = FALSE
-        con = 'http://hgdownload.cse.ucsc.edu/goldenpath/mm10/database/cpgIslandExt.txt.gz'
+        con = 'https://hgdownload.soe.ucsc.edu/goldenPath/mm10/database/cpgIslandExt.txt.gz'
     } else if (genome == 'mm39') {
         use_ah = FALSE
-        con = 'http://hgdownload.cse.ucsc.edu/goldenpath/mm39/database/cpgIslandExt.txt.gz'
+        con = 'https://hgdownload.soe.ucsc.edu/goldenPath/mm39/database/cpgIslandExt.txt.gz'
     } else if (genome == 'rn6') {
         use_ah = FALSE
-        con = 'http://hgdownload.cse.ucsc.edu/goldenpath/rn6/database/cpgIslandExt.txt.gz'
+        con = 'https://hgdownload.soe.ucsc.edu/goldenPath/rn6/database/cpgIslandExt.txt.gz'
     } else if (genome == 'rn7') {
         use_ah = FALSE
-        con = 'http://hgdownload.cse.ucsc.edu/goldenpath/rn7/database/cpgIslandExt.txt.gz'
+        con = 'https://hgdownload.soe.ucsc.edu/goldenPath/rn7/database/cpgIslandExt.txt.gz'
     } else if (genome == 'danRer10') {
         use_ah = FALSE
-        con = 'http://hgdownload.soe.ucsc.edu/goldenPath/danRer10/database/cpgIslandExt.txt.gz'
+        con = 'https://hgdownload.soe.ucsc.edu/goldenPath/danRer10/database/cpgIslandExt.txt.gz'
     } else if (genome == 'danRer11') {
         use_ah = FALSE
-        con = 'http://hgdownload.soe.ucsc.edu/goldenPath/danRer11/database/cpgIslandExt.txt.gz'
+        con = 'https://hgdownload.soe.ucsc.edu/goldenPath/danRer11/database/cpgIslandExt.txt.gz'
     } else if (genome == 'galGal5') {
         use_ah = FALSE
-        con = 'http://hgdownload.cse.ucsc.edu/goldenpath/galGal5/database/cpgIslandExt.txt.gz'
+        con = 'https://hgdownload.soe.ucsc.edu/goldenPath/galGal5/database/cpgIslandExt.txt.gz'
     } else if (genome %in% GENARK$genome) {
         use_ah = FALSE
         con = get_genark_url(genome, sprintf('bbi/%s_%s.cpgIslandExt.bb',
@@ -362,12 +401,12 @@ build_cpg_annots = function(genome = annotatr::builtin_genomes(), annotations = 
                 islands = ah[[ID]]
             } else if(genome %in% GENARK$genome) {
                 # GenArk CpG islands are a bigBed with RefSeq sequence names
-                islands = GenomicRanges::granges(rtracklayer::import(con, format = 'bigBed'))
-                islands = ucsc_genark_seqlevels(islands, genome)
+                islands = GenomicRanges::granges(rtracklayer::import(download_annotation_file(con, genome = genome, cache = cache), format = 'bigBed'))
+                islands = ucsc_genark_seqlevels(islands, genome, cache = cache)
             } else {
                 # Read from URL. There is surprisingly nothing in base that
                 # does this as easily, so here we are with readr again.
-                islands_tbl = readr::read_tsv(con,
+                islands_tbl = readr::read_tsv(download_annotation_file(con, genome = genome, cache = cache),
                     col_names = c('chr','start','end'),
                     col_types = '-cii-------')
                 # Convert to GRanges
@@ -509,8 +548,10 @@ build_cpg_annots = function(genome = annotatr::builtin_genomes(), annotations = 
 #' @param genome The genome assembly.
 #' @param annotations A character vector with entries of the form \code{[genome]_genes_{1to5kb,promoters,5UTRs,cds,exons,firstexons,introns,intronexonboundaries,exonintronboundaries,3UTRs,intergenic}}.
 #'
+#' @param cache A logical stating whether to use the cache on disk for downloads.
+#'
 #' @return A list of \code{GRanges} objects with unique \code{id} of the form \code{[type]:i}, \code{tx_id} being the UCSC knownGene transcript name, \code{gene_id} being the Entrez Gene ID, \code{symbol} being the gene symbol from the Entrez ID to symbol mapping in \code{org.db} for that species, and \code{type} being the annotation type.
-build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations = annotatr::builtin_annotations()) {
+build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations = annotatr::builtin_annotations(), cache = TRUE) {
     # Ensure valid arguments
     genome = match.arg(genome)
     annotations = match.arg(annotations, several.ok = TRUE)
@@ -855,7 +896,7 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
 
     # EnsDb sequences have Ensembl names, use the UCSC-style names
     if(genome %in% GENARK$genome) {
-        genes = ucsc_genark_seqlevels(genes, genome)
+        genes = ucsc_genark_seqlevels(genes, genome, cache = cache)
     }
 
     return(genes)
@@ -867,8 +908,10 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
 #'
 #' @param genome The genome assembly.
 #'
+#' @param cache A logical stating whether to use the cache on disk for downloads.
+#'
 #' @return A \code{GRanges} object with \code{id} giving the \code{transcript_type} from the GENCODE file, \code{tx_id} being the Ensembl transcript ID, \code{gene_id} being the Entrez ID coming from a mapping of gene symbol to Entrez ID, \code{symbol} being the gene_name from the GENCODE file, and the \code{type} being \code{[genome]_lncrna_gencode}.
-build_lncrna_annots = function(genome = c('hg19','hg38','mm10')) {
+build_lncrna_annots = function(genome = c('hg19','hg38','mm10'), cache = TRUE) {
     # Ensure valid arguments
     genome = match.arg(genome)
 
@@ -898,7 +941,7 @@ build_lncrna_annots = function(genome = c('hg19','hg38','mm10')) {
 
     message('Building lncRNA transcripts...')
     ### lncRNA transcripts
-        lncrna_gr = rtracklayer::import(con, genome = genome)
+        lncrna_gr = rtracklayer::import(download_annotation_file(con, genome = genome, cache = cache), genome = genome)
         lncrna_gr = lncrna_gr[lncrna_gr$type == 'transcript']
 
         # Subset the mcols()

@@ -6,13 +6,16 @@
 \usage{
 build_hmm_annots(
   genome = c("hg19"),
-  annotations = annotatr::builtin_annotations()
+  annotations = annotatr::builtin_annotations(),
+  cache = TRUE
 )
 }
 \arguments{
 \item{genome}{The genome assembly.}
 
 \item{annotations}{A character vector of valid chromatin state annotatin codes.}
+
+\item{cache}{A logical stating whether to use the cache on disk for downloads.}
 }
 \value{
 A \code{GRanges} object.

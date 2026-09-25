@@ -4,10 +4,12 @@
 \alias{build_enhancer_annots}
 \title{A helper function to build enhancer annotations for hg19 and mm10 from FANTOM5.}
 \usage{
-build_enhancer_annots(genome = c("hg19", "hg38", "mm9", "mm10"))
+build_enhancer_annots(genome = c("hg19", "hg38", "mm9", "mm10"), cache = TRUE)
 }
 \arguments{
 \item{genome}{The genome assembly.}
+
+\item{cache}{A logical stating whether to use the cache on disk for downloads.}
 }
 \value{
 A \code{GRanges} object.

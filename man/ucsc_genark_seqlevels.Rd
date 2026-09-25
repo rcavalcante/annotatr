@@ -4,12 +4,19 @@
 \alias{ucsc_genark_seqlevels}
 \title{Function to rename the sequences of a GenArk genome's GRanges to UCSC-style names}
 \usage{
-ucsc_genark_seqlevels(gr, genome, seqinfo = get_genark_seqinfo(genome))
+ucsc_genark_seqlevels(
+  gr,
+  genome,
+  cache = TRUE,
+  seqinfo = get_genark_seqinfo(genome, cache = cache)
+)
 }
 \arguments{
 \item{gr}{A \code{GRanges} or \code{GRangesList} with sequence names that are any alias in the GenArk chromAlias file.}
 
 \item{genome}{A string giving the genome assembly, one of \code{GENARK$genome}.}
+
+\item{cache}{A logical stating whether to use the cache on disk for downloads.}
 
 \item{seqinfo}{A \code{Seqinfo} object from \code{get_genark_seqinfo()}.}
 }

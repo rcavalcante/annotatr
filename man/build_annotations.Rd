@@ -4,12 +4,14 @@
 \alias{build_annotations}
 \title{A function to build annotations from TxDb.* and AnnotationHub resources}
 \usage{
-build_annotations(genome, annotations)
+build_annotations(genome, annotations, cache = TRUE)
 }
 \arguments{
 \item{genome}{The genome assembly.}
 
-\item{annotations}{A character vector of annotations to build. Valid annotation codes are listed with \code{builtin_annotations()}. The "basicgenes" shortcut builds the following regions: 1-5Kb upstream of TSSs, promoters, 5UTRs, exons, introns, and 3UTRs. The "cpgs" shortcut builds the following regions: CpG islands, shores, shelves, and interCGI regions. NOTE: Shortcuts need to be appended by the genome, e.g. \code{hg19_basicgenes}.
+\item{annotations}{A character vector of annotations to build. Valid annotation codes are listed with \code{builtin_annotations()}. The "basicgenes" shortcut builds the following regions: 1-5Kb upstream of TSSs, promoters, 5UTRs, exons, introns, and 3UTRs. The "cpgs" shortcut builds the following regions: CpG islands, shores, shelves, and interCGI regions. NOTE: Shortcuts need to be appended by the genome, e.g. \code{hg19_basicgenes}.}
+
+\item{cache}{A logical stating whether to load annotations from, and save them to, the cache on disk (TRUE), or to build them from scratch without the cache (FALSE). See \code{\link{cached-annotations}}.
 Custom annotations whose names are of the form \code{[genome]_custom_[name]} should also be included. Custom annotations should be read in and converted to \code{GRanges} with \code{read_annotations()}. They can be for a \code{supported_genome()}, or for an unsupported genome.}
 }
 \value{

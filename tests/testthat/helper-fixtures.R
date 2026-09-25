@@ -2,6 +2,14 @@
 # tests, so each test builds the data it needs instead of relying on objects
 # created by other test files.
 
+# Keep the tests out of the user's cache
+options(annotatr.cache = file.path(tempdir(), 'annotatr-test-cache'))
+
+# Give a test its own empty cache
+local_empty_cache = function(env = parent.frame()) {
+    withr::local_options(annotatr.cache = withr::local_tempdir(.local_envir = env), .local_envir = env)
+}
+
 extdata = function(file) {
     system.file('extdata', file, package = 'annotatr')
 }

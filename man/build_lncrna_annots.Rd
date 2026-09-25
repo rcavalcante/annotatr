@@ -4,10 +4,12 @@
 \alias{build_lncrna_annots}
 \title{A helper function to build lncRNA annotations.}
 \usage{
-build_lncrna_annots(genome = c("hg19", "hg38", "mm10"))
+build_lncrna_annots(genome = c("hg19", "hg38", "mm10"), cache = TRUE)
 }
 \arguments{
 \item{genome}{The genome assembly.}
+
+\item{cache}{A logical stating whether to use the cache on disk for downloads.}
 }
 \value{
 A \code{GRanges} object with \code{id} giving the \code{transcript_type} from the GENCODE file, \code{tx_id} being the Ensembl transcript ID, \code{gene_id} being the Entrez ID coming from a mapping of gene symbol to Entrez ID, \code{symbol} being the gene_name from the GENCODE file, and the \code{type} being \code{[genome]_lncrna_gencode}.
