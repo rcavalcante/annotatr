@@ -254,12 +254,12 @@ dm_catsum = summarize_categorical(
 print(dm_catsum)
 ```
 
-`summarize_genes()` gives one row per gene, from the gene annotations with a gene ID (e.g. promoters, 1-5Kb, UTRs, exons, and introns). A region counts once toward each gene it is annotated to, and once toward each of the gene's annotation types. The `over` columns are summarized with their mean and standard deviation, and the categories of the `by` column are counted. Use `format = 'long'` for one row per gene and annotation type instead.
+`summarize_genes()` gives one row per gene, from the gene annotations with a gene ID (e.g. promoters, 1-5Kb, UTRs, exons, and introns). A region counts once toward each gene it is annotated to, and once toward each of the gene's annotation types. The `over` columns are summarized with their mean, median, and standard deviation, and the categories of the `by` column are counted. Use `format = 'long'` for one row per gene and annotation type instead.
 
 ```{r, warning = FALSE, message = FALSE}
 # One row per gene, with the number of regions in each gene annotation
-# type, the number of regions in each DM classification, and the mean
-# and standard deviation of the methylation difference
+# type, the number of regions in each DM classification, and the mean,
+# median, and standard deviation of the methylation difference
 dm_genesum = summarize_genes(
     annotated_regions = dm_annotated,
     over = 'diff_meth',

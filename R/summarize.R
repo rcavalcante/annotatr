@@ -210,12 +210,12 @@ summarize_categorical = function(annotated_regions, by = c('annot.type', 'annot.
 #' A region counts once toward a gene, however many of the gene's annotations it overlaps, and once toward each annotation type of the gene. A region annotated to more than one gene counts toward each of them.
 #'
 #' @param annotated_regions The \code{GRanges} result of \code{annotate_regions()}, with gene annotations such as \code{[genome]_basicgenes}.
-#' @param over A character vector of numerical data columns to summarize with the mean and standard deviation over each gene's regions. Default \code{NULL}, no numerical summaries.
+#' @param over A character vector of numerical data columns to summarize with the mean, median, and standard deviation over each gene's regions. Default \code{NULL}, no numerical summaries.
 #' @param by A single categorical data column to count the categories of over each gene's regions, e.g. \code{'DM_status'}. Default \code{NULL}, no category counts.
 #' @param format Either \code{'wide'} (the default) for one row per gene with a count column per annotation type, or \code{'long'} for one row per gene and annotation type.
 #' @param quiet Print progress messages (FALSE) or not (TRUE).
 #'
-#' @return A \code{tbl_df} with columns \code{gene_id} and \code{symbol}, then for \code{format = 'wide'}, \code{n_regions} and \code{n_[type]} for each annotation type (e.g. \code{n_promoters}), or for \code{format = 'long'}, \code{annot.type} and \code{n}. These are followed by \code{n_[category]} for each category in \code{by}, and \code{[column]_mean} and \code{[column]_sd} for each column in \code{over}. Genes with the most regions come first.
+#' @return A \code{tbl_df} with columns \code{gene_id} and \code{symbol}, then for \code{format = 'wide'}, \code{n_regions} and \code{n_[type]} for each annotation type (e.g. \code{n_promoters}), or for \code{format = 'long'}, \code{annot.type} and \code{n}. These are followed by \code{n_[category]} for each category in \code{by}, and \code{[column]_mean}, \code{[column]_median}, and \code{[column]_sd} for each column in \code{over}. Genes with the most regions come first.
 #'
 #' @examples
 #'  if(requireNamespace('TxDb.Hsapiens.UCSC.hg19.knownGene', quietly = TRUE) &&
@@ -296,7 +296,7 @@ summarize_genes = function(annotated_regions, over = NULL, by = NULL, format = c
         if(length(over) > 0) {
             stats = dplyr::summarize(grouped,
                 dplyr::across(dplyr::all_of(over),
-                    list(mean = ~ mean(.x, na.rm = TRUE), sd = ~ stats::sd(.x, na.rm = TRUE)),
+                    list(mean = ~ mean(.x, na.rm = TRUE), median = ~ stats::median(.x, na.rm = TRUE), sd = ~ stats::sd(.x, na.rm = TRUE)),
                     .names = '{.col}_{.fn}'),
                 .groups = 'drop')
             agg = dplyr::left_join(agg, stats, by = keys)

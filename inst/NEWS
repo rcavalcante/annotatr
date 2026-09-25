@@ -5,8 +5,8 @@ NEW FEATURES
 
   o Add summarize_genes(), which summarizes annotated regions with one row
     per gene: the number of regions in each gene annotation type, category
-    counts for a 'by' column, and the mean and standard deviation of 'over'
-    columns. Use format = 'long' for one row per gene and annotation type.
+    counts for a 'by' column, and the mean, median, and standard deviation of
+    'over' columns. Use format = 'long' for one row per gene and annotation type.
   o build_annotations() caches the annotations it builds, and the files it
     downloads, on disk, so later calls load them in seconds instead of
     rebuilding them. Use cache = FALSE to build without the cache, and

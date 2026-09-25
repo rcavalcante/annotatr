@@ -31,7 +31,7 @@ test_that('summarize_genes() gives one row per gene', {
     expect_equal(g$gene_id, c('1', '2'))
     expect_equal(g$symbol, c('geneA', 'geneB'))
     expect_named(g, c('gene_id', 'symbol', 'n_regions', 'n_promoters', 'n_exons',
-        'n_hyper', 'n_hypo', 'diff_meth_mean', 'diff_meth_sd'))
+        'n_hyper', 'n_hypo', 'diff_meth_mean', 'diff_meth_median', 'diff_meth_sd'))
 
     # geneA has r1, r2, and r3. r1 overlaps two of its annotations but counts once.
     expect_equal(g$n_regions, c(3L, 2L))
@@ -40,6 +40,7 @@ test_that('summarize_genes() gives one row per gene', {
     expect_equal(g$n_hyper, c(2L, 1L))
     expect_equal(g$n_hypo, c(1L, 1L))
     expect_equal(g$diff_meth_mean, c(mean(c(10, -20, 30)), mean(c(-20, 30))))
+    expect_equal(g$diff_meth_median, c(10, 5))
     expect_equal(g$diff_meth_sd, c(sd(c(10, -20, 30)), sd(c(-20, 30))))
 })
 
@@ -54,7 +55,7 @@ test_that('summarize_genes() leaves out non-gene annotations', {
 test_that('summarize_genes() gives one row per gene and annotation type in long format', {
     l = summarize_genes(gene_example(), over = 'diff_meth', by = 'DM_status', format = 'long', quiet = TRUE)
 
-    expect_named(l, c('gene_id', 'symbol', 'annot.type', 'n', 'n_hyper', 'n_hypo', 'diff_meth_mean', 'diff_meth_sd'))
+    expect_named(l, c('gene_id', 'symbol', 'annot.type', 'n', 'n_hyper', 'n_hypo', 'diff_meth_mean', 'diff_meth_median', 'diff_meth_sd'))
     expect_equal(l$gene_id, c('1', '1', '2'))
     expect_equal(l$annot.type, c('promoters', 'exons', 'promoters'))
     expect_equal(l$n, c(2L, 2L, 2L))
