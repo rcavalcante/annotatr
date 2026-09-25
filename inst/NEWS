@@ -3,6 +3,12 @@ CHANGES IN VERSION 1.40.0
 
 NEW FEATURES
 
+  o Add build_txdb_annotations(), which builds the gene annotation types
+    (promoters, exons, introns, intergenic, etc.) from any TxDb or EnsDb, e.g.
+    one made from a GENCODE or RefSeq GTF with txdbmaker::makeTxDbFromGFF().
+    Annotations are named [genome]_[group]_[type], e.g.
+    'mm39_gencode_promoters', and work with summarize_genes() and the plotting
+    functions. Gene symbols come from an EnsDb or an optional OrgDb.
   o Add MANE Select annotations for hg38 (issue #29): 'hg38_mane_*', with the
     same types as 'hg38_genes_*' except intergenic, and the 'hg38_basicmane'
     shortcut. They use one transcript per protein-coding gene (MANE v1.5),

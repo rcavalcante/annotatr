@@ -79,6 +79,26 @@ annotations = build_annotations(genome = 'hg38',
     annotations = c('hg38_genes_promoters', 'hg38_mane_promoters'))
 ```
 
+## Gene Annotations from Any TxDb
+
+The genic annotations above come from the `TxDb.*` packages that `annotatr` knows about. To build the same annotation types from other gene models, e.g. GENCODE or RefSeq, or for a genome without built-in annotations, use `build_txdb_annotations()` with any `TxDb` or `EnsDb` object. A GTF or GFF3 file can be made into a `TxDb` with `txdbmaker::makeTxDbFromGFF()`.
+
+The `genome` and `group` arguments are required. The annotation codes are of the form `[genome]_[group]_[type]`, e.g. `mm39_gencode_promoters`, so `group` names where the gene models came from, and annotations from different gene models can be used side by side. The `annotations` argument takes the gene annotation types, or the `basicgenes` shortcut (the default). Gene symbols come from an `EnsDb`, or from an `OrgDb` given with `orgdb`, with `keytype` saying what kind of gene IDs the `TxDb` has.
+
+```{r, eval = FALSE}
+# A TxDb from the GENCODE mouse GTF, with Ensembl gene IDs
+gencode_txdb = txdbmaker::makeTxDbFromGFF('gencode.vM38.annotation.gtf.gz')
+
+gencode_annots = build_txdb_annotations(gencode_txdb, genome = 'mm39', group = 'gencode',
+    annotations = c('basicgenes', 'intergenic'),
+    orgdb = org.Mm.eg.db::org.Mm.eg.db, keytype = 'ENSEMBL')
+
+# Combine with built-in annotations, and use as any other annotations
+annotations = c(gencode_annots, build_annotations(genome = 'mm39', annotations = 'mm39_cpgs'))
+```
+
+These annotations are not cached on disk, since they are built from a `TxDb` already in memory. `summarize_genes()` and the plotting functions work with them as with built-in gene annotations.
+
 ## FANTOM5 Permissive Enhancers
 
 FANTOM5 permissive enhancers were determined from bi-directional CAGE transcription as in [Andersson et al. (2014)](http://www.nature.com/nature/journal/v507/n7493/full/nature12787.html), and are downloaded and processed for hg19 and mm9 from the [FANTOM5](http://fantom.gsc.riken.jp/5/datafiles/phase2.0/extra/Enhancers/) resource. Using the `rtracklayer::liftOver()` function, enhancers from hg19 are lifted to hg38, and mm9 to mm10.

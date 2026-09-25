@@ -41,6 +41,13 @@ MANE = list(
 # Gene annotation types in genomic order, for summarize_genes()
 GENE_TYPES = c('1to5kb', 'promoters', '5UTRs', 'cds', 'firstexons', 'exons', 'intronexonboundaries', 'introns', 'exonintronboundaries', '3UTRs')
 
+# Gene annotation types of the basicgenes and basicmane shortcuts
+BASIC_GENE_TYPES = c('1to5kb', 'promoters', '5UTRs', 'exons', 'introns', '3UTRs')
+
+# The groups of builtin annotation codes, [genome]_[group]_[type]. Gene
+# annotations from build_txdb_annotations() use other group names.
+BUILTIN_GROUPS = c('genes', 'mane', 'cpg', 'enhancers', 'chromatin', 'lncrna', 'custom')
+
 HMMCELLLINES = c('Gm12878','H1hesc','Hepg2','Hmec','Hsmm','Huvec','K562','Nhek','Nhlf')
 
 HMMCODES = c('1_Active_Promoter', '2_Weak_Promoter' ,'3_Poised_Promoter' ,'4_Strong_Enhancer', '5_Strong_Enhancer', '6_Weak_Enhancer', '7_Weak_Enhancer', '8_Insulator', '9_Txn_Transition', '10_Txn_Elongation', '11_Weak_Txn', '12_Repressed', '13_Heterochrom/lo', '14_Repetitive/CNV')
@@ -298,7 +305,7 @@ tidy_annotations = function(annotations) {
             } else {
                 return(paste('CpG', tokens[3]))
             }
-        } else if (tokens[2] %in% c('genes', 'mane')) {
+        } else if (tokens[2] %in% c('genes', 'mane') || (!(tokens[2] %in% BUILTIN_GROUPS) && length(tokens) == 3 && tokens[3] %in% c(GENE_TYPES, 'intergenic'))) {
             if(tokens[3] == 'firstexons') {
                 type = 'first exons'
             } else if (tokens[3] == 'intronexonboundaries') {
@@ -308,9 +315,12 @@ tidy_annotations = function(annotations) {
             } else {
                 type = tokens[3]
             }
-            # Tell MANE apart from all transcripts, e.g. in the same plot
+            # Tell MANE and build_txdb_annotations() groups apart from the
+            # builtin genes, e.g. in the same plot
             if(tokens[2] == 'mane') {
                 type = paste('MANE', type)
+            } else if(tokens[2] != 'genes') {
+                type = paste(tokens[2], type)
             }
             return(type)
         } else if (tokens[2] == 'enhancers') {
@@ -395,10 +405,10 @@ expand_annotations = function(annotations) {
             new_annotations = paste(genome, 'cpg', c('islands','shores','shelves','inter'), sep='_')
         }
         if(are_basicgenes) {
-            new_annotations = c(new_annotations, paste(genome, 'genes', c('1to5kb','promoters','5UTRs','exons','introns','3UTRs'), sep='_'))
+            new_annotations = c(new_annotations, paste(genome, 'genes', BASIC_GENE_TYPES, sep='_'))
         }
         if(are_basicmane) {
-            new_annotations = c(new_annotations, paste(genome, 'mane', c('1to5kb','promoters','5UTRs','exons','introns','3UTRs'), sep='_'))
+            new_annotations = c(new_annotations, paste(genome, 'mane', BASIC_GENE_TYPES, sep='_'))
         }
         if(are_hmms) {
             # Could conceivably use shortcuts for multiple cell lines

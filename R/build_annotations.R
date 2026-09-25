@@ -629,33 +629,12 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
     if(length(group) != 1 || !(group %in% c('genes', 'mane'))) {
         stop('Error: annotations must all be genes or all be mane annotations.')
     }
-    prefix = sprintf('%s_%s', genome, group)
-
-    annot_codes = data.frame(
-        code = c(sprintf('%s_promoters', prefix),
-            sprintf('%s_1to5kb', prefix),
-            sprintf('%s_cds', prefix),
-            sprintf('%s_5UTRs', prefix),
-            sprintf('%s_exons', prefix),
-            sprintf('%s_firstexons', prefix),
-            sprintf('%s_introns', prefix),
-            sprintf('%s_intronexonboundaries', prefix),
-            sprintf('%s_exonintronboundaries', prefix),
-            sprintf('%s_3UTRs', prefix),
-            sprintf('%s_intergenic', prefix)),
-        var = c('promoters_gr','onetofive_gr','cds_gr','fiveUTRs_gr','exons_gr',
-            'firstexons_gr','introns_gr','intronexon_gr','exonintron_gr',
-            'threeUTRs_gr','intergenic_gr'),
-        stringsAsFactors = FALSE)
 
     if(group == 'mane') {
         txdb = build_mane_txdb(cache = cache)
 
         # The MANE summary has the Entrez ID to gene symbol mapping
         eg2symbol = get_mane_summary(cache = cache)[, c('gene_id', 'symbol')]
-
-        # Build the base transcripts
-        tx_gr = transcripts(txdb, columns = c('TXID','GENEID','TXNAME'))
     } else if(genome %in% GENARK$genome) {
         # Get the EnsDb from AnnotationHub
         if(!requireNamespace('ensembldb', quietly = TRUE)) {
@@ -665,14 +644,7 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
         txdb = ah[[GENARK[GENARK$genome == genome, 'ensdb']]]
 
         # The EnsDb has the Ensembl gene ID to gene symbol mapping
-        genes_gr = GenomicFeatures::genes(txdb)
-        eg2symbol = data.frame(
-            gene_id = genes_gr$gene_id,
-            symbol = ifelse(genes_gr$gene_name == '', NA, genes_gr$gene_name),
-            stringsAsFactors = FALSE)
-
-        # Build the base transcripts
-        tx_gr = transcripts(txdb)
+        eg2symbol = NULL
     } else {
         # Check the appropriate TxDb.* and org.XX.eg.db packages are installed
         err_mess = NULL
@@ -697,8 +669,68 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
         x = getExportedValue(orgdb_package, sprintf('org.%s.egSYMBOL', orgdb_name))
         mapped_genes = mappedkeys(x)
         eg2symbol = as.data.frame(x[mapped_genes])
+    }
 
-        # Build the base transcripts
+    genes = build_txdb_gene_annots(txdb, prefix = sprintf('%s_%s', genome, group), annotations = annotations, eg2symbol = eg2symbol)
+
+    # EnsDb sequences have Ensembl names, use the UCSC-style names
+    if(genome %in% GENARK$genome) {
+        genes = ucsc_genark_seqlevels(genes, genome, cache = cache)
+    }
+
+    # The MANE GTF has no seqinfo, use the genome's
+    if(group == 'mane') {
+        genes = set_genome_seqinfo(genes, genome)
+    }
+
+    return(genes)
+}
+
+#' A helper function to build genic annotations from a TxDb or EnsDb
+#'
+#' This does the work for \code{build_gene_annots()} and \code{build_txdb_annotations()}.
+#'
+#' @param txdb A \code{TxDb} or \code{EnsDb} object.
+#' @param prefix A string giving the start of the annotation codes, \code{[genome]_[group]}, e.g. \code{'hg19_genes'}.
+#' @param annotations A character vector of annotation codes of the form \code{[prefix]_[type]}, where the types are \code{1to5kb}, \code{promoters}, \code{5UTRs}, \code{cds}, \code{exons}, \code{firstexons}, \code{introns}, \code{intronexonboundaries}, \code{exonintronboundaries}, \code{3UTRs}, and \code{intergenic}.
+#' @param eg2symbol A \code{data.frame} with columns \code{gene_id} and \code{symbol} mapping the gene IDs of \code{txdb} to gene symbols. If \code{NULL}, the gene names of an \code{EnsDb} are used, and the symbols of a \code{TxDb} are \code{NA}.
+#'
+#' @return A \code{GRangesList} with one \code{GRanges} per annotation, with \code{mcols} \code{id}, \code{tx_id}, \code{gene_id}, \code{symbol}, and \code{type}.
+build_txdb_gene_annots = function(txdb, prefix, annotations, eg2symbol = NULL) {
+    annot_codes = data.frame(
+        code = c(sprintf('%s_promoters', prefix),
+            sprintf('%s_1to5kb', prefix),
+            sprintf('%s_cds', prefix),
+            sprintf('%s_5UTRs', prefix),
+            sprintf('%s_exons', prefix),
+            sprintf('%s_firstexons', prefix),
+            sprintf('%s_introns', prefix),
+            sprintf('%s_intronexonboundaries', prefix),
+            sprintf('%s_exonintronboundaries', prefix),
+            sprintf('%s_3UTRs', prefix),
+            sprintf('%s_intergenic', prefix)),
+        var = c('promoters_gr','onetofive_gr','cds_gr','fiveUTRs_gr','exons_gr',
+            'firstexons_gr','introns_gr','intronexon_gr','exonintron_gr',
+            'threeUTRs_gr','intergenic_gr'),
+        stringsAsFactors = FALSE)
+
+    if(is.null(eg2symbol)) {
+        if(methods::is(txdb, 'EnsDb')) {
+            # The EnsDb has the Ensembl gene ID to gene symbol mapping
+            genes_gr = GenomicFeatures::genes(txdb)
+            eg2symbol = data.frame(
+                gene_id = genes_gr$gene_id,
+                symbol = ifelse(genes_gr$gene_name == '', NA, genes_gr$gene_name),
+                stringsAsFactors = FALSE)
+        } else {
+            eg2symbol = data.frame(gene_id = character(0), symbol = character(0), stringsAsFactors = FALSE)
+        }
+    }
+
+    # Build the base transcripts
+    if(methods::is(txdb, 'EnsDb')) {
+        tx_gr = transcripts(txdb)
+    } else {
         tx_gr = transcripts(txdb, columns = c('TXID','GENEID','TXNAME'))
     }
 
@@ -973,22 +1005,12 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
     }
 
     ### Put it all together
-    mgets = annot_codes[annot_codes$code %in% annotations, 'var']
-    genes = do.call('GRangesList', mget(mgets))
-    names(genes) = annotations
+    built = annot_codes[annot_codes$code %in% annotations, ]
+    genes = do.call('GRangesList', mget(built$var))
+    names(genes) = built$code
 
     # Promoters and boundaries can extend past the ends of chromosomes
     genes = GenomicRanges::trim(genes)
-
-    # EnsDb sequences have Ensembl names, use the UCSC-style names
-    if(genome %in% GENARK$genome) {
-        genes = ucsc_genark_seqlevels(genes, genome, cache = cache)
-    }
-
-    # The MANE GTF has no seqinfo, use the genome's
-    if(group == 'mane') {
-        genes = set_genome_seqinfo(genes, genome)
-    }
 
     return(genes)
 }

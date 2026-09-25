@@ -32,7 +32,7 @@ Given a \code{GRanges} of annotated regions, summarize the regions annotated to 
 \details{
 A region counts once toward a gene, however many of the gene's annotations it overlaps, and once toward each annotation type of the gene. A region annotated to more than one gene counts toward each of them.
 
-MANE annotations (\code{hg38_mane_*}) are summarized the same way. If both \code{hg38_genes_*} and \code{hg38_mane_*} annotations are present, the MANE annotation types are prefixed with \code{mane_}, e.g. \code{n_promoters} and \code{n_mane_promoters}. Both use Entrez gene IDs, so a gene has one row.
+MANE annotations (\code{hg38_mane_*}) and annotations from \code{build_txdb_annotations()} (e.g. \code{mm39_gencode_*}) are summarized the same way. With annotations from more than one group, the annotation types of groups other than \code{genes} are prefixed with the group, e.g. \code{n_promoters} and \code{n_mane_promoters}. \code{hg38_genes_*} and \code{hg38_mane_*} both use Entrez gene IDs, so a gene has one row. Groups with different kinds of gene IDs (e.g. Entrez and Ensembl) give separate rows for the same gene.
 }
 \examples{
  if(requireNamespace('TxDb.Hsapiens.UCSC.hg19.knownGene', quietly = TRUE) &&
