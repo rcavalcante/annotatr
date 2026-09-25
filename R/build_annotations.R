@@ -2,6 +2,14 @@
 #'
 #' Code thanks to Martin Morgan. This is a global variable that will store custom
 #' annotations that a user reads in during a session in which annotatr is loaded.
+#' \code{build_annotations()} gets custom annotations from it by name, e.g.
+#' \code{'hg19_custom_test'}. It lasts for the current R session only.
+#'
+#' It is usually simpler to use the \code{GRanges} that \code{read_annotations()}
+#' returns, and combine it with other annotations using \code{c()}.
+#'
+#' \code{annotatr_cache} is separate from the cache on disk of annotations built by
+#' \code{build_annotations()}. See \code{\link{cached-annotations}}.
 #'
 #' @return An environment to contain custom annotations from \code{read_annotations}.
 #'

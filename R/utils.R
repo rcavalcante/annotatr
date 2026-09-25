@@ -32,6 +32,9 @@ GENARK = data.frame(
     ensdb = c('AH119381'),
     stringsAsFactors = FALSE)
 
+# Gene annotation types in genomic order, for summarize_genes()
+GENE_TYPES = c('1to5kb', 'promoters', '5UTRs', 'cds', 'firstexons', 'exons', 'intronexonboundaries', 'introns', 'exonintronboundaries', '3UTRs')
+
 HMMCELLLINES = c('Gm12878','H1hesc','Hepg2','Hmec','Hsmm','Huvec','K562','Nhek','Nhlf')
 
 HMMCODES = c('1_Active_Promoter', '2_Weak_Promoter' ,'3_Poised_Promoter' ,'4_Strong_Enhancer', '5_Strong_Enhancer', '6_Weak_Enhancer', '7_Weak_Enhancer', '8_Insulator', '9_Txn_Transition', '10_Txn_Elongation', '11_Weak_Txn', '12_Repressed', '13_Heterochrom/lo', '14_Repetitive/CNV')

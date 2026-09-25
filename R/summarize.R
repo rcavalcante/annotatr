@@ -202,3 +202,141 @@ summarize_categorical = function(annotated_regions, by = c('annot.type', 'annot.
 
     return(agg)
 }
+
+#' Summarize annotated regions by gene
+#'
+#' Given a \code{GRanges} of annotated regions, summarize the regions annotated to each gene, with one row per gene. Only gene annotations with a gene ID count (e.g. promoters, 1-5kb upstream, UTRs, exons, and introns), so CpG, intergenic, enhancer, and chromatin annotations are left out.
+#'
+#' A region counts once toward a gene, however many of the gene's annotations it overlaps, and once toward each annotation type of the gene. A region annotated to more than one gene counts toward each of them.
+#'
+#' @param annotated_regions The \code{GRanges} result of \code{annotate_regions()}, with gene annotations such as \code{[genome]_basicgenes}.
+#' @param over A character vector of numerical data columns to summarize with the mean and standard deviation over each gene's regions. Default \code{NULL}, no numerical summaries.
+#' @param by A single categorical data column to count the categories of over each gene's regions, e.g. \code{'DM_status'}. Default \code{NULL}, no category counts.
+#' @param format Either \code{'wide'} (the default) for one row per gene with a count column per annotation type, or \code{'long'} for one row per gene and annotation type.
+#' @param quiet Print progress messages (FALSE) or not (TRUE).
+#'
+#' @return A \code{tbl_df} with columns \code{gene_id} and \code{symbol}, then for \code{format = 'wide'}, \code{n_regions} and \code{n_[type]} for each annotation type (e.g. \code{n_promoters}), or for \code{format = 'long'}, \code{annot.type} and \code{n}. These are followed by \code{n_[category]} for each category in \code{by}, and \code{[column]_mean} and \code{[column]_sd} for each column in \code{over}. Genes with the most regions come first.
+#'
+#' @examples
+#'  if(requireNamespace('TxDb.Hsapiens.UCSC.hg19.knownGene', quietly = TRUE) &&
+#'      requireNamespace('org.Hs.eg.db', quietly = TRUE)) {
+#'    # Build hg19 promoter annotations
+#'    annotations = build_annotations(genome = 'hg19', annotations = 'hg19_genes_promoters')
+#'
+#'    dm_file = system.file('extdata', 'IDH2mut_v_NBM_multi_data_chr9.txt.gz', package = 'annotatr')
+#'    extraCols = c(diff_meth = 'numeric', mu1 = 'numeric', mu0 = 'numeric')
+#'    dm_regions = read_regions(con = dm_file, extraCols = extraCols, genome = 'hg19',
+#'        rename_score = 'pval', rename_name = 'DM_status', format = 'bed')
+#'
+#'    dm_annots = annotate_regions(
+#'        regions = dm_regions,
+#'        annotations = annotations,
+#'        ignore.strand = TRUE)
+#'
+#'    # One row per gene, with the mean methylation difference and the
+#'    # number of hyper- and hypomethylated regions
+#'    genes = summarize_genes(annotated_regions = dm_annots, over = 'diff_meth', by = 'DM_status')
+#'
+#'    # One row per gene and annotation type
+#'    genes_long = summarize_genes(annotated_regions = dm_annots, over = 'diff_meth', format = 'long')
+#'  }
+#'
+#' @export
+summarize_genes = function(annotated_regions, over = NULL, by = NULL, format = c('wide', 'long'), quiet = FALSE) {
+    format = match.arg(format)
+
+    if(!is.null(by) && length(by) != 1) {
+        stop('Error: by must be a single column name.')
+    }
+
+    # Tidy the GRanges into a data.frame for use with dplyr functions
+    tbl = as.data.frame(annotated_regions, row.names = NULL)
+
+    missing_cols = setdiff(c(over, by), colnames(tbl))
+    if(length(missing_cols) > 0) {
+        stop(sprintf('Error: %s not column(s) in annotated_regions.', paste(missing_cols, collapse = ', ')))
+    }
+
+    # Keep the gene annotations with a gene ID
+    tbl = tbl[!is.na(tbl$annot.gene_id) & grepl('_genes_', tbl$annot.type), , drop = FALSE]
+    if(nrow(tbl) == 0) {
+        stop('Error: No regions are annotated to genes. Include gene annotations, e.g. [genome]_basicgenes, in build_annotations().')
+    }
+
+    if(!quiet) {
+        message(sprintf('Summarizing %s regions over %s genes', nrow(dplyr::distinct(tbl, .data$seqnames, .data$start, .data$end)), length(unique(tbl$annot.gene_id))))
+    }
+
+    tbl$gene_id = as.character(tbl$annot.gene_id)
+    tbl$region = paste(tbl$seqnames, tbl$start, tbl$end, sep = ':')
+    # Drop the genome prefix, e.g. hg19_genes_promoters to promoters
+    tbl$annot.type = sub('^.*_genes_', '', tbl$annot.type)
+
+    # A gene's symbol, from any of its annotations
+    symbols = dplyr::summarize(
+        dplyr::group_by(tbl, .data$gene_id),
+        symbol = dplyr::first(stats::na.omit(.data$annot.symbol), default = NA_character_))
+
+    # Count each region once per group (gene, or gene and annotation type), and
+    # summarize the data columns
+    summarize_group = function(regions, keys) {
+        regions = dplyr::distinct(regions, dplyr::across(dplyr::all_of(c(keys, 'region'))), .keep_all = TRUE)
+        grouped = dplyr::group_by(regions, dplyr::across(dplyr::all_of(keys)))
+
+        agg = dplyr::summarize(grouped, n = dplyr::n(), .groups = 'drop')
+        if(!is.null(by)) {
+            counts = dplyr::count(regions, dplyr::across(dplyr::all_of(c(keys, by))))
+            counts = reshape2::dcast(counts, stats::as.formula(sprintf('%s ~ `%s`', paste(keys, collapse = ' + '), by)),
+                value.var = 'n', fill = 0L)
+            category_cols = setdiff(colnames(counts), keys)
+            counts[category_cols] = lapply(counts[category_cols], as.integer)
+            colnames(counts)[match(category_cols, colnames(counts))] = paste0('n_', category_cols)
+            agg = dplyr::left_join(agg, counts, by = keys)
+        }
+        if(length(over) > 0) {
+            stats = dplyr::summarize(grouped,
+                dplyr::across(dplyr::all_of(over),
+                    list(mean = ~ mean(.x, na.rm = TRUE), sd = ~ stats::sd(.x, na.rm = TRUE)),
+                    .names = '{.col}_{.fn}'),
+                .groups = 'drop')
+            agg = dplyr::left_join(agg, stats, by = keys)
+        }
+
+        return(agg)
+    }
+
+    if(format == 'wide') {
+        agg = summarize_group(tbl, 'gene_id')
+        colnames(agg)[colnames(agg) == 'n'] = 'n_regions'
+
+        # One count column per annotation type, in genomic order
+        type_counts = dplyr::count(dplyr::distinct(tbl, .data$gene_id, .data$annot.type, .data$region), .data$gene_id, .data$annot.type)
+        type_counts = reshape2::dcast(type_counts, gene_id ~ annot.type, value.var = 'n', fill = 0L)
+        types = c(intersect(GENE_TYPES, colnames(type_counts)), setdiff(colnames(type_counts), c('gene_id', GENE_TYPES)))
+        type_counts = type_counts[, c('gene_id', types), drop = FALSE]
+        type_counts[types] = lapply(type_counts[types], as.integer)
+        colnames(type_counts) = c('gene_id', paste0('n_', types))
+
+        agg = dplyr::left_join(agg, type_counts, by = 'gene_id')
+        agg = agg[, c('gene_id', 'n_regions', paste0('n_', types), setdiff(colnames(agg), c('gene_id', 'n_regions', paste0('n_', types))))]
+        count_col = 'n_regions'
+    } else {
+        agg = summarize_group(tbl, c('gene_id', 'annot.type'))
+        agg$annot.type = factor(agg$annot.type, levels = c(intersect(GENE_TYPES, agg$annot.type), setdiff(agg$annot.type, GENE_TYPES)))
+        count_col = 'n'
+    }
+
+    agg = dplyr::left_join(symbols, agg, by = 'gene_id')
+    if(format == 'wide') {
+        agg = dplyr::arrange(agg, dplyr::desc(.data[[count_col]]), .data$symbol, .data$gene_id)
+    } else {
+        # Genes with the most regions first, then annotation types in genomic order
+        gene_n = dplyr::count(dplyr::distinct(tbl, .data$gene_id, .data$region), .data$gene_id, name = 'gene_n')
+        agg = dplyr::left_join(agg, gene_n, by = 'gene_id')
+        agg = dplyr::arrange(agg, dplyr::desc(.data$gene_n), .data$symbol, .data$gene_id, .data$annot.type)
+        agg$gene_n = NULL
+        agg$annot.type = as.character(agg$annot.type)
+    }
+
+    return(dplyr::as_tibble(agg))
+}

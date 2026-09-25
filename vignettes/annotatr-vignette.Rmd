@@ -108,13 +108,13 @@ Users may load their own annotations from BED files using the `read_annotations(
 ## These files contain chr, start, and end columns
 ezh2_file = system.file('extdata', 'Gm12878_Ezh2_peak_annotations.txt.gz', package = 'annotatr')
 
-## Custom annotation objects are given names of the form genome_custom_name
-read_annotations(con = ezh2_file, genome = 'hg19', name = 'ezh2', format = 'bed')
+## read_annotations() returns the custom annotations
+ezh2_annotations = read_annotations(con = ezh2_file, genome = 'hg19', name = 'ezh2', format = 'bed')
 
-print(annotatr_cache$get('hg19_custom_ezh2'))
+print(ezh2_annotations)
 ```
 
-To see what is in the `annotatr_cache` environment, do the following:
+Custom annotations can be combined with other annotations using `c()`, e.g. `c(ezh2_annotations, build_annotations(genome = 'hg19', annotations = 'hg19_cpgs'))`. `read_annotations()` also stores them in the `annotatr_cache` environment for the current R session, with names of the form `genome_custom_name`, so they can be included by name in `build_annotations()`, as in the example below. To see what is in the `annotatr_cache` environment, do the following:
 
 ```{r, warning = FALSE, message = FALSE}
 print(annotatr_cache$list_env())
@@ -252,6 +252,20 @@ dm_catsum = summarize_categorical(
     by = c('annot.type', 'DM_status'),
     quiet = TRUE)
 print(dm_catsum)
+```
+
+`summarize_genes()` gives one row per gene, from the gene annotations with a gene ID (e.g. promoters, 1-5Kb, UTRs, exons, and introns). A region counts once toward each gene it is annotated to, and once toward each of the gene's annotation types. The `over` columns are summarized with their mean and standard deviation, and the categories of the `by` column are counted. Use `format = 'long'` for one row per gene and annotation type instead.
+
+```{r, warning = FALSE, message = FALSE}
+# One row per gene, with the number of regions in each gene annotation
+# type, the number of regions in each DM classification, and the mean
+# and standard deviation of the methylation difference
+dm_genesum = summarize_genes(
+    annotated_regions = dm_annotated,
+    over = 'diff_meth',
+    by = 'DM_status',
+    quiet = TRUE)
+print(dm_genesum)
 ```
 
 ## Plotting
