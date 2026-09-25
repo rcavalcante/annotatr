@@ -25,7 +25,7 @@ test_that('build_txdb_annotations() builds gene annotations from a TxDb', {
     a = build_txdb_annotations(tiny_txdb(), genome = 'hg19', group = 'mytx')
 
     expect_s4_class(a, 'GRanges')
-    expect_named(GenomicRanges::mcols(a), c('id', 'tx_id', 'gene_id', 'symbol', 'type'))
+    expect_named(GenomicRanges::mcols(a), c('id', 'tx_id', 'gene_id', 'symbol', 'entrez_id', 'ensembl_id', 'type'))
     expect_setequal(unique(a$type), sprintf('hg19_mytx_%s', c('1to5kb', 'promoters', '5UTRs', 'exons', 'introns', '3UTRs')))
     expect_equal(unique(Seqinfo::genome(a)), 'hg19')
 
@@ -34,6 +34,9 @@ test_that('build_txdb_annotations() builds gene annotations from a TxDb', {
     expect_equal(exons$tx_id, c('t1', 't1', 't2'))
     expect_equal(exons$gene_id, c('g1', 'g1', 'g2'))
     expect_true(all(is.na(exons$symbol)))
+    # Without an OrgDb, the kind of gene ID is unknown
+    expect_true(all(is.na(exons$entrez_id)))
+    expect_true(all(is.na(exons$ensembl_id)))
 
     introns = a[a$type == 'hg19_mytx_introns']
     expect_equal(as.character(IRanges::ranges(introns)), '201-299')
@@ -59,12 +62,16 @@ test_that('build_txdb_annotations() gets symbols from an OrgDb', {
 
     a = build_txdb_annotations(tiny_txdb(c('1', '2')), genome = 'hg19', group = 'mytx', annotations = 'exons', orgdb = orgdb)
     expect_equal(a$symbol, c('A1BG', 'A1BG', 'A2M'))
+    expect_equal(a$entrez_id, c('1', '1', '2'))
+    expect_equal(a$ensembl_id, c('ENSG00000121410', 'ENSG00000121410', 'ENSG00000175899'))
 
     # Ensembl gene IDs, with versions as in GENCODE
     txdb = tiny_txdb(c('ENSG00000121410.14', 'ENSG00000175899.17'))
     a = build_txdb_annotations(txdb, genome = 'hg19', group = 'gencode', annotations = 'exons', orgdb = orgdb, keytype = 'ENSEMBL')
     expect_equal(a$gene_id, c('ENSG00000121410.14', 'ENSG00000121410.14', 'ENSG00000175899.17'))
     expect_equal(a$symbol, c('A1BG', 'A1BG', 'A2M'))
+    expect_equal(a$entrez_id, c('1', '1', '2'))
+    expect_equal(a$ensembl_id, c('ENSG00000121410', 'ENSG00000121410', 'ENSG00000175899'))
 
     expect_error(build_txdb_annotations(txdb, genome = 'hg19', group = 'gencode', orgdb = orgdb, keytype = 'NONSENSE'), 'not a keytype of orgdb')
     expect_error(build_txdb_annotations(txdb, genome = 'hg19', group = 'gencode', orgdb = 'org.Hs.eg.db'), 'orgdb must be an OrgDb')
@@ -99,7 +106,7 @@ test_that('Annotations from build_txdb_annotations() work with annotate_regions(
 
     g = summarize_genes(annotated, quiet = TRUE)
     expect_equal(g$gene_id, c('g1', 'g2'))
-    expect_named(g, c('gene_id', 'symbol', 'n_regions', 'n_promoters', 'n_exons'))
+    expect_named(g, c('gene_id', 'symbol', 'entrez_id', 'ensembl_id', 'n_regions', 'n_promoters', 'n_exons'))
     expect_equal(g$n_promoters, c(1L, 0L))
     expect_equal(g$n_exons, c(1L, 1L))
 
@@ -107,5 +114,5 @@ test_that('Annotations from build_txdb_annotations() work with annotate_regions(
     other = annots
     other$type = sub('_mytx_', '_other_', other$type)
     g = summarize_genes(annotate_regions(regions, c(annots, other), quiet = TRUE), quiet = TRUE)
-    expect_named(g, c('gene_id', 'symbol', 'n_regions', 'n_mytx_promoters', 'n_mytx_exons', 'n_other_promoters', 'n_other_exons'))
+    expect_named(g, c('gene_id', 'symbol', 'entrez_id', 'ensembl_id', 'n_regions', 'n_mytx_promoters', 'n_mytx_exons', 'n_other_promoters', 'n_other_exons'))
 })

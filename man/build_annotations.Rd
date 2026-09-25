@@ -15,7 +15,14 @@ build_annotations(genome, annotations, cache = TRUE)
 Custom annotations whose names are of the form \code{[genome]_custom_[name]} should also be included. Custom annotations should be read in and converted to \code{GRanges} with \code{read_annotations()}. They can be for a \code{supported_genome()}, or for an unsupported genome.}
 }
 \value{
-A \code{GRanges} object of all the \code{annotations} combined. The \code{mcols} are \code{id, tx_id, gene_id, symbol, type}. The \code{id} column is a unique name, the \code{tx_id} column is either a UCSC knownGene transcript ID (genic annotations) or a Ensembl transcript ID (lncRNA annotations), the \code{gene_id} is the Entrez ID, the \code{symbol} is the gene symbol from the \code{org.*.eg.db} mapping from the Entrez ID, and the \code{type} is of the form \code{[genome]_[type]_[name]}.
+A \code{GRanges} object of all the \code{annotations} combined. The \code{mcols} are \code{id, tx_id, gene_id, symbol, entrez_id, ensembl_id, type}:
+\describe{
+  \item{id}{A unique name, e.g. \code{promoter:1}.}
+  \item{tx_id}{The transcript ID of gene annotations, from the source of the gene models (e.g. a UCSC knownGene or Ensembl transcript ID).}
+  \item{gene_id}{The gene ID used by the source of the gene models: the Entrez ID for most genomes, the Ensembl ID for \code{rn4} and sheep (\code{oviariramb2}), and the FlyBase ID for \code{dm3} and \code{dm6}.}
+  \item{symbol, entrez_id, ensembl_id}{The gene symbol, Entrez ID, and Ensembl ID (without version) of every gene annotation, whatever the source's gene ID is. They come from the \code{org.*.eg.db} package, the \code{EnsDb}, or the MANE summary. When a gene ID maps to more than one symbol, Entrez ID, or Ensembl ID, the first is used. They are \code{NA} for genes without a mapping, and for other annotations.}
+  \item{type}{The annotation code, of the form \code{[genome]_[group]_[type]}.}
+}
 }
 \description{
 Create a \code{GRanges} object consisting of all the desired \code{annotations}. Supported annotation codes are listed by \code{builtin_annotations()}. The basis for enhancer annotations are FANTOM5 data, the basis for CpG related annotations are CpG island tracks from \code{AnnotationHub}, and the basis for genic annotations are from the \code{TxDb.*} and \code{org.db} group of packages.

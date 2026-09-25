@@ -53,7 +53,14 @@ annotatr_cache <- local({
 #' @param cache A logical stating whether to load annotations from, and save them to, the cache on disk (TRUE), or to build them from scratch without the cache (FALSE). See \code{\link{cached-annotations}}.
 #' Custom annotations whose names are of the form \code{[genome]_custom_[name]} should also be included. Custom annotations should be read in and converted to \code{GRanges} with \code{read_annotations()}. They can be for a \code{supported_genome()}, or for an unsupported genome.
 #'
-#' @return A \code{GRanges} object of all the \code{annotations} combined. The \code{mcols} are \code{id, tx_id, gene_id, symbol, type}. The \code{id} column is a unique name, the \code{tx_id} column is either a UCSC knownGene transcript ID (genic annotations) or a Ensembl transcript ID (lncRNA annotations), the \code{gene_id} is the Entrez ID, the \code{symbol} is the gene symbol from the \code{org.*.eg.db} mapping from the Entrez ID, and the \code{type} is of the form \code{[genome]_[type]_[name]}.
+#' @return A \code{GRanges} object of all the \code{annotations} combined. The \code{mcols} are \code{id, tx_id, gene_id, symbol, entrez_id, ensembl_id, type}:
+#' \describe{
+#'   \item{id}{A unique name, e.g. \code{promoter:1}.}
+#'   \item{tx_id}{The transcript ID of gene annotations, from the source of the gene models (e.g. a UCSC knownGene or Ensembl transcript ID).}
+#'   \item{gene_id}{The gene ID used by the source of the gene models: the Entrez ID for most genomes, the Ensembl ID for \code{rn4} and sheep (\code{oviariramb2}), and the FlyBase ID for \code{dm3} and \code{dm6}.}
+#'   \item{symbol, entrez_id, ensembl_id}{The gene symbol, Entrez ID, and Ensembl ID (without version) of every gene annotation, whatever the source's gene ID is. They come from the \code{org.*.eg.db} package, the \code{EnsDb}, or the MANE summary. When a gene ID maps to more than one symbol, Entrez ID, or Ensembl ID, the first is used. They are \code{NA} for genes without a mapping, and for other annotations.}
+#'   \item{type}{The annotation code, of the form \code{[genome]_[group]_[type]}.}
+#' }
 #'
 #' @examples
 #' # Example with hg19 gene promoters
@@ -89,7 +96,7 @@ build_annotations = function(genome, annotations, cache = TRUE) {
 
     # Do the other_annotations first because we don't want to fail unexpectedly at the end
     if(length(other_annotations) > 0) {
-        annots_grl = c(annots_grl, GenomicRanges::GRangesList(sapply(other_annotations, function(ca){annotatr_cache$get(ca)})))
+        annots_grl = c(annots_grl, GenomicRanges::GRangesList(lapply(other_annotations, function(ca){standardize_mcols(annotatr_cache$get(ca))})))
     }
 
     # Load the builtin_annotations that are already in the cache
@@ -131,10 +138,11 @@ build_annotations = function(genome, annotations, cache = TRUE) {
         built = unlist(built_grl, use.names = FALSE)
         built = as.list(split(built, factor(built$type, levels = to_build)))
         for(code in to_build) {
+            gr = standardize_mcols(built[[code]])
             if(cache) {
-                save_cached_annotation(built[[code]], code, genome)
+                save_cached_annotation(gr, code, genome)
             }
-            builtin_grl[[code]] = built[[code]]
+            builtin_grl[[code]] = gr
         }
     }
 
@@ -204,7 +212,7 @@ build_ah_annots = function(genome, ah_codes, annotation_class) {
         GenomicRanges::mcols(gr)$symbol = NA
         GenomicRanges::mcols(gr)$type = sprintf('%s_%s_%s', genome, annotation_class, names(ah_codes[i]))
 
-        GenomicRanges::mcols(gr) = GenomicRanges::mcols(gr)[, c('id','tx_id','gene_id','symbol','type')]
+        gr = standardize_mcols(gr)
 
         ########################################################
         # Write the object named [genome]_[annotation_class]_[name] to the annotatr_cache
@@ -563,7 +571,7 @@ build_cpg_annots = function(genome = annotatr::builtin_genomes(), annotations = 
 #'
 #' @param cache A logical stating whether to use the cache on disk for downloads.
 #'
-#' @return A \code{data.frame} with one row per MANE Select transcript, and columns \code{tx_id} (Ensembl transcript ID with version), \code{gene_id} (Entrez ID), and \code{symbol}.
+#' @return A \code{data.frame} with one row per MANE Select transcript, and columns \code{tx_id} (Ensembl transcript ID with version), \code{gene_id} (Entrez ID), \code{symbol}, and \code{ensembl_id} (Ensembl gene ID without version).
 get_mane_summary = function(cache = TRUE) {
     path = download_annotation_file(sprintf('%s/MANE.GRCh38.v%s.summary.txt.gz', MANE$url, MANE$version), genome = 'hg38', cache = cache)
     summary = utils::read.delim(path, colClasses = 'character', check.names = FALSE)
@@ -573,6 +581,7 @@ get_mane_summary = function(cache = TRUE) {
         tx_id = summary$Ensembl_nuc,
         gene_id = sub('^GeneID:', '', summary[['#NCBI_GeneID']]),
         symbol = summary$symbol,
+        ensembl_id = strip_id_version(summary$Ensembl_Gene),
         stringsAsFactors = FALSE))
 }
 
@@ -633,8 +642,14 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
     if(group == 'mane') {
         txdb = build_mane_txdb(cache = cache)
 
-        # The MANE summary has the Entrez ID to gene symbol mapping
-        eg2symbol = get_mane_summary(cache = cache)[, c('gene_id', 'symbol')]
+        # The MANE summary maps Entrez IDs to gene symbols and Ensembl IDs
+        gene_table = get_mane_summary(cache = cache)
+        gene_table = data.frame(
+            gene_id = gene_table$gene_id,
+            symbol = gene_table$symbol,
+            entrez_id = gene_table$gene_id,
+            ensembl_id = gene_table$ensembl_id,
+            stringsAsFactors = FALSE)
     } else if(genome %in% GENARK$genome) {
         # Get the EnsDb from AnnotationHub
         if(!requireNamespace('ensembldb', quietly = TRUE)) {
@@ -643,8 +658,8 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
         ah = AnnotationHub::AnnotationHub()
         txdb = ah[[GENARK[GENARK$genome == genome, 'ensdb']]]
 
-        # The EnsDb has the Ensembl gene ID to gene symbol mapping
-        eg2symbol = NULL
+        # The EnsDb has the gene symbols and Entrez IDs
+        gene_table = NULL
     } else {
         # Check the appropriate TxDb.* and org.XX.eg.db packages are installed
         err_mess = NULL
@@ -665,13 +680,19 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
         }
         txdb = getExportedValue(txdb_name, txdb_name)
 
-        # Get the org.XX.eg.db mapping from Entrez ID to gene symbol
-        x = getExportedValue(orgdb_package, sprintf('org.%s.egSYMBOL', orgdb_name))
-        mapped_genes = mappedkeys(x)
-        eg2symbol = as.data.frame(x[mapped_genes])
+        # Map the TxDb gene IDs to symbols, Entrez IDs, and Ensembl IDs. The
+        # ensGene TxDbs have Ensembl (FlyBase for fly) gene IDs, the others
+        # have Entrez IDs.
+        if(grepl('ensGene', txdb_name)) {
+            keytype = if(orgdb_name == 'Dm') 'FLYBASE' else 'ENSEMBL'
+        } else {
+            keytype = 'ENTREZID'
+        }
+        orgdb = getExportedValue(orgdb_package, orgdb_package)
+        gene_table = get_gene_table(AnnotationDbi::keys(txdb, keytype = 'GENEID'), orgdb = orgdb, keytype = keytype)
     }
 
-    genes = build_txdb_gene_annots(txdb, prefix = sprintf('%s_%s', genome, group), annotations = annotations, eg2symbol = eg2symbol)
+    genes = build_txdb_gene_annots(txdb, prefix = sprintf('%s_%s', genome, group), annotations = annotations, gene_table = gene_table)
 
     # EnsDb sequences have Ensembl names, use the UCSC-style names
     if(genome %in% GENARK$genome) {
@@ -693,10 +714,10 @@ build_gene_annots = function(genome = annotatr::builtin_genomes(), annotations =
 #' @param txdb A \code{TxDb} or \code{EnsDb} object.
 #' @param prefix A string giving the start of the annotation codes, \code{[genome]_[group]}, e.g. \code{'hg19_genes'}.
 #' @param annotations A character vector of annotation codes of the form \code{[prefix]_[type]}, where the types are \code{1to5kb}, \code{promoters}, \code{5UTRs}, \code{cds}, \code{exons}, \code{firstexons}, \code{introns}, \code{intronexonboundaries}, \code{exonintronboundaries}, \code{3UTRs}, and \code{intergenic}.
-#' @param eg2symbol A \code{data.frame} with columns \code{gene_id} and \code{symbol} mapping the gene IDs of \code{txdb} to gene symbols. If \code{NULL}, the gene names of an \code{EnsDb} are used, and the symbols of a \code{TxDb} are \code{NA}.
+#' @param gene_table A \code{data.frame} from \code{get_gene_table()}, with columns \code{gene_id}, \code{symbol}, \code{entrez_id}, and \code{ensembl_id}, for the gene IDs of \code{txdb}. If \code{NULL}, the gene names and Entrez IDs of an \code{EnsDb} are used, and those of a \code{TxDb} are \code{NA}.
 #'
-#' @return A \code{GRangesList} with one \code{GRanges} per annotation, with \code{mcols} \code{id}, \code{tx_id}, \code{gene_id}, \code{symbol}, and \code{type}.
-build_txdb_gene_annots = function(txdb, prefix, annotations, eg2symbol = NULL) {
+#' @return A \code{GRangesList} with one \code{GRanges} per annotation, with the standard \code{mcols} (see \code{standardize_mcols()}).
+build_txdb_gene_annots = function(txdb, prefix, annotations, gene_table = NULL) {
     annot_codes = data.frame(
         code = c(sprintf('%s_promoters', prefix),
             sprintf('%s_1to5kb', prefix),
@@ -714,18 +735,22 @@ build_txdb_gene_annots = function(txdb, prefix, annotations, eg2symbol = NULL) {
             'threeUTRs_gr','intergenic_gr'),
         stringsAsFactors = FALSE)
 
-    if(is.null(eg2symbol)) {
+    if(is.null(gene_table)) {
         if(methods::is(txdb, 'EnsDb')) {
-            # The EnsDb has the Ensembl gene ID to gene symbol mapping
-            genes_gr = GenomicFeatures::genes(txdb)
-            eg2symbol = data.frame(
+            # The EnsDb has the gene symbols and Entrez IDs (the first, if more than one)
+            genes_gr = GenomicFeatures::genes(txdb, columns = c('gene_id', 'gene_name', 'entrezid'))
+            entrez = vapply(as.list(genes_gr$entrezid), function(ids) as.character(ids[!is.na(ids)][1]), character(1))
+            gene_table = data.frame(
                 gene_id = genes_gr$gene_id,
                 symbol = ifelse(genes_gr$gene_name == '', NA, genes_gr$gene_name),
+                entrez_id = entrez,
+                ensembl_id = strip_id_version(genes_gr$gene_id),
                 stringsAsFactors = FALSE)
         } else {
-            eg2symbol = data.frame(gene_id = character(0), symbol = character(0), stringsAsFactors = FALSE)
+            gene_table = get_gene_table(character(0))
         }
     }
+    eg2symbol = gene_table
 
     # Build the base transcripts
     if(methods::is(txdb, 'EnsDb')) {
@@ -1009,6 +1034,15 @@ build_txdb_gene_annots = function(txdb, prefix, annotations, eg2symbol = NULL) {
     genes = do.call('GRangesList', mget(built$var))
     names(genes) = built$code
 
+    # Add the symbols, Entrez IDs, and Ensembl IDs of the genes
+    genes = S4Vectors::endoapply(genes, function(gr) {
+        m = match(as.character(gr$gene_id), gene_table$gene_id)
+        gr$symbol = gene_table$symbol[m]
+        gr$entrez_id = gene_table$entrez_id[m]
+        gr$ensembl_id = gene_table$ensembl_id[m]
+        standardize_mcols(gr)
+    })
+
     # Promoters and boundaries can extend past the ends of chromosomes
     genes = GenomicRanges::trim(genes)
 
@@ -1061,8 +1095,9 @@ build_lncrna_annots = function(genome = c('hg19','hg38','mm10'), cache = TRUE) {
         lncrna_gr = lncrna_gr[lncrna_gr$type == 'transcript']
 
         # Subset the mcols()
-        GenomicRanges::mcols(lncrna_gr) = GenomicRanges::mcols(lncrna_gr)[, c('gene_name','transcript_id','transcript_type')]
-        colnames(GenomicRanges::mcols(lncrna_gr)) = c('symbol','tx_id','transcript_type')
+        GenomicRanges::mcols(lncrna_gr) = GenomicRanges::mcols(lncrna_gr)[, c('gene_name','transcript_id','transcript_type','gene_id')]
+        colnames(GenomicRanges::mcols(lncrna_gr)) = c('symbol','tx_id','transcript_type','ensembl_id')
+        GenomicRanges::mcols(lncrna_gr)$ensembl_id = strip_id_version(GenomicRanges::mcols(lncrna_gr)$ensembl_id)
 
         # Give the lncRNAs their ids according to the transcript_type
         lncrna_grl = split(lncrna_gr, GenomicRanges::mcols(lncrna_gr)$transcript_type)
@@ -1075,11 +1110,12 @@ build_lncrna_annots = function(genome = c('hg19','hg38','mm10'), cache = TRUE) {
 
         # Get the Entrez Gene IDs from the Gene Symbols
         GenomicRanges::mcols(lncrna_gr)$gene_id = eg2symbol[match(GenomicRanges::mcols(lncrna_gr)$symbol, eg2symbol$symbol), 'gene_id']
+        GenomicRanges::mcols(lncrna_gr)$entrez_id = GenomicRanges::mcols(lncrna_gr)$gene_id
 
         # Give it the correct type
         GenomicRanges::mcols(lncrna_gr)$type = sprintf('%s_lncrna_gencode', genome)
 
-        GenomicRanges::mcols(lncrna_gr) = GenomicRanges::mcols(lncrna_gr)[, c('id','tx_id','gene_id','symbol','type')]
+        lncrna_gr = standardize_mcols(lncrna_gr)
 
     return(lncrna_gr)
 }

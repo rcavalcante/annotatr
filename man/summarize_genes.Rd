@@ -24,7 +24,7 @@ summarize_genes(
 \item{quiet}{Print progress messages (FALSE) or not (TRUE).}
 }
 \value{
-A \code{tbl_df} with columns \code{gene_id} and \code{symbol}, then for \code{format = 'wide'}, \code{n_regions} and \code{n_[type]} for each annotation type (e.g. \code{n_promoters}), or for \code{format = 'long'}, \code{annot.type} and \code{n}. These are followed by \code{n_[category]} for each category in \code{by}, and \code{[column]_mean}, \code{[column]_median}, and \code{[column]_sd} for each column in \code{over}. Genes with the most regions come first.
+A \code{tbl_df} with columns \code{gene_id}, \code{symbol}, \code{entrez_id}, and \code{ensembl_id}, then for \code{format = 'wide'}, \code{n_regions} and \code{n_[type]} for each annotation type (e.g. \code{n_promoters}), or for \code{format = 'long'}, \code{annot.type} and \code{n}. These are followed by \code{n_[category]} for each category in \code{by}, and \code{[column]_mean}, \code{[column]_median}, and \code{[column]_sd} for each column in \code{over}. Genes with the most regions come first.
 }
 \description{
 Given a \code{GRanges} of annotated regions, summarize the regions annotated to each gene, with one row per gene. Only gene annotations with a gene ID count (e.g. promoters, 1-5kb upstream, UTRs, exons, and introns), so CpG, intergenic, enhancer, and chromatin annotations are left out.

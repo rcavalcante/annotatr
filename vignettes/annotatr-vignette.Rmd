@@ -58,9 +58,9 @@ The genic annotations are determined by functions from `GenomicFeatures` and dat
 
 Also included in genic annotations are intronexon and exonintron boundaries. These annotations are 200bp up/down stream of any boundary between an exon and intron. Important to note, is that the boundaries are with respect to the strand of the gene.
 
-Non-intergenic gene annotations include Entrez ID and gene symbol information where it exists. The `org.*.eg.db` packages for the appropriate organisms are used to provide gene IDs and gene symbols. For sheep (`oviariramb2`), which has no `TxDb.*` or `org.*.eg.db` packages, gene annotations are built from the Ensembl `EnsDb` in `AnnotationHub` and include Ensembl gene IDs and gene symbols. Its CpG islands come from the UCSC GenArk assembly hub.
+For sheep (`oviariramb2`), which has no `TxDb.*` or `org.*.eg.db` packages, gene annotations are built from the Ensembl `EnsDb` in `AnnotationHub`. Its CpG islands come from the UCSC GenArk assembly hub.
 
-The genic annotations have populated `tx_id`, `gene_id`, and `symbol` columns. Respectively they are, the knownGene transcript name, Entrez Gene ID, and gene symbol.
+Non-intergenic gene annotations have populated `tx_id`, `gene_id`, `symbol`, `entrez_id`, and `ensembl_id` columns. The `tx_id` and `gene_id` are the transcript and gene IDs of the source of the gene models: Entrez Gene IDs for most genomes, Ensembl IDs for `rn4` and sheep, and FlyBase IDs for `dm3` and `dm6`. Whatever the source's IDs are, the `symbol`, `entrez_id`, and `ensembl_id` columns give the gene symbol, Entrez Gene ID, and Ensembl gene ID (without version), from the `org.*.eg.db` package for the organism, or the `EnsDb` for sheep. When a gene ID maps to more than one symbol or ID, the first is used.
 
 Genic annotations are available for all hg19, hg38, mm9, mm10, rn4, rn5, rn6, dm3, and dm6.
 

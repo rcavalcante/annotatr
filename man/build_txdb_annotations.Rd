@@ -22,12 +22,12 @@ build_txdb_annotations(
 
 \item{annotations}{A character vector of annotation types to build: \code{1to5kb}, \code{promoters}, \code{5UTRs}, \code{cds}, \code{exons}, \code{firstexons}, \code{introns}, \code{intronexonboundaries}, \code{exonintronboundaries}, \code{3UTRs}, and \code{intergenic}. The \code{basicgenes} shortcut (the default) builds 1-5kb upstream of TSSs, promoters, 5UTRs, exons, introns, and 3UTRs.}
 
-\item{orgdb}{An optional \code{OrgDb} object, e.g. \code{org.Mm.eg.db::org.Mm.eg.db}, to get gene symbols for the gene IDs of a \code{TxDb}. An \code{EnsDb} has gene symbols already.}
+\item{orgdb}{An optional \code{OrgDb} object, e.g. \code{org.Mm.eg.db::org.Mm.eg.db}, to get gene symbols, Entrez IDs, and Ensembl IDs for the gene IDs of a \code{TxDb}. An \code{EnsDb} has them already.}
 
 \item{keytype}{A string giving the type of the gene IDs in \code{txdb}, as a \code{keytype} of \code{orgdb}, e.g. \code{'ENTREZID'} (the default) or \code{'ENSEMBL'}. For \code{'ENSEMBL'}, versions of gene IDs (e.g. the \code{.12} in \code{ENSMUSG00000000001.12}) are ignored when looking up symbols.}
 }
 \value{
-A \code{GRanges} object with \code{mcols} \code{id}, \code{tx_id}, \code{gene_id}, \code{symbol}, and \code{type}, as from \code{build_annotations()}. The \code{tx_id} and \code{gene_id} are the transcript names and gene IDs of \code{txdb}, and \code{symbol} is \code{NA} when there is no \code{orgdb} or \code{EnsDb} gene name.
+A \code{GRanges} object with \code{mcols} \code{id}, \code{tx_id}, \code{gene_id}, \code{symbol}, \code{entrez_id}, \code{ensembl_id}, and \code{type}, as from \code{build_annotations()}. The \code{tx_id} and \code{gene_id} are the transcript names and gene IDs of \code{txdb}. The \code{symbol}, \code{entrez_id}, and \code{ensembl_id} come from an \code{EnsDb}, or from \code{orgdb} (the first, when a gene ID maps to more than one), and are \code{NA} without either.
 }
 \description{
 Build the same gene annotations as \code{build_annotations()} (promoters, exons, introns, etc.) from gene models you provide, e.g. GENCODE or RefSeq gene models, or a genome without built-in annotations. The result can be combined with built-in annotations with \code{c()} and used with \code{annotate_regions()}, \code{summarize_genes()}, and the plotting functions.

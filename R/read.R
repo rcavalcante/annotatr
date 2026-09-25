@@ -52,7 +52,7 @@ read_regions = function(con, genome = NA, format, extraCols = character(), renam
 
 #' Read custom annotations
 #'
-#' \code{read_annotations()} is a wrapper for the \code{rtracklayer::import()} function that creates a \code{GRanges} object matching the structure of annotations built with \code{build_annotations()}. The structure is defined by \code{GRanges}, with the \code{mcols()} with names \code{c('id','tx_id','gene_id','symbol','type')}.
+#' \code{read_annotations()} is a wrapper for the \code{rtracklayer::import()} function that creates a \code{GRanges} object matching the structure of annotations built with \code{build_annotations()}. The structure is defined by \code{GRanges}, with the \code{mcols()} with names \code{c('id','tx_id','gene_id','symbol','entrez_id','ensembl_id','type')}. Columns named \code{tx_id}, \code{gene_id}, \code{symbol}, \code{entrez_id}, or \code{ensembl_id} in \code{extraCols} are kept, and the others are \code{NA}.
 #'
 #' @param con A path, URL, connection or BEDFile object. See \code{rtracklayer::import.bed()} documentation.
 #' @param name A string for the name of the annotations to be used in the name of the object, [genome]_custom_[name]
@@ -88,32 +88,18 @@ read_annotations = function(con, name, genome = NA, format, extraCols = characte
         genome_name = genome
     }
 
-    protected_extraCols = c('gene_id','symbol','tx_id')
-
     if(!missing(format)) {
         gr = rtracklayer::import(con = con, genome = genome, format = format, extraCols = extraCols, ...)
     } else {
         gr = rtracklayer::import(con = con, genome = genome, extraCols = extraCols, ...)
     }
 
-    # Determine whether gene_id or symbol are missing from extraCols
-    missing_extraCols = base::setdiff(protected_extraCols, names(extraCols))
-
-    if(any(missing_extraCols == 'gene_id')) {
-        GenomicRanges::mcols(gr)$gene_id = NA
-    }
-    if(any(missing_extraCols == 'symbol')) {
-        GenomicRanges::mcols(gr)$symbol = NA
-    }
-    if(any(missing_extraCols == 'tx_id')) {
-        GenomicRanges::mcols(gr)$tx_id = NA
-    }
-
     GenomicRanges::mcols(gr)$id = paste0(name,':',seq_along(gr))
     GenomicRanges::mcols(gr)$type = sprintf('%s_custom_%s', genome_name, name)
 
-    # Make sure only the desired mcols make it out
-    GenomicRanges::mcols(gr) = GenomicRanges::mcols(gr)[,c('id','tx_id','gene_id','symbol','type')]
+    # Make sure only the desired mcols make it out, including any of
+    # entrez_id and ensembl_id given in extraCols
+    gr = standardize_mcols(gr)
 
     ########################################################
     # Write the object named [genome]_custom_[name] to the annotatr_cache

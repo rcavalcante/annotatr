@@ -30,7 +30,7 @@ test_that('build_annotations() returns custom annotations without downloading', 
 expect_built = function(annotations, annots) {
     expect_s4_class(annotations, 'GRanges')
     expect_setequal(unique(annotations$type), expand_annotations(annots))
-    expect_named(GenomicRanges::mcols(annotations), c('id', 'tx_id', 'gene_id', 'symbol', 'type'))
+    expect_named(GenomicRanges::mcols(annotations), c('id', 'tx_id', 'gene_id', 'symbol', 'entrez_id', 'ensembl_id', 'type'))
 }
 
 test_that('CpG annotations build from UCSC', {
@@ -83,6 +83,8 @@ test_that('MANE annotations build, with one transcript per gene', {
 
     # Entrez gene IDs and symbols, as for hg38_genes_*
     expect_equal(unique(a$gene_id[a$symbol %in% 'BRAF']), '673')
+    expect_equal(unique(a$entrez_id[a$symbol %in% 'BRAF']), '673')
+    expect_equal(unique(a$ensembl_id[a$symbol %in% 'BRAF']), 'ENSG00000157764')
     expect_false(anyNA(a$symbol))
     expect_equal(unique(Seqinfo::genome(a)), 'hg38')
 })
@@ -113,6 +115,13 @@ for(genome in builtin_genomes()) {
 
         a = suppressMessages(build_annotations(genome = genome, annotations = annots, cache = FALSE))
         expect_built(a, annots)
+
+        # Most gene annotations have a symbol, Entrez ID, and Ensembl ID,
+        # whatever kind of gene ID the source has (e.g. FlyBase for dm6)
+        genic = a[grepl('_genes_', a$type) & !is.na(a$gene_id)]
+        expect_gt(mean(!is.na(genic$symbol)), 0.5)
+        expect_gt(mean(!is.na(genic$entrez_id)), 0.5)
+        expect_gt(mean(!is.na(genic$ensembl_id)), 0.5)
     })
 }
 

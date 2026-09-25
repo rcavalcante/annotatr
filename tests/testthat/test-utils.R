@@ -93,6 +93,38 @@ test_that('expand_annotations() expands shortcuts', {
         'Heterochrom/lo', 'Repetitive/CNV')))
 })
 
+test_that('standardize_mcols() gives annotations the same columns', {
+    gr = GenomicRanges::GRanges('chr1', IRanges::IRanges(1, 10), type = 'hg19_custom_x', id = 'x:1', score = 5)
+    gr = standardize_mcols(gr)
+
+    expect_named(GenomicRanges::mcols(gr), c('id', 'tx_id', 'gene_id', 'symbol', 'entrez_id', 'ensembl_id', 'type'))
+    expect_equal(gr$id, 'x:1')
+    expect_true(is.na(gr$entrez_id))
+})
+
+test_that('get_gene_table() maps gene IDs, using the first of several matches', {
+    skip_if_not_installed('org.Hs.eg.db')
+    orgdb = org.Hs.eg.db::org.Hs.eg.db
+
+    t = get_gene_table(c('1', '2', '1', NA, 'nonsense'), orgdb = orgdb, keytype = 'ENTREZID')
+    expect_named(t, c('gene_id', 'symbol', 'entrez_id', 'ensembl_id'))
+    expect_equal(t$gene_id, c('1', '2', 'nonsense'))
+    expect_equal(t$symbol, c('A1BG', 'A2M', NA))
+    expect_equal(t$ensembl_id, c('ENSG00000121410', 'ENSG00000175899', NA))
+
+    # Ensembl IDs with versions
+    t = get_gene_table(c('ENSG00000121410.14', 'ENSG00000175899.17'), orgdb = orgdb, keytype = 'ENSEMBL')
+    expect_equal(t$gene_id, c('ENSG00000121410.14', 'ENSG00000175899.17'))
+    expect_equal(t$ensembl_id, c('ENSG00000121410', 'ENSG00000175899'))
+    expect_equal(t$entrez_id, c('1', '2'))
+
+    # Without an OrgDb, only the IDs themselves
+    t = get_gene_table(c('1', '2'), keytype = 'ENTREZID')
+    expect_equal(t$entrez_id, c('1', '2'))
+    expect_true(all(is.na(t$symbol)))
+    expect_equal(nrow(get_gene_table(character(0))), 0)
+})
+
 test_that('set_genome_seqinfo() gives ranges the seqinfo of a genome', {
     gr = GenomicRanges::GRanges('chr1', IRanges::IRanges(1, 1e9))
 
