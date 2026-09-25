@@ -94,8 +94,40 @@ jobs:
             exit 1
           fi
 
+      # BiocCheck downloads a small status file from bioconductor.org (e.g. to
+      # check for deprecated packages), and caches it. Keeping its cache for a
+      # week means most runs don't contact bioconductor.org for it at all.
+      - name: Restore the BiocCheck cache
+        id: bioccheck-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: /github/home/.cache/R/BiocCheck
+          key: bioccheck-${{ steps.versions.outputs.bioc }}-${{ steps.versions.outputs.week }}
+
+      # bioconductor.org is sometimes down, which makes BiocCheck fail. Retry
+      # politely: 3 attempts in total, waiting 2 and then 4 minutes. A real
+      # BiocCheck error fails all 3 attempts.
       - name: BiocCheck
-        run: Rscript -e 'BiocCheck::BiocCheck(Sys.glob("annotatr_*.tar.gz"), `quit-with-status` = TRUE)'
+        run: |
+          for attempt in 1 2 3; do
+            if Rscript -e 'BiocCheck::BiocCheck(Sys.glob("annotatr_*.tar.gz"), `quit-with-status` = TRUE)'; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              wait=$((attempt * 120))
+              echo "::warning::BiocCheck failed (attempt $attempt of 3), retrying in $wait seconds in case bioconductor.org is down"
+              sleep "$wait"
+            fi
+          done
+          echo "::error::BiocCheck failed 3 times"
+          exit 1
+
+      - name: Save the BiocCheck cache
+        if: always() && steps.bioccheck-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: /github/home/.cache/R/BiocCheck
+          key: ${{ steps.bioccheck-cache.outputs.cache-primary-key }}
 
       - name: Upload the check results
         if: failure()
