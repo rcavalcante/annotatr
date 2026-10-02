@@ -61,7 +61,8 @@ BUGFIXES
     rn7, danRer10, danRer11, galGal5), and hg19 chromHMM states, which started
     1 bp early because UCSC's 0-based starts were used as 1-based. CpG shores,
     shelves, and inter-CGI regions, built from the islands, are fixed too.
-    Reported, with a fix, by Ryan Yancey (issue #54, PR #55).
+    Reported, with a fix, by Ryan Yancey (issue #54, PR #55). Backported to
+    1.38.3.
   o Gene annotations for dm3, dm6, and rn4 had no gene symbols, because their
     gene IDs are FlyBase or Ensembl IDs, but symbols were looked up by Entrez
     ID. They now have symbols, Entrez IDs, and Ensembl IDs.
@@ -84,11 +85,11 @@ BUGFIXES
   o build_annotations() no longer attaches the TxDb.* and org.*.eg.db
     packages, and says which of them to install when they are missing.
   o Fix plot_categorical() with the default fill = NULL, which failed when the
-    plot was drawn.
+    plot was drawn. Backported to 1.38.2.
   o Fix hg38_lncrna_gencode and mm10_lncrna_gencode, which failed after
     AnnotationHub removed its GENCODE resources (AH75123, AH49550). All lncRNA
     annotations are now downloaded from GENCODE over HTTPS, using the same
-    releases as before (hg19: 19, hg38: 31, mm10: M6).
+    releases as before (hg19: 19, hg38: 31, mm10: M6). Backported to 1.38.1.
 
 USER-FACING CHANGES
 
@@ -127,6 +128,35 @@ INTERNAL CHANGES
     other or on file order, and plot tests build the plots. Build tests for
     small downloads run whenever online. Full build tests for every genome run
     with ANNOTATR_FULL_TESTS=true, which docker/check.sh sets.
+
+CHANGES IN VERSION 1.38.3
+-------------------------
+
+BUGFIXES
+
+  o Fix CpG islands read from UCSC database tables (hg38, mm10, mm39, rn6,
+    rn7, danRer10, danRer11, galGal5), and hg19 chromHMM states, which started
+    1 bp early because UCSC's 0-based starts were used as 1-based. CpG shores,
+    shelves, and inter-CGI regions, built from the islands, are fixed too.
+    Reported, with a fix, by Ryan Yancey (issue #54, PR #55).
+
+CHANGES IN VERSION 1.38.2
+-------------------------
+
+BUGFIXES
+
+  o Fix plot_categorical() with the default fill = NULL, which failed when the
+    plot was drawn.
+
+CHANGES IN VERSION 1.38.1
+-------------------------
+
+BUGFIXES
+
+  o Fix hg38_lncrna_gencode and mm10_lncrna_gencode, which failed after
+    AnnotationHub removed its GENCODE resources (AH75123, AH49550). All lncRNA
+    annotations are now downloaded from GENCODE over HTTPS, using the same
+    releases as before (hg19: 19, hg38: 31, mm10: M6).
 
 CHANGES IN VERSION 1.16.0
 -------------------------
