@@ -65,10 +65,40 @@ BUGFIXES
   o Gene annotations for dm3, dm6, and rn4 had no gene symbols, because their
     gene IDs are FlyBase or Ensembl IDs, but symbols were looked up by Entrez
     ID. They now have symbols, Entrez IDs, and Ensembl IDs.
+  o annotate_regions() gives clear errors when the regions and annotations are
+    from different genomes, or have no chromosome names in common (e.g. 2 and
+    chr2), instead of findOverlaps() errors or no overlaps. It suggests
+    read_regions(genome = ...) once per session for regions without a genome.
+  o hg38_enhancers_fantom and mm10_enhancers_fantom have the seqinfo of their
+    genome. liftOver() had dropped the genome and chromosome lengths.
+  o Intergenic and interCGI annotations are only on chromosomes with genes or
+    CpG islands. Unplaced contigs and alternate haplotypes without any were
+    each an entire intergenic or interCGI region.
+  o plot_numerical_coannotations() scatterplots draw each region once per
+    facet. Regions were drawn once per combination of their annotations, so
+    with the semi-transparent points, regions with many annotations (e.g. in
+    genes with many transcripts) looked darker.
+  o Gene annotations are trimmed to the ends of chromosomes. Some promoters
+    and intron/exon boundaries extended past them, with warnings, e.g. for
+    danRer10, danRer11, mm10, rn4, and rn6.
+  o build_annotations() no longer attaches the TxDb.* and org.*.eg.db
+    packages, and says which of them to install when they are missing.
+  o Fix plot_categorical() with the default fill = NULL, which failed when the
+    plot was drawn.
+  o Fix hg38_lncrna_gencode and mm10_lncrna_gencode, which failed after
+    AnnotationHub removed its GENCODE resources (AH75123, AH49550). All lncRNA
+    annotations are now downloaded from GENCODE over HTTPS, using the same
+    releases as before (hg19: 19, hg38: 31, mm10: M6).
 
 USER-FACING CHANGES
 
   o Require R >= 4.6.0, the version Bioconductor 3.24 runs on.
+  o Document that read_annotations() returns the custom annotations, which can
+    be combined with other annotations using c(), as well as storing them in
+    annotatr_cache.
+  o summarize_annotations(), plot_annotation(), and plot_categorical() label the
+    regions in annotated_random as "Background" instead of "Random Regions".
+    The argument name annotated_random is unchanged.
 
 DEPRECATED AND DEFUNCT
 
@@ -97,42 +127,6 @@ INTERNAL CHANGES
     other or on file order, and plot tests build the plots. Build tests for
     small downloads run whenever online. Full build tests for every genome run
     with ANNOTATR_FULL_TESTS=true, which docker/check.sh sets.
-
-USER-FACING CHANGES
-
-  o Document that read_annotations() returns the custom annotations, which can
-    be combined with other annotations using c(), as well as storing them in
-    annotatr_cache.
-  o summarize_annotations(), plot_annotation(), and plot_categorical() label the
-    regions in annotated_random as "Background" instead of "Random Regions".
-    The argument name annotated_random is unchanged.
-
-BUGFIXES
-
-  o annotate_regions() gives clear errors when the regions and annotations are
-    from different genomes, or have no chromosome names in common (e.g. 2 and
-    chr2), instead of findOverlaps() errors or no overlaps. It suggests
-    read_regions(genome = ...) once per session for regions without a genome.
-  o hg38_enhancers_fantom and mm10_enhancers_fantom have the seqinfo of their
-    genome. liftOver() had dropped the genome and chromosome lengths.
-  o Intergenic and interCGI annotations are only on chromosomes with genes or
-    CpG islands. Unplaced contigs and alternate haplotypes without any were
-    each an entire intergenic or interCGI region.
-  o plot_numerical_coannotations() scatterplots draw each region once per
-    facet. Regions were drawn once per combination of their annotations, so
-    with the semi-transparent points, regions with many annotations (e.g. in
-    genes with many transcripts) looked darker.
-  o Gene annotations are trimmed to the ends of chromosomes. Some promoters
-    and intron/exon boundaries extended past them, with warnings, e.g. for
-    danRer10, danRer11, mm10, rn4, and rn6.
-  o build_annotations() no longer attaches the TxDb.* and org.*.eg.db
-    packages, and says which of them to install when they are missing.
-  o Fix plot_categorical() with the default fill = NULL, which failed when the
-    plot was drawn.
-  o Fix hg38_lncrna_gencode and mm10_lncrna_gencode, which failed after
-    AnnotationHub removed its GENCODE resources (AH75123, AH49550). All lncRNA
-    annotations are now downloaded from GENCODE over HTTPS, using the same
-    releases as before (hg19: 19, hg38: 31, mm10: M6).
 
 CHANGES IN VERSION 1.16.0
 -------------------------
